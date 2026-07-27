@@ -1,0 +1,952 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Job-App Backend API",
+    "description": "REST API for job search platform",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "description": "Health check endpoint for ALB/load balancer verification.\n\nReturns:\n    HTTP 200: {\"status\": \"ok\"} when Lambda is ready\n    HTTP 503: {\"status\": \"unavailable\"} when Lambda is starting or in error\n\nLogging:\n- Only logs on status change (ready -> error or vice versa)\n- Not logged on every request (would be too noisy in CloudWatch)",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/profile/parse": {
+      "post": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Parse Cv",
+        "description": "Parse raw CV text into structured profile.\n\nEndpoint: POST /me/profile/parse\nAuth: Required (JWT)\n\nRequest Body:\n    - cvText (str): Raw CV text, max 50KB\n\nResponse (HTTP 200):\n    - PerfilEstructurado: Parsed and validated profile\n\nError Responses:\n    - HTTP 400: Validation error (invalid input, schema mismatch after retry)\n    - HTTP 413: CV exceeds 50KB limit\n    - HTTP 502: Bedrock timeout or service error\n\nLogic:\n1. Validate cvText (non-empty, <50KB)\n2. If invalid: Return HTTP 413 (if size) or HTTP 400 (if other)\n3. Invoke Bedrock SMALL model with CV parsing prompt\n4. Validate response against PerfilEstructurado schema\n5. If validation fails: Retry once with error injected into prompt\n6. If retry fails: Return HTTP 400 or HTTP 502 as appropriate\n7. Return parsed PerfilEstructurado (not persisted)\n8. Log attempt count, model used, success/failure status\n\nRequirements:\n- 1.1: Accept POST with cvText (≤50KB)\n- 1.2: Invoke Bedrock SMALL model from env var\n- 1.3: Validate response against PerfilEstructurado, retry once on failure\n- 1.4: Return HTTP 200 with PerfilEstructurado on success\n- 1.5: Return HTTP 413 on >50KB\n- 1.6: Return HTTP 502 on Bedrock timeout/failure\n- 1.7: Log model used, attempt count, status (no CV text content)",
+        "operationId": "parse_cv_me_profile_parse_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParseCVRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerfilEstructurado"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/profile": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Get Profile",
+        "description": "Retrieve the user's saved profile.\n\nEndpoint: GET /me/profile\nAuth: Required (JWT)\n\nResponse (HTTP 200):\n    - perfilEstructurado: Structured profile\n    - resumenParaMatching: Summary text for matching (or null)\n    - cargosSugeridos: Suggested roles (or empty list)\n    - cargosActivos: User-selected active roles (or empty list)\n    - profileVersion: Version number\n    - updatedAt: Timestamp of last update\n    - resumenGenerating: Boolean flag (read-only from DB)\n\nError Responses:\n    - HTTP 404: Profile not found\n\nLogic:\n1. Query Perfiles table by userId (pk)\n2. If not found: Return HTTP 404 with profile_not_found\n3. Return all stored fields (including resumenGenerationStatus → resumenGenerating)\n4. Log retrieval status\n\nRequirements:\n- 2.1, 2.2: Query Perfiles by userId\n- 2.3: Return perfilEstructurado\n- 2.4: Return resumenParaMatching (may be null)\n- 2.5: Return cargosActivos, cargosSugeridos, profileVersion, updatedAt\n- 3.5: Return resumenGenerating (read-only boolean, NOT persisted by this endpoint)\n- 3.7: Return 404 with profile_not_found if missing",
+        "operationId": "get_profile_me_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Profile Me Profile Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Save Profile",
+        "description": "Save a structured profile for the user.\n\nEndpoint: PUT /me/profile\nAuth: Required (JWT)\n\nRequest Body:\n    - perfilEstructurado: Structured profile (PerfilEstructurado model)\n\nResponse (HTTP 200):\n    - profileVersion: Updated version number\n    - updatedAt: Timestamp of update\n    - cargosActivos: Returned as-is (not modified by this endpoint)\n\nError Responses:\n    - HTTP 400: Validation error\n\nLogic:\n1. Validate request body (already done by Pydantic)\n2. Get current profile to determine next version\n3. Persist ONLY perfilEstructurado, profileVersion (incremented), updatedAt\n4. Return HTTP 200 with version info immediately (no async background tasks)\n5. Never modify resumenParaMatching, resumenGenerationStatus, cargosSugeridos\n6. Log save operation\n\nRequirements:\n- 2.1: Validate body against SaveProfileRequest\n- 2.3: Persist perfilEstructurado\n- 2.4: Increment profileVersion\n- 2.5: Update updatedAt timestamp\n- 3.1: Return HTTP 200 with version/timestamp\n- 3.2: Perform write atomically, return immediately\n- 3.3: Log profile save operation\n- 10.1: Perform DynamoDB write\n- 10.2: Increment version atomically\n- 10.3: Never enqueue background tasks in this endpoint\n- 10.4: Never modify resumenParaMatching or resumenGenerationStatus\n- 10.5: Return only version and updatedAt (worker owns other fields)",
+        "operationId": "save_profile_me_profile_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Save Profile Me Profile Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/profile/roles/suggest": {
+      "post": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Suggest Roles",
+        "description": "Suggest job roles based on the user's resume.\n\nEndpoint: POST /me/roles/suggest\nAuth: Required (JWT)\n\nResponse (HTTP 200):\n    - suggestions: List of suggested job roles\n    - suggestedAt: Timestamp of suggestion\n\nError Responses:\n    - HTTP 424: Resume not ready (resumenParaMatching is null or generation in progress)\n    - HTTP 400: Validation error after retry\n    - HTTP 502: Bedrock failure/timeout\n\nLogic:\n1. Query Perfiles by userId\n2. Check resumenParaMatching: if null or resumenGenerationStatus == \"generating\", return 424\n3. Invoke Bedrock SMALL model with role suggestion prompt\n4. Validate response against RolesSuggestions schema\n5. If validation fails: Retry once with error injected\n6. If retry fails: Return HTTP 400 or 502\n7. Return suggestions (not persisted)\n8. Log operation\n\nRequirements:\n- 4.1: Check resumenParaMatching and generation status\n- 4.2: Return HTTP 424 if resume not ready\n- 4.3: Invoke Bedrock SMALL model\n- 4.4: Validate against RolesSuggestions\n- 4.5: Retry once on validation failure\n- 4.6: Return HTTP 200 with suggestions on success\n- 4.7: Log suggestions attempt",
+        "operationId": "suggest_roles_me_profile_roles_suggest_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Suggest Roles Me Profile Roles Suggest Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/profile/roles": {
+      "put": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Save Roles",
+        "description": "Save user's active job roles/titles.\n\nEndpoint: PUT /me/roles\nAuth: Required (JWT)\n\nRequest Body:\n    - cargosActivos: List of 1-10 job roles, each ≤50 chars (empty list allowed)\n\nResponse (HTTP 200):\n    - profileVersion: Updated version number\n    - cargosActivos: Saved roles\n    - updatedAt: Timestamp of update\n\nError Responses:\n    - HTTP 400: Validation error (invalid role list)\n\nLogic:\n1. Validate cargosActivos via validate_roles_list (1-10 items, ≤50 chars each)\n2. If invalid: Return HTTP 400\n3. Get current profile to determine next version\n4. Update ONLY cargosActivos, profileVersion (incremented), updatedAt\n5. Return HTTP 200 with version/roles/timestamp\n6. Log operation\n\nRequirements:\n- 5.1: Accept PUT with cargosActivos\n- 5.2: Validate roles list (1-10 items, ≤50 chars each)\n- 5.3: Return HTTP 400 on validation error\n- 5.4: Persist roles atomically\n- 5.5: Increment profileVersion\n- 5.6: Return HTTP 200 with version/roles/timestamp",
+        "operationId": "save_roles_me_profile_roles_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetRolesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Save Roles Me Profile Roles Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/companies": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "List Companies",
+        "description": "List all companies in the shared catalog.\n\nEndpoint: GET /companies\nAuth: Not required\n\nQuery Parameters:\n    - limit (int): Page size, 10-100, default 20\n    - offset (int): Page offset, default 0\n\nResponse (HTTP 200):\n    - companies: List of company objects\n    - total: Total number of companies\n    - hasMore: Boolean indicating if more results exist\n\nLogic:\n1. Scan Empresas table (all companies)\n2. Sort case-insensitively by nombre\n3. Return raw stored fields only (no derived/computed flags)\n4. Log retrieval operation\n\nCompany fields returned:\n    - companyId, nombre, careersUrl, plataforma\n    - lastScannedAt, lastScanStatus, lastVacancyCount, consecutiveFailures\n\nRequirements:\n- 6.1: Paginate listing\n- 6.2: Sort by nombre case-insensitively\n- 6.3: Return raw stored fields only\n- 6.4: Return {\"companies\", \"total\", \"hasMore\"}\n- 6.5: No auth required",
+        "operationId": "list_companies_companies_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 10,
+              "description": "Page size (10-100, default 20)",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Page size (10-100, default 20)"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Page offset (default 0)",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Page offset (default 0)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompaniesListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Add Company",
+        "description": "Add a new company to the shared catalog.\n\nEndpoint: POST /companies\nAuth: Not required\n\nRequest Body:\n    - careersUrl (str): Company careers page URL (http/https)\n\nResponse (HTTP 201):\n    - companyId: SHA-256 hash of normalized URL\n    - nombre: Extracted company name\n    - plataforma: Detected platform (greenhouse, lever, html)\n    - createdAt: Timestamp\n\nError Responses:\n    - HTTP 400: Malformed URL or platform detection failed\n    - HTTP 409: Company already exists (duplicate URL)\n\nLogic:\n1. Validate careersUrl via validate_empresa_url (400 if invalid)\n2. Normalize URL and compute companyId (SHA-256 hash)\n3. Detect platform using ONLY hostname check (detect_platform_hostname_only)\n4. Check if companyId already exists (409 if found)\n5. Extract company nombre from URL domain (domain.com → \"domain\")\n6. Create Empresas entry with lastScannedAt=null, lastScanStatus=null, etc.\n7. Return 201 with companyId, nombre, plataforma, createdAt\n\nRequirements:\n- 7.1: Accept careersUrl\n- 7.2: Validate URL (400 on invalid)\n- 7.3: Normalize URL via normalize_url\n- 7.4: Compute companyId via compute_company_id (SHA-256)\n- 7.5: Detect platform via detect_platform_hostname_only (pure hostname check, no HTTP)\n- 7.6: Map platform detection failure to 400 platform_detection_failed\n- 7.7: Return 409 company_already_exists if hash exists\n- 7.8: Return 201 with companyId, nombre, plataforma, createdAt",
+        "operationId": "add_company_companies_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCompanyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/companies": {
+      "get": {
+        "tags": [
+          "subscriptions"
+        ],
+        "summary": "List User Subscriptions",
+        "description": "List all active companies the user is subscribed to.\n\nEndpoint: GET /me/companies\nAuth: Required (JWT)\n\nResponse (HTTP 200):\n    - subscriptions: List of subscription objects\n\nLogic:\n1. Query Suscripciones table by userId\n2. Filter for activa=true only\n3. Left-join with Empresas to get company details\n4. Sort by addedAt descending (most recent first)\n5. Return raw stored fields only (no derived/computed flags)\n6. Log retrieval\n\nSubscription fields returned:\n    - companyId, nombre, plataforma, addedAt\n    - lastScannedAt, lastScanStatus, lastVacancyCount, consecutiveFailures\n\nRequirements:\n- 8.1: Query Suscripciones by userId\n- 8.2: Filter for activa=true only\n- 8.3: Left-join Empresas for details\n- 8.4: Sort by addedAt descending\n- 8.5: Return raw stored fields only\n- 8.6: Return {\"subscriptions\": [...]}",
+        "operationId": "list_user_subscriptions_me_companies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/companies/{company_id}": {
+      "put": {
+        "tags": [
+          "subscriptions"
+        ],
+        "summary": "Toggle Subscription",
+        "description": "Activate or deactivate a company subscription for the user.\n\nEndpoint: PUT /me/companies/{companyId}\nAuth: Required (JWT)\n\nPath Parameters:\n    - companyId (str): Company ID (SHA-256 hash)\n\nRequest Body:\n    - activa (bool): True to activate, False to deactivate\n\nResponse (HTTP 200):\n    - companyId, activa, updatedAt\n\nError Responses:\n    - HTTP 404: Subscription not found for this (userId, companyId)\n    - HTTP 400: Company not found in Empresas table\n\nLogic:\n1. Validate subscription exists for (userId, companyId) (404 if missing)\n2. Validate companyId exists in Empresas (400 if missing)\n3. Set activa flag\n4. If reactivating (activa=true): Update addedAt to current timestamp\n5. If deactivating (activa=false): Keep addedAt unchanged\n6. Persist to Suscripciones\n7. Return 200 with companyId, activa, updatedAt\n\nRequirements:\n- 9.1: Accept PUT with activa flag\n- 9.2: Validate subscription exists (404 subscription_not_found)\n- 9.3: Validate company exists (400 company_not_found)\n- 9.4: Set activa flag\n- 9.5: Refresh addedAt on reactivation\n- 9.6: Persist atomically\n- 9.7: Return 200 with companyId, activa, updatedAt\n- 9.8: Log operation",
+        "operationId": "toggle_subscription_me_companies__company_id__put",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddCompanyRequest": {
+        "properties": {
+          "careersUrl": {
+            "type": "string",
+            "title": "Careersurl",
+            "description": "Company careers page URL (http/https)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "careersUrl"
+        ],
+        "title": "AddCompanyRequest",
+        "description": "Request body for POST /companies.\n\nContains the careers URL for a company to be added to the shared catalog."
+      },
+      "Certificacion": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre",
+            "description": "Certification name"
+          },
+          "emisor": {
+            "type": "string",
+            "title": "Emisor",
+            "description": "Issuing organization"
+          },
+          "ano": {
+            "type": "string",
+            "title": "Ano",
+            "description": "Year obtained"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "emisor",
+          "ano"
+        ],
+        "title": "Certificacion",
+        "description": "Certification entry from CV."
+      },
+      "CompaniesListResponse": {
+        "properties": {
+          "companies": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyListItem"
+            },
+            "type": "array",
+            "title": "Companies"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "title": "Hasmore"
+          }
+        },
+        "type": "object",
+        "required": [
+          "companies",
+          "total",
+          "hasMore"
+        ],
+        "title": "CompaniesListResponse",
+        "description": "Response for GET /companies."
+      },
+      "CompanyCreateResponse": {
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "title": "Companyid"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "plataforma": {
+            "type": "string",
+            "title": "Plataforma"
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "companyId",
+          "nombre",
+          "plataforma",
+          "createdAt"
+        ],
+        "title": "CompanyCreateResponse",
+        "description": "Response for POST /companies (201 Created)."
+      },
+      "CompanyListItem": {
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "title": "Companyid"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "careersUrl": {
+            "type": "string",
+            "title": "Careersurl"
+          },
+          "plataforma": {
+            "type": "string",
+            "title": "Plataforma"
+          },
+          "lastScannedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastscannedat"
+          },
+          "lastScanStatus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastscanstatus"
+          },
+          "lastVacancyCount": {
+            "type": "integer",
+            "title": "Lastvacancycount"
+          },
+          "consecutiveFailures": {
+            "type": "integer",
+            "title": "Consecutivefailures"
+          }
+        },
+        "type": "object",
+        "required": [
+          "companyId",
+          "nombre",
+          "careersUrl",
+          "plataforma",
+          "lastVacancyCount",
+          "consecutiveFailures"
+        ],
+        "title": "CompanyListItem",
+        "description": "Company item in list response."
+      },
+      "Educacion": {
+        "properties": {
+          "titulo": {
+            "type": "string",
+            "title": "Titulo",
+            "description": "Degree or certification title"
+          },
+          "institucion": {
+            "type": "string",
+            "title": "Institucion",
+            "description": "Institution name"
+          },
+          "ano": {
+            "type": "string",
+            "title": "Ano",
+            "description": "Year or year range"
+          },
+          "especializacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Especializacion",
+            "description": "Specialization or focus area"
+          }
+        },
+        "type": "object",
+        "required": [
+          "titulo",
+          "institucion",
+          "ano"
+        ],
+        "title": "Educacion",
+        "description": "Education entry from CV."
+      },
+      "ExperienciaLaboral": {
+        "properties": {
+          "puesto": {
+            "type": "string",
+            "title": "Puesto",
+            "description": "Job title"
+          },
+          "empresa": {
+            "type": "string",
+            "title": "Empresa",
+            "description": "Company name"
+          },
+          "duracion": {
+            "type": "string",
+            "title": "Duracion",
+            "description": "Duration (e.g., '2 years', 'Jan 2020 - Dec 2021')"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion",
+            "description": "Job description and responsibilities"
+          },
+          "tecnologias": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tecnologias",
+            "description": "Technologies used"
+          }
+        },
+        "type": "object",
+        "required": [
+          "puesto",
+          "empresa",
+          "duracion",
+          "descripcion"
+        ],
+        "title": "ExperienciaLaboral",
+        "description": "Work experience entry from CV."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse",
+        "description": "Health check response."
+      },
+      "ParseCVRequest": {
+        "properties": {
+          "cvText": {
+            "type": "string",
+            "title": "Cvtext",
+            "description": "Raw CV text (≤50KB)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cvText"
+        ],
+        "title": "ParseCVRequest",
+        "description": "Request body for POST /me/profile/parse.\n\nContains raw CV text to be parsed into structured profile.\nNote: max_length validation is NOT applied here; instead, the endpoint\nvalidates the size (≤50KB) and returns HTTP 413 if exceeded.\nThis allows us to return a proper error response instead of FastAPI's\ndefault 422 validation error."
+      },
+      "PerfilEstructurado": {
+        "properties": {
+          "experiencia": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienciaLaboral"
+            },
+            "type": "array",
+            "title": "Experiencia",
+            "description": "Work experience entries"
+          },
+          "educacion": {
+            "items": {
+              "$ref": "#/components/schemas/Educacion"
+            },
+            "type": "array",
+            "title": "Educacion",
+            "description": "Education entries"
+          },
+          "proyectos": {
+            "items": {
+              "$ref": "#/components/schemas/Proyecto"
+            },
+            "type": "array",
+            "title": "Proyectos",
+            "description": "Project entries"
+          },
+          "certificaciones": {
+            "items": {
+              "$ref": "#/components/schemas/Certificacion"
+            },
+            "type": "array",
+            "title": "Certificaciones",
+            "description": "Certification entries"
+          },
+          "skills": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Skills",
+            "description": "Technical skills"
+          },
+          "lenguajes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Lenguajes",
+            "description": "Languages spoken/read"
+          }
+        },
+        "type": "object",
+        "required": [
+          "skills"
+        ],
+        "title": "PerfilEstructurado",
+        "description": "User's structured CV profile, parsed from raw CV text.\n\nThis is the primary data structure for storing user's professional information."
+      },
+      "Proyecto": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre",
+            "description": "Project name"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion",
+            "description": "Project description"
+          },
+          "tecnologias": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tecnologias",
+            "description": "Technologies used"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "Project URL (optional)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "descripcion"
+        ],
+        "title": "Proyecto",
+        "description": "Project entry from CV."
+      },
+      "SaveProfileRequest": {
+        "properties": {
+          "perfilEstructurado": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PerfilEstructurado"
+              }
+            ],
+            "description": "Structured profile object from CV parsing or manual editing"
+          }
+        },
+        "type": "object",
+        "required": [
+          "perfilEstructurado"
+        ],
+        "title": "SaveProfileRequest",
+        "description": "Request body for PUT /me/profile.\n\nContains the structured profile to be saved."
+      },
+      "SetRolesRequest": {
+        "properties": {
+          "cargosActivos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "minItems": 0,
+            "title": "Cargosactivos",
+            "description": "List of active job roles (1-10 items, each ≤50 chars)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cargosActivos"
+        ],
+        "title": "SetRolesRequest",
+        "description": "Request body for PUT /me/roles.\n\nContains the list of active job roles/titles selected by the user."
+      },
+      "SubscriptionItem": {
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "title": "Companyid"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "plataforma": {
+            "type": "string",
+            "title": "Plataforma"
+          },
+          "addedAt": {
+            "type": "string",
+            "title": "Addedat"
+          },
+          "lastScannedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastscannedat"
+          },
+          "lastScanStatus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastscanstatus"
+          },
+          "lastVacancyCount": {
+            "type": "integer",
+            "title": "Lastvacancycount"
+          },
+          "consecutiveFailures": {
+            "type": "integer",
+            "title": "Consecutivefailures"
+          }
+        },
+        "type": "object",
+        "required": [
+          "companyId",
+          "nombre",
+          "plataforma",
+          "addedAt",
+          "lastVacancyCount",
+          "consecutiveFailures"
+        ],
+        "title": "SubscriptionItem",
+        "description": "Company subscription item in user's list."
+      },
+      "SubscriptionListResponse": {
+        "properties": {
+          "subscriptions": {
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionItem"
+            },
+            "type": "array",
+            "title": "Subscriptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscriptions"
+        ],
+        "title": "SubscriptionListResponse",
+        "description": "Response for GET /me/companies."
+      },
+      "SubscriptionUpdateResponse": {
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "title": "Companyid"
+          },
+          "activa": {
+            "type": "boolean",
+            "title": "Activa"
+          },
+          "updatedAt": {
+            "type": "string",
+            "title": "Updatedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "companyId",
+          "activa",
+          "updatedAt"
+        ],
+        "title": "SubscriptionUpdateResponse",
+        "description": "Response for PUT /me/companies/{companyId}."
+      },
+      "ToggleSubscriptionRequest": {
+        "properties": {
+          "activa": {
+            "type": "boolean",
+            "title": "Activa",
+            "description": "Whether the subscription is active (true) or inactive (false)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activa"
+        ],
+        "title": "ToggleSubscriptionRequest",
+        "description": "Request body for PUT /me/companies/{companyId}.\n\nContains the subscription activation state."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

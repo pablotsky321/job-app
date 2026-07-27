@@ -1,0 +1,347 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Set up backend project structure and dependencies": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122092335
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122099839
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122547588
+      }
+    ],
+    "1.2 Implement custom exception classes": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122092445
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122550990
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122820155
+      }
+    ],
+    "1.3 Implement structured JSON logging": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122092523
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122551361
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122820389
+      }
+    ],
+    "1.4 Implement domain models": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122092690
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122551844
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122820878
+      }
+    ],
+    "1.5 Implement validators.py pure functions": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122092784
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122824204
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123064846
+      }
+    ],
+    "1.6 Write unit tests for validators.py pure functions": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122092892
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123073327
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123076778
+      }
+    ],
+    "1.7 Implement normalization.py pure functions": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122092983
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122824574
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123065177
+      }
+    ],
+    "1.8 Write unit tests for normalization.py pure functions": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093064
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123073682
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123077098
+      }
+    ],
+    "1.9 Implement DynamoDB access helpers": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093142
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122824897
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123065517
+      }
+    ],
+    "1.10 Implement JWT claim extraction helpers": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093222
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122825328
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123065796
+      }
+    ],
+    "1.11 Implement Bedrock client module": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093330
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122825642
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123066366
+      }
+    ],
+    "2. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093475
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123090510
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123194728
+      }
+    ],
+    "3.1 Implement request body schemas": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093567
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123197563
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123758418
+      }
+    ],
+    "3.2 Implement FastAPI app bootstrap and health check endpoint": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093633
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123198005
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123758727
+      }
+    ],
+    "3.3 Implement JWT extraction dependency for routes": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093707
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123198343
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123759152
+      }
+    ],
+    "4.1 Implement POST /me/profile/parse endpoint": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093777
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123763161
+      },
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785124213906
+      }
+    ],
+    "4.2 Implement GET /me/profile and PUT /me/profile endpoints": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093856
+      }
+    ],
+    "4.3 Implement POST /me/roles/suggest and PUT /me/roles endpoints": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093921
+      }
+    ],
+    "5. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122093994
+      }
+    ],
+    "6.1 Implement GET /companies and POST /companies endpoints": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122094064
+      }
+    ],
+    "6.2 Implement GET /me/companies and PUT /me/companies/{companyId} endpoints": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122094131
+      }
+    ],
+    "7. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122094249
+      }
+    ],
+    "8.1 Implement Lambda entry point": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122094343
+      }
+    ],
+    "8.2 Create OpenAPI export script": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785122094409
+      }
+    ],
+    "1. Shared module foundation": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123077171
+      }
+    ],
+    "3. Request schemas and API bootstrap": [
+      {
+        "executionId": "dfdc2b3d-27cd-4507-b852-b9c320458e2c",
+        "chatSessionId": "sess_ad81eb1e-f56c-44e5-89de-450716c98f09",
+        "timestamp": 1785123759293
+      }
+    ]
+  }
+}
