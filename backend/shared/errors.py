@@ -177,6 +177,17 @@ class CompanyAlreadyExists(AppException):
         )
         self.company_id = company_id
 
+    def to_dict(self) -> dict:
+        """
+        Override to include companyId in the 409 response.
+        
+        Returns:
+            Dict with error and companyId fields
+        """
+        response = super().to_dict()
+        response["companyId"] = self.company_id
+        return response
+
 
 class CompanyNotFound(AppException):
     """

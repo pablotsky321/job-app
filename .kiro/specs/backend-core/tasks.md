@@ -79,44 +79,44 @@ Implementation plan for the monolithic FastAPI + Mangum Lambda backend (Python 3
     - Create `backend/api/routes/auth.py` with a FastAPI dependency `get_current_user_id(request)` that reads `event.requestContext.authorizer.claims.sub` from the Lambda/Mangum scope via `backend/shared/auth.py` and returns the `userId` for use in all `/me/...` routes
     - _Requirements: 13.1, 13.3_
 
-- [ ] 4. Profile and roles endpoints
+- [x] 4. Profile and roles endpoints
   - [x] 4.1 Implement POST /me/profile/parse endpoint
     - Create `backend/api/routes/profile.py` with `POST /me/profile/parse`: validates `cvText` via `validate_cv_text` (413 if >50KB), invokes `BedrockClient.invoke_with_retry` against `PerfilEstructurado` using `BEDROCK_MODEL_SMALL`, returns 200 with the parsed profile (not persisted), 400 on validation failure after retry, 502 on Bedrock failure/timeout; register the profile router in `backend/main.py`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7_
 
-  - [~] 4.2 Implement GET /me/profile and PUT /me/profile endpoints
+  - [x] 4.2 Implement GET /me/profile and PUT /me/profile endpoints
     - Add `GET /me/profile` to `backend/api/routes/profile.py`: queries Perfiles by `userId` (from JWT dependency), returns 200 with `perfilEstructurado`, `resumenParaMatching`, `cargosSugeridos`, `cargosActivos`, `profileVersion`, `updatedAt`, and derived `resumenGenerating` (read-only from stored `resumenGenerationStatus`, written by a worker outside backend-core's scope); returns 404 with `profile_not_found` when absent
     - Add `PUT /me/profile`: validates body against `SaveProfileRequest`, persists ONLY `perfilEstructurado`/`profileVersion += 1`/`updatedAt` to the Perfiles table, and returns HTTP 200 with `{"profileVersion", "updatedAt"}` immediately once the write completes — no synchronous score recalculation, no Bedrock invocation, no `asyncio.create_task()` or other in-process background task, no SQS enqueue, and no modification of `resumenParaMatching` or `resumenGenerationStatus` (those fields are owned entirely by a worker outside backend-core's scope)
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 10.1, 10.2, 10.3, 10.4, 10.5, 17.1, 17.2, 17.3_
 
-  - [~] 4.3 Implement POST /me/roles/suggest and PUT /me/roles endpoints
+  - [x] 4.3 Implement POST /me/roles/suggest and PUT /me/roles endpoints
     - Add `POST /me/roles/suggest` to `backend/api/routes/profile.py`: returns 424 `resume_not_ready` when `resumenParaMatching` is null or generation is in progress (both read-only from the Perfiles table, never written by this endpoint), otherwise invokes `BedrockClient.invoke_with_retry` against `RolesSuggestions` using `BEDROCK_MODEL_SMALL`, returns 200 with `{"suggestions", "suggestedAt"}` (not persisted); returns 400 on validation failure after retry, 502 on Bedrock failure
     - Add `PUT /me/roles`: validates body via `validate_roles_list` (1–10 items, ≤50 chars each, empty list accepted), persists `cargosActivos`/`profileVersion += 1`/`updatedAt`, returns 200 with `{"profileVersion", "cargosActivos", "updatedAt"}` without synchronous rescoring
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [~] 5. Checkpoint - Ensure all tests pass
+- [x] 5. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Companies and subscriptions endpoints
-  - [~] 6.1 Implement GET /companies and POST /companies endpoints
+- [x] 6. Companies and subscriptions endpoints
+  - [x] 6.1 Implement GET /companies and POST /companies endpoints
     - Create `backend/api/routes/companies.py` with `GET /companies`: paginated (`limit` 10–100 default 20, `offset`) listing from Empresas, sorted case-insensitively by `nombre`, returning the raw stored fields only — `companyId`, `nombre`, `careersUrl`, `plataforma`, `lastScannedAt`, `lastScanStatus`, `lastVacancyCount`, `consecutiveFailures` — with no derived/computed warning flag, plus `{"companies", "total", "hasMore"}`
     - Add `POST /companies`: validates `careersUrl` via `validate_empresa_url`, normalizes via `normalize_url`/`compute_company_id`, detects platform using ONLY `detect_platform_hostname_only(url)` (pure hostname check, no HTTP fetch, no JSON-LD inspection — returns `'greenhouse'`/`'lever'`/`'html'`), maps a malformed-URL parse failure from that function to 400 `platform_detection_failed`, returns 409 `company_already_exists` if the hash exists, otherwise creates the Empresas entry with `lastScannedAt = null`, `lastScanStatus = null`, `lastVacancyCount = 0`, `consecutiveFailures = 0` and returns 201 with `{"companyId", "nombre", "plataforma", "createdAt"}`; register the companies router in `backend/main.py`
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8_
 
-  - [~] 6.2 Implement GET /me/companies and PUT /me/companies/{companyId} endpoints
+  - [x] 6.2 Implement GET /me/companies and PUT /me/companies/{companyId} endpoints
     - Add `GET /me/companies` to `backend/api/routes/companies.py`: queries Suscripciones by `userId` where `activa = true`, left-joins Empresas details, sorted by `addedAt` descending, returns `{"subscriptions": [...]}` with only the raw stored fields (`companyId`, `nombre`, `plataforma`, `addedAt`, `lastScannedAt`, `lastScanStatus`, `lastVacancyCount`, `consecutiveFailures`) — no derived/computed warning flag; interpretation of `lastScanStatus`/`consecutiveFailures` is left to the client
     - Add `PUT /me/companies/{companyId}`: validates the subscription exists for `(userId, companyId)` (404 `subscription_not_found`), validates `companyId` exists in Empresas (400 `company_not_found`), sets `activa` and refreshes `addedAt` on reactivation, returns 200 with `{"companyId", "activa", "updatedAt"}`
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8_
 
-- [~] 7. Checkpoint - Ensure all tests pass
+- [x] 7. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. Lambda entry point and OpenAPI export
-  - [~] 8.1 Implement Lambda entry point
+- [x] 8. Lambda entry point and OpenAPI export
+  - [x] 8.1 Implement Lambda entry point
     - Create `lambda_handler.py` at the repo root importing the Mangum `handler` from `backend/main.py`, exposing it as the Lambda function's configured handler target
     - _Requirements: 22.1, 22.2_
 
-  - [~] 8.2 Create OpenAPI export script
+  - [x] 8.2 Create OpenAPI export script
     - Create `scripts/export-openapi.py`: imports the fully assembled `app` from `backend/main.py`, calls `app.openapi()`, and writes the result to `frontend/openapi/openapi.json` (indented JSON)
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6_
 

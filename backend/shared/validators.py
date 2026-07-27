@@ -197,15 +197,16 @@ def validate_roles_list(roles: List[str]) -> Tuple[bool, str | None]:
         >>> is_valid
         False
     """
-    # Check count: 1-10 items (note: empty list is invalid)
+    # Check count: 0-10 items (empty list is accepted)
     if not isinstance(roles, list):
         return False, "Roles must be a list"
 
-    if len(roles) == 0:
-        return False, "At least one role must be specified"
-
     if len(roles) > 10:
         return False, f"Maximum 10 roles allowed (actual: {len(roles)})"
+
+    # Empty list is valid (user clearing all roles)
+    if len(roles) == 0:
+        return True, None
 
     # Validate each role
     for idx, role in enumerate(roles):

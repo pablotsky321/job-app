@@ -296,10 +296,10 @@ class TestValidateRolesList:
         assert error is None
 
     def test_validate_roles_list_empty_list(self):
-        """Test that empty list fails validation."""
+        """Test that empty list is accepted (user clearing all roles)."""
         is_valid, error = validate_roles_list([])
-        assert is_valid is False
-        assert "empty" in error.lower() or "at least" in error.lower()
+        assert is_valid is True
+        assert error is None
 
     def test_validate_roles_list_exceeds_10(self):
         """Test that list with more than 10 items fails validation."""

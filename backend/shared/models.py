@@ -96,9 +96,6 @@ class RolesSuggestions(BaseModel):
     """
 
     suggestions: List[str] = Field(..., description="List of 5-7 suggested job roles")
-    suggestedAt: datetime = Field(
-        default_factory=datetime.utcnow, description="Timestamp when suggestions were generated"
-    )
 
     model_config = ConfigDict(extra="ignore")
 

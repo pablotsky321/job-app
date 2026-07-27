@@ -190,6 +190,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(profile.router)
+    app.include_router(profile.roles_router)
     app.include_router(companies.companies_router)
     app.include_router(companies.subscriptions_router)
 
