@@ -10,7 +10,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
 
 ### Category 1: Extraction Cascade — Pure Testable Functions (NO AWS mocks)
 
-- [ ] 1. Implement core extraction interfaces and helpers
+- [x] 1. Implement core extraction interfaces and helpers
   - Create `backend/shared/extraction.py` with:
     - `class VacancyExtracted` (titulo, descripcion, url, modalidad, ubicacion)
     - `class ExtractionResult` (vacancies: List[VacancyExtracted], origen: str, error: Optional[str])
@@ -19,7 +19,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Validate: `compute_vacancyId` is deterministic (same URL → same hash), normalizes HTTPS/http and Example.COM/example.com
   - _Requirements: 1.1_
 
-- [ ] 2. Implement Board API Client extractor
+- [x] 2. Implement Board API Client extractor
   - Create `backend/shared/board_api_client.py` with:
     - `board_api_client(empresa: Empresa) -> ExtractionResult`
     - Support plataforma='greenhouse' and 'lever' (read boardToken from Empresa)
@@ -29,7 +29,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Validate without AWS boto3 calls: mock HTTP responses, test error handling
   - _Requirements: 3.1-3.6, 2.8_
 
-- [ ] 3. Implement JSON-LD Extractor
+- [x] 3. Implement JSON-LD Extractor
   - Create `backend/shared/json_ld_extractor.py` with:
     - `json_ld_extractor(empresa: Empresa) -> ExtractionResult`
     - Fetch careersUrl, parse HTML, locate application/ld+json JobPosting blocks
@@ -40,7 +40,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Test: pure HTML parsing without boto3, mock HTTP responses
   - _Requirements: 4.1-4.5, 2.8_
 
-- [ ] 4. Implement HTML cleaning for LLM processing
+- [x] 4. Implement HTML cleaning for LLM processing
   - Create `backend/shared/html_cleaner.py` with:
     - `html_to_clean_text(html: str, max_clean_size_kb: int = 100) -> str`
     - Remove script, style, noscript, svg, iframe, meta tags and content
@@ -50,7 +50,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Test: Pure BeautifulSoup (html.parser only, NO lxml), verify size limit enforcement
   - _Requirements: 5.1, tech rule_
 
-- [ ] 5. Implement HTML+LLM Extractor with validation retry
+- [x] 5. Implement HTML+LLM Extractor with validation retry
   - Create `backend/shared/html_llm_extractor.py` with:
     - `html_llm_extractor(empresa: Empresa) -> ExtractionResult`
     - Fetch careersUrl, clean HTML via html_to_clean_text

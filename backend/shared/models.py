@@ -146,6 +146,14 @@ class Empresa(BaseModel):
     consecutiveFailures: int = Field(
         default=0, description="Count of consecutive failed scan attempts"
     )
+    boardToken: Optional[str] = Field(
+        default=None,
+        description="Board token for greenhouse/lever API (extracted from careersUrl or set manually)",
+    )
+    ultimoOrigenExitoso: Optional[str] = Field(
+        default=None,
+        description="Last successful extraction origin: 'board_api' | 'json_ld' | 'html_llm'",
+    )
     createdAt: datetime = Field(
         default_factory=datetime.utcnow, description="Timestamp when company was added"
     )
