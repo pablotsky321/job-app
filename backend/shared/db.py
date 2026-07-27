@@ -97,6 +97,28 @@ def _get_dynamodb_client():
 # HELPER FUNCTIONS
 # ============================================================================
 
+def get_dynamodb_table(env_var_name: str):
+    """
+    Get a DynamoDB Table resource by environment variable name.
+    
+    Args:
+        env_var_name: Environment variable name containing the table name
+                      (e.g., 'DYNAMODB_TABLE_PERFILES')
+    
+    Returns:
+        boto3 DynamoDB Table resource
+        
+    Raises:
+        RuntimeError: If the environment variable is not set
+    """
+    table_name = os.getenv(env_var_name)
+    if not table_name:
+        raise RuntimeError(f"Environment variable {env_var_name} is not set")
+    
+    client = _get_dynamodb_client()
+    return client.Table(table_name)
+
+
 def query_by_pk(
     table_logical_name: str,
     pk_name: str,
@@ -409,6 +431,68 @@ def scan_items(
     
     except ClientError as e:
         logger.error("scan_items_failed", context={
+            "table": table_name,
+            "error": str(e),
+        })
+        raise
+
+
+def scan_all_items(
+    table_logical_name: str,
+    filter_expression: Optional[str] = None,
+    expression_values: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Scan an entire table, handling DynamoDB pagination via LastEvaluatedKey.
+    
+    Use when you need ALL items from a table (e.g., for application-level sorting).
+    Use sparingly — full table scans are expensive on large tables.
+    
+    Args:
+        table_logical_name: Logical table name
+        filter_expression: Optional FilterExpression for scan
+        expression_values: Values for filter expression
+        
+    Returns:
+        List of all items in the table matching the filter
+        
+    Raises:
+        RuntimeError: If table not found or scan fails
+    """
+    if table_logical_name not in TABLES:
+        raise RuntimeError(f"Unknown table: {table_logical_name}")
+    
+    table_name = TABLES[table_logical_name]
+    client = _get_dynamodb_client()
+    table = client.Table(table_name)
+    
+    try:
+        scan_kwargs = {}
+        if filter_expression:
+            scan_kwargs["FilterExpression"] = filter_expression
+        if expression_values:
+            scan_kwargs["ExpressionAttributeValues"] = expression_values
+        
+        items = []
+        while True:
+            response = table.scan(**scan_kwargs)
+            items.extend(response.get("Items", []))
+            
+            # Check if there are more pages
+            last_key = response.get("LastEvaluatedKey")
+            if not last_key:
+                break
+            scan_kwargs["ExclusiveStartKey"] = last_key
+        
+        logger.info("scan_all_items_success", context={
+            "table": table_name,
+            "row_count": len(items),
+        })
+        
+        return items
+    
+    except ClientError as e:
+        logger.error("scan_all_items_failed", context={
             "table": table_name,
             "error": str(e),
         })

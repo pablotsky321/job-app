@@ -49,9 +49,7 @@ class SetRolesRequest(BaseModel):
 
     cargosActivos: List[str] = Field(
         ...,
-        description="List of active job roles (1-10 items, each ≤50 chars)",
-        min_items=0,
-        max_items=10,
+        description="List of active job roles (0-10 items, each ≤50 chars)",
     )
 
     model_config = ConfigDict(extra="ignore")

@@ -31,7 +31,7 @@ from backend.shared.db import (
     query_by_pk,
     put_item,
     update_item,
-    scan_items,
+    scan_all_items,
     TABLES,
     _get_dynamodb_client,
 )
@@ -167,7 +167,7 @@ async def list_companies(
 
     try:
         # Scan all companies
-        items = scan_items("empresas")
+        items = scan_all_items("empresas")
 
         # Sort case-insensitively by nombre
         items.sort(key=lambda x: x.get("nombre", "").lower())

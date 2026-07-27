@@ -26,6 +26,7 @@ from backend.shared.errors import (
     AIServiceUnavailable,
     CVTooLarge,
     ProfileNotFound,
+    ResumeNotReady,
 )
 from backend.shared.models import (
     PerfilEstructurado,
@@ -35,6 +36,7 @@ from backend.shared.db import (
     query_by_pk,
     put_item,
     update_item,
+    get_dynamodb_table,
 )
 from backend.api.routes.auth import get_current_user_id
 from backend.api.models.requests import ParseCVRequest, SaveProfileRequest, SetRolesRequest
@@ -44,6 +46,9 @@ logger = get_contextual_logger(__name__)
 
 # Create router for profile endpoints
 router = APIRouter(prefix="/me/profile", tags=["profile"])
+
+# Create router for roles endpoints (separate prefix)
+roles_router = APIRouter(prefix="/me/roles", tags=["roles"])
 
 
 # ============================================================================
@@ -220,7 +225,7 @@ async def get_profile(
     - 2.3: Return perfilEstructurado
     - 2.4: Return resumenParaMatching (may be null)
     - 2.5: Return cargosActivos, cargosSugeridos, profileVersion, updatedAt
-    - 3.5: Return resumenGenerating (read-only boolean, NOT persisted by this endpoint)
+    - 3.5: Return resumenGenerating (true if resumenGenerationStatus == 'pending', else false)
     - 3.7: Return 404 with profile_not_found if missing
     """
     logger.info(
@@ -230,8 +235,6 @@ async def get_profile(
 
     try:
         # Query DynamoDB Perfiles table by pk=userId
-        from backend.shared.db import get_dynamodb_table
-        
         perfiles_table = get_dynamodb_table("DYNAMODB_TABLE_PERFILES")
         
         response = perfiles_table.get_item(
@@ -255,7 +258,7 @@ async def get_profile(
             "cargosActivos": item.get("cargosActivos", []),
             "profileVersion": item.get("profileVersion", 1),
             "updatedAt": item.get("updatedAt"),
-            "resumenGenerating": item.get("resumenGenerationStatus") == "generating",
+            "resumenGenerating": item.get("resumenGenerationStatus") == "pending",
         }
         
         logger.info(
@@ -303,7 +306,6 @@ async def save_profile(
     Response (HTTP 200):
         - profileVersion: Updated version number
         - updatedAt: Timestamp of update
-        - cargosActivos: Returned as-is (not modified by this endpoint)
 
     Error Responses:
         - HTTP 400: Validation error
@@ -339,8 +341,6 @@ async def save_profile(
 
     try:
         # Step 1: Get current profile to determine next version
-        from backend.shared.db import get_dynamodb_table
-        
         perfiles_table = get_dynamodb_table("DYNAMODB_TABLE_PERFILES")
         
         get_response = perfiles_table.get_item(
@@ -348,12 +348,10 @@ async def save_profile(
         )
         
         current_version = 1
-        current_cargos_activos = []
         
         if "Item" in get_response:
             item = get_response["Item"]
             current_version = item.get("profileVersion", 1)
-            current_cargos_activos = item.get("cargosActivos", [])
         
         # Step 2: Prepare update
         new_version = current_version + 1
@@ -372,11 +370,10 @@ async def save_profile(
             ReturnValues="ALL_NEW",
         )
         
-        # Step 4: Return response with version info
+        # Step 4: Return response with version info only
         response_data = {
             "profileVersion": new_version,
             "updatedAt": updated_at,
-            "cargosActivos": current_cargos_activos,
         }
         
         logger.info(
@@ -408,7 +405,7 @@ async def save_profile(
 # ============================================================================
 
 
-@router.post("/roles/suggest", response_model=dict)
+@roles_router.post("/suggest", response_model=dict)
 async def suggest_roles(
     user_id: str = Depends(get_current_user_id),
 ):
@@ -429,11 +426,11 @@ async def suggest_roles(
 
     Logic:
     1. Query Perfiles by userId
-    2. Check resumenParaMatching: if null or resumenGenerationStatus == "generating", return 424
+    2. Check resumenParaMatching: if null or resumenGenerationStatus == "pending", return 424
     3. Invoke Bedrock SMALL model with role suggestion prompt
     4. Validate response against RolesSuggestions schema
     5. If validation fails: Retry once with error injected
-    6. If retry fails: Return HTTP 400 or 502
+    6. If retry fails: Return HTTP 400
     7. Return suggestions (not persisted)
     8. Log operation
 
@@ -453,8 +450,6 @@ async def suggest_roles(
 
     try:
         # Step 1: Query Perfiles to get resumenParaMatching
-        from backend.shared.db import get_dynamodb_table
-        
         perfiles_table = get_dynamodb_table("DYNAMODB_TABLE_PERFILES")
         
         response = perfiles_table.get_item(
@@ -466,14 +461,15 @@ async def suggest_roles(
                 "suggest_roles_profile_not_found",
                 context={"user_id": user_id},
             )
-            raise ProfileNotFound()
+            raise ResumeNotReady()
         
         item = response["Item"]
         resumen = item.get("resumenParaMatching")
         generation_status = item.get("resumenGenerationStatus")
         
         # Step 2: Check if resume is ready
-        if resumen is None or generation_status == "generating":
+        # Resume not ready if: resumenParaMatching is null OR generation is in progress (pending)
+        if resumen is None or generation_status == "pending":
             logger.info(
                 "suggest_roles_resume_not_ready",
                 context={
@@ -482,7 +478,6 @@ async def suggest_roles(
                     "generation_status": generation_status,
                 },
             )
-            from backend.shared.errors import ResumeNotReady
             raise ResumeNotReady()
         
         # Step 3: Prepare prompt for Bedrock
@@ -514,8 +509,21 @@ async def suggest_roles(
         
         return response_data
 
-    except ProfileNotFound:
+    except (ResumeNotReady, ProfileNotFound):
         raise
+    except ValidationError as ve:
+        # Pydantic validation failed after retry → HTTP 400
+        logger.error(
+            "suggest_roles_validation_error",
+            context={
+                "user_id": user_id,
+                "error": str(ve),
+            },
+        )
+        raise ValidationErrorException(
+            message="Failed to validate role suggestions",
+            details="Bedrock response did not match expected schema after retry",
+        )
     except Exception as e:
         error_type = type(e).__name__
         logger.error(
@@ -537,7 +545,7 @@ async def suggest_roles(
 # ============================================================================
 
 
-@router.put("/roles", response_model=dict)
+@roles_router.put("", response_model=dict)
 async def save_roles(
     request: SetRolesRequest,
     user_id: str = Depends(get_current_user_id),
@@ -602,8 +610,6 @@ async def save_roles(
             )
         
         # Step 2: Get current profile for version tracking
-        from backend.shared.db import get_dynamodb_table
-        
         perfiles_table = get_dynamodb_table("DYNAMODB_TABLE_PERFILES")
         
         get_response = perfiles_table.get_item(
@@ -729,16 +735,11 @@ def _prepare_roles_suggestion_prompt(resumen_text: str) -> str:
 
     Req: 12.2 - includes schema in prompt for validation hints
     """
-    prompt = f"""Based on the following resume summary, suggest 5-10 relevant job roles/titles 
-that would be good matches for this professional. Return a JSON object with:
+    prompt = f"""Based on this professional profile summary, suggest 5-7 job titles/roles that would be a good fit.
+Return as JSON with a "suggestions" field containing an array of strings.
 
-- suggestions: array of job role strings (e.g., "Senior Python Developer", "DevOps Engineer")
-- reasoning: brief explanation of why these roles match the profile
-
-Resume Summary:
+Profile Summary:
 {resumen_text}
 
-Return ONLY valid JSON matching the schema above. No explanation, no markdown formatting.
-Start with {{ and end with }}.
-"""
+Return ONLY valid JSON: {{"suggestions": ["Role1", "Role2", ...]}}. No explanation."""
     return prompt
