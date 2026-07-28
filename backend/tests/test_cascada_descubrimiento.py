@@ -1,10 +1,11 @@
 """
 Tests for Cascada_Descubrimiento orchestrator (pure function).
 
-Verifies cascade order, stop logic, and routing by plataforma.
+Verifies cascade order, stop logic, routing by plataforma,
+compute_vacancyId determinism/normalization, and scan result classification.
 NO AWS calls — extractors are mocked to test orchestration logic only.
 
-Requirements: 2.1-2.13
+Requirements: 2.1-2.13, 6.1-6.6
 """
 
 from unittest.mock import patch
@@ -12,8 +13,9 @@ from unittest.mock import patch
 import pytest
 
 from backend.shared.cascada_descubrimiento import cascada_descubrimiento
-from backend.shared.extraction import ExtractionResult, VacancyExtracted
+from backend.shared.extraction import ExtractionResult, VacancyExtracted, compute_vacancyId
 from backend.shared.models import Empresa, PlatformaEnum
+from backend.shared.scan_classification import classify_scan_result
 
 
 # =============================================================================
@@ -380,3 +382,317 @@ class TestStopLogic:
 
         assert len(vacancies) == 10
         assert origen == "html_llm"
+
+
+# =============================================================================
+# Tests: compute_vacancyId — determinism and URL normalization
+# =============================================================================
+
+
+class TestComputeVacancyId:
+    """Requirement 1.1: vacancyId = SHA-256 of normalized URL (64 hex lowercase)."""
+
+    def test_determinism_same_url(self):
+        """Same URL always produces the same vacancyId."""
+        url = "https://boards.greenhouse.io/company/jobs/12345"
+        assert compute_vacancyId(url) == compute_vacancyId(url)
+
+    def test_determinism_multiple_calls(self):
+        """Multiple calls with the same URL are identical."""
+        url = "https://example.com/careers/engineer"
+        results = [compute_vacancyId(url) for _ in range(100)]
+        assert len(set(results)) == 1
+
+    def test_output_format_64_hex_lowercase(self):
+        """Output is 64 lowercase hex characters."""
+        result = compute_vacancyId("https://example.com/jobs/1")
+        assert len(result) == 64
+        assert all(c in "0123456789abcdef" for c in result)
+
+    def test_normalizes_host_case(self):
+        """EXAMPLE.COM and example.com produce same hash."""
+        id1 = compute_vacancyId("https://EXAMPLE.COM/jobs/123")
+        id2 = compute_vacancyId("https://example.com/jobs/123")
+        assert id1 == id2
+
+    def test_normalizes_scheme_case(self):
+        """HTTPS:// and https:// produce same hash."""
+        id1 = compute_vacancyId("HTTPS://example.com/jobs/123")
+        id2 = compute_vacancyId("https://example.com/jobs/123")
+        assert id1 == id2
+
+    def test_normalizes_fragment_removal(self):
+        """URL with and without fragment produce same hash."""
+        id1 = compute_vacancyId("https://example.com/jobs/123#apply")
+        id2 = compute_vacancyId("https://example.com/jobs/123")
+        assert id1 == id2
+
+    def test_normalizes_trailing_slash(self):
+        """URL with and without trailing slash produce same hash."""
+        id1 = compute_vacancyId("https://example.com/jobs/123/")
+        id2 = compute_vacancyId("https://example.com/jobs/123")
+        assert id1 == id2
+
+    def test_combined_normalization(self):
+        """Host case + fragment + trailing slash all normalize to same hash."""
+        id_base = compute_vacancyId("https://example.com/jobs/123")
+        id_noisy = compute_vacancyId("HTTPS://EXAMPLE.COM/jobs/123/#section")
+        assert id_base == id_noisy
+
+    def test_different_paths_different_ids(self):
+        """Different paths produce different vacancyIds."""
+        id1 = compute_vacancyId("https://example.com/jobs/123")
+        id2 = compute_vacancyId("https://example.com/jobs/456")
+        assert id1 != id2
+
+    def test_different_schemes_different_ids(self):
+        """http vs https are different protocols → different IDs."""
+        id1 = compute_vacancyId("http://example.com/jobs/123")
+        id2 = compute_vacancyId("https://example.com/jobs/123")
+        assert id1 != id2
+
+    def test_preserves_path_case(self):
+        """Path case is preserved (only scheme/host are lowercased)."""
+        id1 = compute_vacancyId("https://example.com/Jobs/Senior")
+        id2 = compute_vacancyId("https://example.com/jobs/senior")
+        assert id1 != id2
+
+    def test_preserves_query_params(self):
+        """Query params contribute to the hash (different params = different ID)."""
+        id1 = compute_vacancyId("https://example.com/jobs?id=1")
+        id2 = compute_vacancyId("https://example.com/jobs?id=2")
+        assert id1 != id2
+
+
+# =============================================================================
+# Tests: classify_scan_result — extraction result classification
+# =============================================================================
+
+
+class TestClassifyScanResult:
+    """Requirement 6: Classify scan result into exactly one of four categories."""
+
+    def test_ok_when_vacancies_present_no_error(self):
+        """Requirement 6.2: valid response with N > 0 → OK."""
+        empresa = _make_empresa("greenhouse", lastVacancyCount=5)
+        vacancies = [
+            VacancyExtracted(titulo="Dev", url="https://example.com/j/1")
+        ]
+        result = (vacancies, "board_api", None)
+        assert classify_scan_result(empresa, result) == "OK"
+
+    def test_ok_with_many_vacancies(self):
+        """OK regardless of how many vacancies (as long as > 0)."""
+        empresa = _make_empresa("lever", lastVacancyCount=0)
+        vacancies = [
+            VacancyExtracted(titulo=f"Job {i}", url=f"https://x.com/{i}")
+            for i in range(50)
+        ]
+        result = (vacancies, "json_ld", None)
+        assert classify_scan_result(empresa, result) == "OK"
+
+    def test_failed_when_error_present(self):
+        """Requirement 6.3: error present → FAILED."""
+        empresa = _make_empresa("html", lastVacancyCount=3)
+        result = ([], "html_llm", "timeout")
+        assert classify_scan_result(empresa, result) == "FAILED"
+
+    def test_failed_even_with_vacancies_if_error(self):
+        """FAILED takes priority: error present overrides vacancy count."""
+        empresa = _make_empresa("greenhouse", lastVacancyCount=0)
+        vacancies = [
+            VacancyExtracted(titulo="Dev", url="https://example.com/j/1")
+        ]
+        result = (vacancies, "board_api", "partial_failure")
+        assert classify_scan_result(empresa, result) == "FAILED"
+
+    def test_empty_sospechoso_zero_vacancies_lastcount_positive(self):
+        """Requirement 6.4: 0 vacancies + lastVacancyCount > 0 → EMPTY_SOSPECHOSO."""
+        empresa = _make_empresa("greenhouse", lastVacancyCount=10)
+        result = ([], "html_llm", None)
+        assert classify_scan_result(empresa, result) == "EMPTY_SOSPECHOSO"
+
+    def test_empty_sospechoso_with_none_vacancies_list(self):
+        """EMPTY_SOSPECHOSO when vacancies list is None and lastVacancyCount > 0."""
+        empresa = _make_empresa("lever", lastVacancyCount=1)
+        result = (None, "json_ld", None)
+        assert classify_scan_result(empresa, result) == "EMPTY_SOSPECHOSO"
+
+    def test_empty_legitimo_zero_vacancies_lastcount_zero(self):
+        """Requirement 6.5: 0 vacancies + lastVacancyCount == 0 → EMPTY_LEGITIMO."""
+        empresa = _make_empresa("html", lastVacancyCount=0)
+        result = ([], "html_llm", None)
+        assert classify_scan_result(empresa, result) == "EMPTY_LEGITIMO"
+
+    def test_empty_legitimo_none_vacancies_lastcount_zero(self):
+        """EMPTY_LEGITIMO when vacancies list is None and lastVacancyCount == 0."""
+        empresa = _make_empresa("jsonld", lastVacancyCount=0)
+        result = (None, "json_ld", None)
+        assert classify_scan_result(empresa, result) == "EMPTY_LEGITIMO"
+
+    def test_exactly_one_classification_per_input(self):
+        """Requirement 6.6: each input maps to exactly ONE classification."""
+        empresa_high = _make_empresa("greenhouse", lastVacancyCount=5)
+        empresa_zero = _make_empresa("greenhouse", lastVacancyCount=0)
+
+        # Each case returns a single string
+        cases = [
+            (empresa_high, ([VacancyExtracted(titulo="X", url="https://x.com/1")], "board_api", None)),
+            (empresa_high, ([], "html_llm", "error")),
+            (empresa_high, ([], "html_llm", None)),
+            (empresa_zero, ([], "html_llm", None)),
+        ]
+        expected = ["OK", "FAILED", "EMPTY_SOSPECHOSO", "EMPTY_LEGITIMO"]
+        for (emp, res), exp in zip(cases, expected):
+            assert classify_scan_result(emp, res) == exp
+
+    def test_failed_various_error_types(self):
+        """FAILED regardless of error string content."""
+        empresa = _make_empresa("html", lastVacancyCount=0)
+        errors = ["HTTP 500", "timeout", "invalid JSON", "exception: ValueError"]
+        for err in errors:
+            result = ([], "html_llm", err)
+            assert classify_scan_result(empresa, result) == "FAILED"
+
+
+# =============================================================================
+# Tests: Extractor error handling — board_api, json_ld, html_llm
+# =============================================================================
+
+
+class TestExtractorErrorHandling:
+    """Error handling paths for each extractor in the cascade."""
+
+    @patch("backend.shared.cascada_descubrimiento.html_llm_extractor")
+    @patch("backend.shared.cascada_descubrimiento.json_ld_extractor")
+    @patch("backend.shared.cascada_descubrimiento.board_api_client")
+    def test_board_api_timeout_error_continues_cascade(
+        self, mock_board, mock_jsonld, mock_html
+    ):
+        """board_api returns error (timeout) → cascade continues to json_ld."""
+        mock_board.return_value = _make_extraction_result(
+            0, origen="board_api", error="timeout after 10s"
+        )
+        mock_jsonld.return_value = _make_extraction_result(3, origen="json_ld")
+        empresa = _make_empresa("greenhouse")
+
+        vacancies, origen, error = cascada_descubrimiento(empresa)
+
+        assert len(vacancies) == 3
+        assert origen == "json_ld"
+        assert error is None
+
+    @patch("backend.shared.cascada_descubrimiento.html_llm_extractor")
+    @patch("backend.shared.cascada_descubrimiento.json_ld_extractor")
+    @patch("backend.shared.cascada_descubrimiento.board_api_client")
+    def test_board_api_http_error_continues_cascade(
+        self, mock_board, mock_jsonld, mock_html
+    ):
+        """board_api returns HTTP 4xx/5xx error → continues to next method."""
+        mock_board.return_value = _make_extraction_result(
+            0, origen="board_api", error="HTTP 403 Forbidden"
+        )
+        mock_jsonld.return_value = _make_extraction_result(0, origen="json_ld")
+        mock_html.return_value = _make_extraction_result(1, origen="html_llm")
+        empresa = _make_empresa("lever")
+
+        vacancies, origen, error = cascada_descubrimiento(empresa)
+
+        assert len(vacancies) == 1
+        assert origen == "html_llm"
+
+    @patch("backend.shared.cascada_descubrimiento.html_llm_extractor")
+    @patch("backend.shared.cascada_descubrimiento.json_ld_extractor")
+    @patch("backend.shared.cascada_descubrimiento.board_api_client")
+    def test_json_ld_connection_error_continues_to_html_llm(
+        self, mock_board, mock_jsonld, mock_html
+    ):
+        """json_ld returns connection error → cascade falls through to html_llm."""
+        mock_board.return_value = _make_extraction_result(0, origen="board_api")
+        mock_jsonld.return_value = _make_extraction_result(
+            0, origen="json_ld", error="ConnectionError: DNS failed"
+        )
+        mock_html.return_value = _make_extraction_result(5, origen="html_llm")
+        empresa = _make_empresa("greenhouse")
+
+        vacancies, origen, error = cascada_descubrimiento(empresa)
+
+        assert len(vacancies) == 5
+        assert origen == "html_llm"
+        assert error is None
+
+    @patch("backend.shared.cascada_descubrimiento.html_llm_extractor")
+    @patch("backend.shared.cascada_descubrimiento.json_ld_extractor")
+    @patch("backend.shared.cascada_descubrimiento.board_api_client")
+    def test_json_ld_invalid_json_error_continues(
+        self, mock_board, mock_jsonld, mock_html
+    ):
+        """json_ld invalid JSON → cascade continues to html_llm."""
+        mock_jsonld.return_value = _make_extraction_result(
+            0, origen="json_ld", error="Invalid JSON in ld+json block"
+        )
+        mock_html.return_value = _make_extraction_result(2, origen="html_llm")
+        empresa = _make_empresa("html")
+
+        vacancies, origen, error = cascada_descubrimiento(empresa)
+
+        assert len(vacancies) == 2
+        assert origen == "html_llm"
+
+    @patch("backend.shared.cascada_descubrimiento.html_llm_extractor")
+    @patch("backend.shared.cascada_descubrimiento.json_ld_extractor")
+    @patch("backend.shared.cascada_descubrimiento.board_api_client")
+    def test_html_llm_bedrock_timeout_returns_error(
+        self, mock_board, mock_jsonld, mock_html
+    ):
+        """html_llm bedrock timeout → returns error (final method, no more fallback)."""
+        mock_board.return_value = _make_extraction_result(0, origen="board_api")
+        mock_jsonld.return_value = _make_extraction_result(0, origen="json_ld")
+        mock_html.return_value = _make_extraction_result(
+            0, origen="html_llm", error="Bedrock InvokeModel timeout"
+        )
+        empresa = _make_empresa("greenhouse")
+
+        vacancies, origen, error = cascada_descubrimiento(empresa)
+
+        assert vacancies == []
+        assert origen == "html_llm"
+        assert error == "Bedrock InvokeModel timeout"
+
+    @patch("backend.shared.cascada_descubrimiento.html_llm_extractor")
+    @patch("backend.shared.cascada_descubrimiento.json_ld_extractor")
+    @patch("backend.shared.cascada_descubrimiento.board_api_client")
+    def test_html_llm_validation_error_returns_error(
+        self, mock_board, mock_jsonld, mock_html
+    ):
+        """html_llm Pydantic validation failure (after retry) → error in final result."""
+        mock_board.return_value = _make_extraction_result(0, origen="board_api")
+        mock_jsonld.return_value = _make_extraction_result(0, origen="json_ld")
+        mock_html.return_value = _make_extraction_result(
+            0, origen="html_llm", error="Pydantic validation failed after retry"
+        )
+        empresa = _make_empresa("lever")
+
+        vacancies, origen, error = cascada_descubrimiento(empresa)
+
+        assert vacancies == []
+        assert origen == "html_llm"
+        assert "validation" in error.lower()
+
+    @patch("backend.shared.cascada_descubrimiento.html_llm_extractor")
+    @patch("backend.shared.cascada_descubrimiento.json_ld_extractor")
+    @patch("backend.shared.cascada_descubrimiento.board_api_client")
+    def test_all_methods_raise_exceptions_greenhouse(
+        self, mock_board, mock_jsonld, mock_html
+    ):
+        """All three methods raise exceptions → final error from html_llm."""
+        mock_board.side_effect = TimeoutError("board timeout")
+        mock_jsonld.side_effect = ConnectionError("json_ld connection refused")
+        mock_html.side_effect = RuntimeError("bedrock exploded")
+        empresa = _make_empresa("greenhouse")
+
+        vacancies, origen, error = cascada_descubrimiento(empresa)
+
+        assert vacancies == []
+        assert origen == "html_llm"
+        assert "RuntimeError" in error

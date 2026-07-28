@@ -62,7 +62,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Test: mock Bedrock responses (valid JSON, invalid JSON, validation edge cases), pure function logic
   - _Requirements: 5.2-5.6, 2.8, tech rule (Bedrock via bedrock.py)_
 
-- [ ] 6. Implement Cascada_Descubrimiento orchestrator (pure function)
+- [x] 6. Implement Cascada_Descubrimiento orchestrator (pure function)
   - Create `backend/shared/cascada_descubrimiento.py` with:
     - `cascada_descubrimiento(empresa: Empresa) -> tuple: (vacancies, origen, error)`
     - Route by plataforma:
@@ -79,7 +79,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
 
 ### Category 2: Scan Result Classification & Closure Logic — Pure Testable Functions
 
-- [ ] 7. Implement scan result classification function
+- [x] 7. Implement scan result classification function
   - Create `backend/shared/scan_classification.py` with:
     - `classify_scan_result(empresa: Empresa, extraction_result: tuple) -> str`
     - Input: empresa with lastVacancyCount, extraction_result = (vacancies_list, origen, error)
@@ -92,7 +92,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Test: exhaustive decision table (all four cases), pure function
   - _Requirements: 6.1-6.6_
 
-- [ ] 8. Implement missCount increment and vacancy closure logic
+- [x] 8. Implement missCount increment and vacancy closure logic
   - Create `backend/shared/misscount_logic.py` with:
     - `apply_missCount_logic(empresa: Empresa, vacantes_nuevas_en_escan: List[VacancyExtracted], vacantes_existentes: List[Vacante]) -> List[Vacante]`
     - For each EXISTING vacancy:
@@ -110,7 +110,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
 
 ### Category 3: Cargo Prefiltro — Pure Testable Function
 
-- [ ] 9. Implement cargo prefiltro with token matching
+- [x] 9. Implement cargo prefiltro with token matching
   - Create `backend/shared/prefiltro_cargos.py` with:
     - `get_significant_tokens(text: str) -> set`
       - Lowercase, remove diacritics (NFD normalization), split on whitespace/punctuation
@@ -128,7 +128,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
 
 ### Category 4: Orchestration Lambdas (SQS-driven, with AWS but pure-function core)
 
-- [ ] 10. Implement Orquestador Lambda (POST /scans endpoint)
+- [x] 10. Implement Orquestador Lambda (POST /scans endpoint)
   - Create `backend/api/routes/orquestador.py` with:
     - `handler_post_scans(event, context)` Lambda entry point
     - Extract userId from JWT (event.requestContext.authorizer.claims.sub)
@@ -143,7 +143,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Test with mocks: JWT extraction, Suscripción queries, Ventana_Frescura logic, SQS send errors
   - _Requirements: 8, 9, 10, 11_
 
-- [ ] 11. Implement Scan_Worker Lambda (SQS_Scan consumer)
+- [x] 11. Implement Scan_Worker Lambda (SQS_Scan consumer)
   - Create `backend/workers/scan_worker.py` with:
     - `handler_scan_worker(event, context)` Lambda entry point
     - For each SQS record: extract jobId, companyId from ScanMessage
@@ -158,7 +158,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Test with mocks: cascada flow, classification routing, Vacante upsert, SQS_Scoring publish
   - _Requirements: 2, 6, 7, 12, 13_
 
-- [ ] 12. Implement Scoring_Worker Lambda (SQS_Scoring consumer)
+- [x] 12. Implement Scoring_Worker Lambda (SQS_Scoring consumer)
   - Create `backend/workers/scoring_worker.py` with:
     - `handler_scoring_worker(event, context)` Lambda entry point
     - For each SQS record: extract userId, vacancyId from ScoringMessage
@@ -176,7 +176,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Test with mocks: idempotence (scoreProfileVersion check), Bedrock response validation, prefiltro routing
   - _Requirements: 13, 16, 17_
 
-- [ ] 13. Implement GET /scans/{jobId} endpoint
+- [x] 13. Implement GET /scans/{jobId} endpoint
   - Create `backend/api/routes/scans.py` with:
     - `handler_get_scans(event, context)` Lambda entry point
     - Extract userId from JWT
@@ -196,7 +196,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
 
 ### Category 5: Shared Helpers & Rescoring Support
 
-- [ ] 14. Implement Rescoring_Detector pure functions
+- [x] 14. Implement Rescoring_Detector pure functions
   - Create `backend/shared/rescoring.py` with:
     - `is_score_stale(usuario_vacante: UsuarioVacante, perfil: Perfiles) -> bool`
       - Pure function: no I/O
@@ -213,7 +213,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
 
 ### Category 6: Unit Tests for Pure Functions (NO AWS mocks, focused)
 
-- [ ] 15. Write unit tests for extraction cascade
+- [x] 15. Write unit tests for extraction cascade
   - Create `backend/tests/test_cascada_descubrimiento.py` with:
     - Test compute_vacancyId: determinism, URL normalization (case, fragment, trailing slash)
     - Test cascada_descubrimiento: order by plataforma, stop logic (first N>0), manual skip
@@ -222,7 +222,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Run: `pytest backend/tests/test_cascada_descubrimiento.py -v`
   - _Requirements: 2, 6_
 
-- [ ] 16. Write unit tests for scan classification
+- [x] 16. Write unit tests for scan classification
   - Create `backend/tests/test_scan_classification.py` with:
     - Test classify_scan_result: all four classifications (OK, FAILED, EMPTY_SOSPECHOSO, EMPTY_LEGITIMO)
     - Test exhaustive decision table: (error, vacancies_count, lastVacancyCount) tuples
@@ -230,7 +230,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Run: `pytest backend/tests/test_scan_classification.py -v`
   - _Requirements: 6_
 
-- [ ] 17. Write unit tests for missCount logic
+- [x] 17. Write unit tests for missCount logic
   - Create `backend/tests/test_misscount_logic.py` with:
     - Test increment on missing vacancies (missCount += 1)
     - Test reset on reappearance (missCount = 0)
@@ -242,7 +242,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Run: `pytest backend/tests/test_misscount_logic.py -v`
   - _Requirements: 7_
 
-- [ ] 18. Write unit tests for HTML cleaning
+- [x] 18. Write unit tests for HTML cleaning
   - Create `backend/tests/test_html_cleaner.py` with:
     - Test script/style/noscript/svg removal (no content leakage)
     - Test comment removal
@@ -252,7 +252,7 @@ This implementation plan breaks down the backend-scan-y-scoring feature into act
   - Run: `pytest backend/tests/test_html_cleaner.py -v`
   - _Requirements: 5_
 
-- [ ] 19. Write unit tests for prefiltro_cargos
+- [x] 19. Write unit tests for prefiltro_cargos
   - Create `backend/tests/test_prefiltro_cargos.py` with:
     - Test get_significant_tokens: lowercasing, diacritic removal, stopword filtering
     - Test pasa_prefiltro_cargos: token overlap >= threshold

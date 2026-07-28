@@ -186,13 +186,14 @@ def create_app() -> FastAPI:
     # ===========================
     # Route Registration
     # ===========================
-    from backend.api.routes import health, profile, companies
+    from backend.api.routes import health, profile, companies, orquestador
 
     app.include_router(health.router)
     app.include_router(profile.router)
     app.include_router(profile.roles_router)
     app.include_router(companies.companies_router)
     app.include_router(companies.subscriptions_router)
+    app.include_router(orquestador.scans_router)
 
     return app
 

@@ -11,29 +11,38 @@ from datetime import datetime
 from typing import List
 
 from backend.shared.extraction import VacancyExtracted, compute_vacancyId
-from backend.shared.models import Empresa, PlatformaEnum, Vacante
+from backend.shared.models import Empresa, Vacante
 
 
 def apply_missCount_logic(
     empresa: Empresa,
     vacantes_nuevas_en_escan: List[VacancyExtracted],
     vacantes_existentes: List[Vacante],
+    origen: str = "automated",
 ) -> List[Vacante]:
     """Apply missCount logic after an OK-classified scan.
 
+    PRECONDITION: Only call this function when scan classification == OK.
+
     For each EXISTING vacancy:
-      - If vacancyId NOT in scan result: missCount += 1
-      - If vacancyId IS in scan result: missCount = 0
-      - If missCount >= 2 AND origen != 'manual': cerrada = True
-      - If cerrada was True AND vacancyId in scan: cerrada = False (reopen)
+      - Req 7.1: If vacancyId NOT in scan result AND estado='abierta': missCount += 1
+      - Req 7.2: If vacancyId IS in scan result: missCount = 0
+      - Req 7.3: If estado was 'cerrada' AND vacancyId in scan: estado = 'abierta'
+      - Req 7.4: If missCount >= 2 AND origen != 'manual': estado = 'cerrada'
+      - Req 7.5: Manual origin NEVER auto-closes regardless of missCount
+      - Req 7.7: When found in scan, update lastSeenAt (verificadaAt) without
+                 modifying vacancyId or firstSeenAt (crawledAt)
 
     For each NEW vacancy in scan (not in existing):
-      - Create Vacante with vacancyId = SHA-256(url), missCount = 0, cerrada = False
+      - Req 7.6: Create Vacante with vacancyId = SHA-256(url), missCount = 0,
+                 estado = 'abierta', firstSeenAt = now
 
     Args:
         empresa: The company being scanned.
         vacantes_nuevas_en_escan: Vacancies found in the current scan result.
         vacantes_existentes: Previously stored vacancies for this company.
+        origen: Extraction method origin ('board_api', 'json_ld', 'html_llm')
+                used when creating NEW vacancy records.
 
     Returns:
         List of updated and new Vacante records ready for DynamoDB upsert.
@@ -68,8 +77,9 @@ def apply_missCount_logic(
             # Requirement 7.7: Update lastSeenAt (verificadaAt), don't touch crawledAt
             vacante.verificadaAt = now
         else:
-            # Requirement 7.1: Increment missCount
-            vacante.missCount += 1
+            # Requirement 7.1: Increment missCount ONLY for abierta vacancies
+            if not vacante.cerrada:
+                vacante.missCount += 1
 
             # Requirement 7.4: Close if missCount >= 2 AND not manual
             # Requirement 7.5: Manual origin NEVER auto-closes
@@ -91,7 +101,7 @@ def apply_missCount_logic(
                 ubicacion=extracted.ubicacion,
                 url=extracted.url,
                 plataforma=empresa.plataforma,
-                origen="automated",
+                origen=origen,
                 crawledAt=now,
                 verificadaAt=now,
                 missCount=0,

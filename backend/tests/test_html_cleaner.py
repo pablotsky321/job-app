@@ -288,3 +288,103 @@ class TestEdgeCases:
         result = html_to_clean_text(html)
         assert "Unclosed paragraph" in result
         assert "Div content" in result
+
+
+class TestHtmlParserOnly:
+    """Verify that only html.parser is used, never lxml."""
+
+    def test_source_does_not_import_lxml(self):
+        """The html_cleaner module must NOT import or use lxml as a parser."""
+        import inspect
+        from backend.shared import html_cleaner
+
+        source = inspect.getsource(html_cleaner)
+        # Must not import lxml
+        assert "import lxml" not in source
+        assert "from lxml" not in source
+        # Must not use lxml as BeautifulSoup parser
+        assert '"lxml"' not in source
+        assert "'lxml'" not in source
+
+    def test_beautifulsoup_uses_html_parser(self):
+        """Verify BeautifulSoup is called with 'html.parser' by checking module source."""
+        import inspect
+        from backend.shared import html_cleaner
+
+        source = inspect.getsource(html_cleaner)
+        assert '"html.parser"' in source or "'html.parser'" in source
+
+
+class TestNoContentLeakage:
+    """Ensure inner content of removed tags never leaks into output."""
+
+    def test_script_with_text_content_does_not_leak(self):
+        """Script tags may contain JS that looks like natural text — must not leak."""
+        html = '<script>var title = "Secret Job Title"; alert(title);</script><p>Public</p>'
+        result = html_to_clean_text(html)
+        assert "Secret Job Title" not in result
+        assert "alert" not in result
+        assert "Public" in result
+
+    def test_style_with_class_names_does_not_leak(self):
+        """Class names inside style tags should not appear in output."""
+        html = "<style>.job-listing { display: block; } .salary-range { color: green; }</style><p>Apply now</p>"
+        result = html_to_clean_text(html)
+        assert "job-listing" not in result
+        assert "salary-range" not in result
+        assert "Apply now" in result
+
+    def test_noscript_fallback_text_does_not_leak(self):
+        """Noscript fallback messages must not contaminate cleaned text."""
+        html = "<noscript><p>You need JavaScript enabled to see job listings.</p></noscript><h1>Jobs</h1>"
+        result = html_to_clean_text(html)
+        assert "You need JavaScript" not in result
+        assert "Jobs" in result
+
+    def test_svg_path_data_does_not_leak(self):
+        """SVG path data (d attribute, text elements) must not appear in output."""
+        html = """
+        <svg xmlns="http://www.w3.org/2000/svg">
+            <text x="10" y="20">SVG Hidden Text</text>
+            <path d="M10 10 H 90 V 90 H 10 Z"/>
+        </svg>
+        <p>Visible paragraph</p>
+        """
+        result = html_to_clean_text(html)
+        assert "SVG Hidden Text" not in result
+        assert "M10 10" not in result
+        assert "Visible paragraph" in result
+
+    def test_iframe_with_nested_content_does_not_leak(self):
+        """Iframe fallback content and attributes must not appear in output."""
+        html = '<iframe src="https://tracking.com"><p>Your browser does not support iframes.</p></iframe><p>Real</p>'
+        result = html_to_clean_text(html)
+        assert "tracking.com" not in result
+        assert "does not support iframes" not in result
+        assert "Real" in result
+
+    def test_multiple_removed_tags_interleaved_with_content(self):
+        """Multiple removed tags interleaved with real content — only real content survives."""
+        html = """
+        <script>trackPageView();</script>
+        <h1>Senior Engineer</h1>
+        <style>h1 { font-size: 24px; }</style>
+        <p>Remote position</p>
+        <noscript>Enable JS</noscript>
+        <svg><rect width="100" height="100"/></svg>
+        <p>Apply by email</p>
+        <meta name="description" content="hidden meta">
+        <iframe src="analytics.html">fallback</iframe>
+        """
+        result = html_to_clean_text(html)
+        # Real content preserved
+        assert "Senior Engineer" in result
+        assert "Remote position" in result
+        assert "Apply by email" in result
+        # Removed content absent
+        assert "trackPageView" not in result
+        assert "font-size" not in result
+        assert "Enable JS" not in result
+        assert "rect" not in result
+        assert "hidden meta" not in result
+        assert "fallback" not in result

@@ -219,6 +219,83 @@ class TestPasaPrefiltroCargos:
         )
         assert result is True
 
+    def test_none_in_cargos_list_skipped(self):
+        """None entries in cargosActivos are gracefully skipped."""
+        # get_significant_tokens(None) returns empty set, so no overlap from that entry
+        result = pasa_prefiltro_cargos(
+            "Ingeniero Backend",
+            [None, "Ingeniero Software"],
+        )
+        assert result is True  # "ingeniero" overlaps with second cargo
+
+    def test_threshold_env_integration(self, monkeypatch):
+        """When threshold not passed explicitly, _get_threshold default (1) applies."""
+        monkeypatch.delenv("PREFILTRO_THRESHOLD", raising=False)
+        # Default threshold is 1, so one token overlap is enough
+        result = pasa_prefiltro_cargos(
+            "Desarrollador Frontend",
+            ["Desarrollador Backend"],
+        )
+        assert result is True  # "desarrollador" overlaps
+
+
+# ============================================================================
+# Spanish stopwords — explicit verification
+# ============================================================================
+
+
+class TestSpanishStopwords:
+    """Explicit tests that Spanish stopwords (including accented forms) are filtered."""
+
+    def test_common_prepositions_filtered(self):
+        """Common Spanish prepositions (de, en, por, para, con, sin) are stopwords."""
+        text = "de en por para con sin"
+        result = get_significant_tokens(text)
+        assert result == set()
+
+    def test_articles_filtered(self):
+        """Spanish articles (el, la, los, las, un, una) are stopwords."""
+        text = "el la los las un una"
+        result = get_significant_tokens(text)
+        assert result == set()
+
+    def test_accented_stopwords_normalized_and_filtered(self):
+        """Accented stopwords (más→mas, también→tambien) are filtered after normalization."""
+        # "más" normalizes to "mas" which is in STOPWORDS
+        # "también" normalizes to "tambien" which is in STOPWORDS
+        result = get_significant_tokens("más también")
+        assert "mas" not in result
+        assert "tambien" not in result
+        assert result == set()
+
+    def test_conjunctions_filtered(self):
+        """Spanish conjunctions (y, o, pero, que, ni) are stopwords."""
+        text = "y o pero que ni"
+        result = get_significant_tokens(text)
+        assert result == set()
+
+    def test_mixed_stopwords_and_significant(self):
+        """Only significant tokens remain after stopword removal in a real title."""
+        result = get_significant_tokens("Gerente de Proyecto para la Región Sur")
+        # Stopwords removed: "de", "para", "la"
+        assert "de" not in result
+        assert "para" not in result
+        assert "la" not in result
+        # Significant tokens remain
+        assert "gerente" in result
+        assert "proyecto" in result
+        assert "region" in result  # diacritic removed from Región
+        assert "sur" in result
+
+    def test_stopwords_do_not_contribute_to_prefiltro_overlap(self):
+        """Stopwords shared between titulo and cargo don't create a false positive."""
+        # Both have "de", "la", "en" but no significant token overlap
+        result = pasa_prefiltro_cargos(
+            "Asistente de la Dirección en Finanzas",
+            ["Coordinador de la Logística en Bodega"],
+        )
+        assert result is False  # no significant overlap
+
 
 # ============================================================================
 # _get_threshold tests

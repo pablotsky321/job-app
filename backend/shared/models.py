@@ -254,6 +254,75 @@ class Perfiles(BaseModel):
 # ============================================================================
 
 
+class UsuarioVacante(BaseModel):
+    """Score and match details for a user-vacancy pair.
+
+    Keyed by (userId, vacancyId).
+    Requirements: 1.9, 17.5, 18.1
+    """
+
+    userId: str = Field(..., description="User ID (from JWT sub claim)")
+    vacancyId: str = Field(..., description="Vacancy ID (SHA-256 of normalized URL)")
+    score: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=100,
+        description="Match score 0-100; null if filtered_out or pending",
+    )
+    scoreDetalle: Optional[dict] = Field(
+        default=None,
+        description="ScoringResult (veredicto, coincidencias, faltantes, resumen)",
+    )
+    scoreProfileVersion: Optional[int] = Field(
+        default=None,
+        description="Profile version when score was computed (for staleness detection)",
+    )
+    estado: str = Field(
+        ...,
+        description="'scored' | 'filtered_out' | 'pending' | 'error'",
+    )
+    updatedAt: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp of last update"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class ScoringMessage(BaseModel):
+    """Message payload for SQS_Scoring queue.
+
+    Published by Scan_Worker, consumed by Scoring_Worker.
+    Requirement 12.4: One message per (userId, Vacante) pair of NEW vacancy.
+    """
+
+    userId: str = Field(..., description="User ID (from JWT sub claim)")
+    vacancyId: str = Field(..., description="Vacancy ID (SHA-256 of normalized URL, 64 hex chars)")
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class ScoringResult(BaseModel):
+    """Output from Bedrock_Client scoring invocation.
+
+    Validates score, veredicto, coincidencias, faltantes, resumen.
+    Requirements: 1.10, 17.1
+    """
+
+    score: int = Field(..., ge=0, le=100, description="Match score 0-100")
+    veredicto: str = Field(
+        ..., description="'excelente' | 'buen_encaje' | 'parcial' | 'bajo'"
+    )
+    coincidencias: List[str] = Field(
+        default_factory=list, description="Matched requirements/skills"
+    )
+    faltantes: List[str] = Field(
+        default_factory=list, description="Missing requirements/skills"
+    )
+    resumen: str = Field(..., description="Short match summary")
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class Vacante(BaseModel):
     """Job posting / vacancy.
 
@@ -287,6 +356,85 @@ class Vacante(BaseModel):
     cerrada: bool = Field(
         default=False,
         description="Whether posting has been marked as closed (missCount >= 2, origen != 'manual')",
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+# ============================================================================
+# SCORING MODELS (used by Scoring_Worker Lambda)
+# ============================================================================
+
+
+class ScoringMessage(BaseModel):
+    """SQS_Scoring message payload.
+
+    Published by Scan_Worker, consumed by Scoring_Worker.
+    One message per (userId, Vacante) pair for new vacancies.
+
+    Requirements: 12.4, 13.5-13.8
+    """
+
+    userId: str = Field(..., description="User ID (from JWT sub claim)")
+    vacancyId: str = Field(..., description="Vacancy ID (SHA-256 of normalized URL, 64 hex chars)")
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class ScoringResult(BaseModel):
+    """Output from Bedrock_Client scoring invocation.
+
+    Validates score, veredicto, coincidencias, faltantes, resumen.
+
+    Requirements: 1.10, 17.1
+    """
+
+    score: int = Field(..., ge=0, le=100, description="Match score 0-100")
+    veredicto: str = Field(
+        ...,
+        description="'excelente' | 'buen_encaje' | 'parcial' | 'bajo'",
+    )
+    coincidencias: List[str] = Field(
+        default_factory=list, description="Matched requirements/skills"
+    )
+    faltantes: List[str] = Field(
+        default_factory=list, description="Missing requirements/skills"
+    )
+    resumen: str = Field(..., description="Short match summary")
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class UsuarioVacante(BaseModel):
+    """Score and match details for a user-vacancy pair.
+
+    Keyed by (userId, vacancyId) in DynamoDB.
+
+    Requirements: 1.9, 17.5, 18.1
+    """
+
+    userId: str = Field(..., description="User ID")
+    vacancyId: str = Field(..., description="Vacancy ID (SHA-256 hash)")
+    score: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=100,
+        description="Match score 0-100; null if filtered_out or pending",
+    )
+    scoreDetalle: Optional[dict] = Field(
+        default=None,
+        description="ScoringResult dict (veredicto, coincidencias, faltantes, resumen)",
+    )
+    scoreProfileVersion: Optional[int] = Field(
+        default=None,
+        description="Profile version when score was computed (for staleness detection)",
+    )
+    estado: str = Field(
+        ...,
+        description="'scored' | 'filtered_out' | 'pending' | 'error'",
+    )
+    updatedAt: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp of last update"
     )
 
     model_config = ConfigDict(extra="ignore")
