@@ -121,6 +121,14 @@ frontend_domain = "job-search-assistant.mvp"
 
 ses_email = "noreply@example.com"
 
+# Team email addresses that will each get an SES email identity created
+# (used to receive job vacancy notification emails). Each address must be
+# manually verified in AWS SES console after terraform apply.
+ses_team_emails = [
+  "team-member-1@example.com",
+  "team-member-2@example.com"
+]
+
 # ============================================================================
 # Bedrock Configuration
 # ============================================================================

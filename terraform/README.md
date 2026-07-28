@@ -136,8 +136,9 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your values
 nano terraform.tfvars
 
-# Initialize Terraform (downloads AWS provider, sets up backend)
-terraform init
+# Initialize Terraform against the S3 backend (bucket/key/region/encrypt
+# come from backend-config.hcl, not from inline flags)
+terraform init -backend-config=backend-config.hcl
 ```
 
 ### 2. Review Configuration
@@ -148,29 +149,30 @@ terraform fmt -check
 
 # Validate syntax
 terraform validate
-
-# Review planned changes
-terraform plan
 ```
 
-### 3. Apply Terraform
+### 3. Import Existing Resources
 
 ```bash
-# Apply infrastructure changes
-terraform apply
-
-# Review and confirm with 'yes'
-```
-
-### 4. Import Existing Resources
-
-```bash
-# Run import script to import 15 existing resources
+# Run import script to import the 15 existing resources into state
 bash scripts/import_resources.sh
 
 # Verify import success
 terraform state list
-terraform plan  # Should show 0 changes
+```
+
+### 4. Plan and Apply
+
+```bash
+# Discard any stale plan file generated before state was populated
+rm -f tfplan
+
+# Generate a fresh plan now that state is populated by import.
+# This should show 0 changes for the 15 imported resources.
+terraform plan -out=tfplan
+
+# Apply the plan
+terraform apply tfplan
 ```
 
 ### 5. Post-Deployment Steps
@@ -204,7 +206,7 @@ terraform/
 │
 ├── modules/                   # Terraform submodules (one per AWS service)
 │   ├── iam/
-│   │   └── main.tf           # 5 Lambda IAM roles + EventBridge role + GitHub Actions OIDC
+│   │   └── main.tf           # 8 roles: 5 Lambda + EventBridge Scheduler + GitHub Actions OIDC + API Gateway CloudWatch logging
 │   ├── dynamodb/
 │   │   └── main.tf           # 7 DynamoDB tables
 │   ├── sqs/
@@ -242,6 +244,7 @@ Creates minimal-privilege IAM roles for each Lambda function plus EventBridge an
 - **notificador-role**: SES (send email)
 - **eventbridge-scheduler-role**: Lambda (invoke orquestador)
 - **github-actions-role**: OIDC provider + role for CI/CD
+- **api-gateway-cloudwatch-role**: CloudWatch Logs (write access for API Gateway account-level logging)
 
 Each role follows **principle of least privilege** — permissions are scoped to specific resources.
 
@@ -437,11 +440,11 @@ nano terraform.tfvars
 ### Step 2: Initialize Terraform
 
 ```bash
-terraform init
+terraform init -backend-config=backend-config.hcl
 
 # Output should show:
 # - AWS provider downloaded
-# - Backend configured (S3)
+# - Backend configured (S3, using backend-config.hcl values)
 # - Modules downloaded
 ```
 
@@ -458,30 +461,11 @@ terraform fmt -check
 terraform fmt -write
 ```
 
-### Step 4: Review Plan
+### Step 4: Import Existing Resources
 
 ```bash
-terraform plan -out=tfplan
-
-# Review output:
-# - Should show ~20+ resources to create
-# - Should show 0 resources to destroy
-# - Save plan to file for later apply
-```
-
-### Step 5: Apply Infrastructure
-
-```bash
-terraform apply tfplan
-
-# Confirm with 'yes' when prompted
-# Wait for all resources to create (5-10 minutes)
-```
-
-### Step 6: Import Existing Resources
-
-```bash
-# Run import script
+# Run import script to import the 15 existing resources into the
+# now-correctly-S3-backed state
 bash scripts/import_resources.sh
 
 # Verify imports
@@ -490,12 +474,33 @@ terraform state list
 # Should show 15 imported resources
 ```
 
-### Step 7: Verify No Changes
+### Step 5: Discard Stale Plan (if any)
 
 ```bash
-terraform plan
+# A plan generated before state was populated by import is stale and must
+# not be reused
+rm -f tfplan
+```
 
-# Should output: No changes. Infrastructure is up-to-date.
+### Step 6: Generate a Fresh Plan
+
+```bash
+terraform plan -out=tfplan
+
+# Review output:
+# - Should show 0 changes for the 15 imported resources
+# - Should show new resources to create (everything not yet imported)
+# - Should show 0 resources to destroy
+# - Save plan to file for the apply step
+```
+
+### Step 7: Apply Infrastructure
+
+```bash
+terraform apply tfplan
+
+# Confirm with 'yes' when prompted
+# Wait for all resources to create (5-10 minutes)
 ```
 
 ### Step 8: Post-Deployment Configuration

@@ -71,6 +71,11 @@ output "scan_jobs_table_arn" {
   value       = aws_dynamodb_table.scan_jobs.arn
 }
 
+output "scan_jobs_table_stream_arn" {
+  description = "ARN of the ScanJobs table DynamoDB Stream (NEW_AND_OLD_IMAGES), used to trigger the notificador Lambda"
+  value       = aws_dynamodb_table.scan_jobs.stream_arn
+}
+
 # All table ARNs as a map for easy reference
 output "all_table_arns" {
   description = "Map of all DynamoDB table ARNs"

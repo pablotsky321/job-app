@@ -1,0 +1,2419 @@
+﻿module.dynamodb.aws_dynamodb_table.vacantes: Refreshing state... [id=Vacantes]
+module.ses.data.aws_caller_identity.current: Reading...
+module.dynamodb.aws_dynamodb_table.entradas: Refreshing state... [id=Entradas]
+aws_resourcegroups_group.job_search_assistant: Refreshing state... [id=job-search-assistant]
+module.dynamodb.aws_dynamodb_table.perfiles: Refreshing state... [id=Perfiles]
+module.dynamodb.aws_dynamodb_table.suscripciones: Refreshing state... [id=Suscripciones]
+data.aws_caller_identity.current: Reading...
+module.dynamodb.aws_dynamodb_table.scan_jobs: Refreshing state... [id=ScanJobs]
+module.sqs.aws_sqs_queue.scoring_dlq: Refreshing state... [id=https://sqs.us-east-1.amazonaws.com/078716600427/scoring-dlq]
+module.dynamodb.aws_dynamodb_table.empresas: Refreshing state... [id=Empresas]
+module.ses.data.aws_caller_identity.current: Read complete after 0s [id=078716600427]
+module.sqs.aws_sqs_queue.scan_dlq: Refreshing state... [id=https://sqs.us-east-1.amazonaws.com/078716600427/scan-dlq]
+data.aws_caller_identity.current: Read complete after 0s [id=078716600427]
+module.dynamodb.aws_dynamodb_table.usuario_vacante: Refreshing state... [id=UsuarioVacante]
+data.aws_region.current: Reading...
+data.aws_region.current: Read complete after 0s [id=us-east-1]
+module.sqs.aws_sqs_queue.scoring_queue: Refreshing state... [id=https://sqs.us-east-1.amazonaws.com/078716600427/scoring-queue]
+module.sqs.aws_sqs_queue.scan_queue: Refreshing state... [id=https://sqs.us-east-1.amazonaws.com/078716600427/scan-queue]
+module.cognito.aws_cognito_user_pool.user_pool: Refreshing state... [id=us-east-1_LreFyDA2b]
+module.cognito.aws_cognito_user_pool_client.frontend: Refreshing state... [id=c7dt8acog5t0ifssh05eq0gc4]
+module.cognito.aws_cognito_user_pool_domain.frontend: Refreshing state... [id=job-search-assistant-mvp]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+  ~ update in-place
++/- create replacement and then destroy
+ <= read (data resources)
+
+Terraform will perform the following actions:
+
+  # aws_resourcegroups_group.job_search_assistant will be updated in-place
+  ~ resource "aws_resourcegroups_group" "job_search_assistant" {
+      - description = "Hackathon resources" -> null
+        id          = "job-search-assistant"
+        name        = "job-search-assistant"
+      ~ tags        = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+        }
+      ~ tags_all    = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+        }
+        # (1 unchanged attribute hidden)
+
+      ~ resource_query {
+          ~ query = jsonencode(
+              ~ {
+                  ~ TagFilters          = [
+                      ~ {
+                          ~ Key    = "Proyecto" -> "Project"
+                            # (1 unchanged attribute hidden)
+                        },
+                    ]
+                    # (1 unchanged attribute hidden)
+                }
+            )
+            # (1 unchanged attribute hidden)
+        }
+    }
+
+  # module.api_gateway.aws_api_gateway_account.logging will be created
+  + resource "aws_api_gateway_account" "logging" {
+      + api_key_version     = (known after apply)
+      + cloudwatch_role_arn = (known after apply)
+      + features            = (known after apply)
+      + id                  = (known after apply)
+      + throttle_settings   = (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_authorizer.cognito will be created
+  + resource "aws_api_gateway_authorizer" "cognito" {
+      + arn                              = (known after apply)
+      + authorizer_result_ttl_in_seconds = 300
+      + id                               = (known after apply)
+      + identity_source                  = "method.request.header.Authorization"
+      + name                             = "cognito-authorizer"
+      + provider_arns                    = [
+          + "arn:aws:cognito-idp:us-east-1:078716600427:userpool/us-east-1_LreFyDA2b",
+        ]
+      + rest_api_id                      = (known after apply)
+      + type                             = "COGNITO_USER_POOLS"
+    }
+
+  # module.api_gateway.aws_api_gateway_deployment.api will be created
+  + resource "aws_api_gateway_deployment" "api" {
+      + created_date  = (known after apply)
+      + execution_arn = (known after apply)
+      + id            = (known after apply)
+      + invoke_url    = (known after apply)
+      + rest_api_id   = (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_integration.api_lambda will be created
+  + resource "aws_api_gateway_integration" "api_lambda" {
+      + cache_namespace         = (known after apply)
+      + connection_type         = "INTERNET"
+      + http_method             = "ANY"
+      + id                      = (known after apply)
+      + integration_http_method = "POST"
+      + passthrough_behavior    = (known after apply)
+      + request_parameters      = {
+          + "integration.request.path.proxy" = "method.request.path.proxy"
+        }
+      + resource_id             = (known after apply)
+      + rest_api_id             = (known after apply)
+      + timeout_milliseconds    = 29000
+      + type                    = "AWS_PROXY"
+      + uri                     = (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_integration.api_options will be created
+  + resource "aws_api_gateway_integration" "api_options" {
+      + cache_namespace      = (known after apply)
+      + connection_type      = "INTERNET"
+      + http_method          = "OPTIONS"
+      + id                   = (known after apply)
+      + passthrough_behavior = (known after apply)
+      + request_templates    = {
+          + "application/json" = jsonencode(
+                {
+                  + statusCode = 200
+                }
+            )
+        }
+      + resource_id          = (known after apply)
+      + rest_api_id          = (known after apply)
+      + timeout_milliseconds = 29000
+      + type                 = "MOCK"
+    }
+
+  # module.api_gateway.aws_api_gateway_integration.root_lambda will be created
+  + resource "aws_api_gateway_integration" "root_lambda" {
+      + cache_namespace         = (known after apply)
+      + connection_type         = "INTERNET"
+      + http_method             = "ANY"
+      + id                      = (known after apply)
+      + integration_http_method = "POST"
+      + passthrough_behavior    = (known after apply)
+      + resource_id             = (known after apply)
+      + rest_api_id             = (known after apply)
+      + timeout_milliseconds    = 29000
+      + type                    = "AWS_PROXY"
+      + uri                     = (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_integration.root_options will be created
+  + resource "aws_api_gateway_integration" "root_options" {
+      + cache_namespace      = (known after apply)
+      + connection_type      = "INTERNET"
+      + http_method          = "OPTIONS"
+      + id                   = (known after apply)
+      + passthrough_behavior = (known after apply)
+      + request_templates    = {
+          + "application/json" = jsonencode(
+                {
+                  + statusCode = 200
+                }
+            )
+        }
+      + resource_id          = (known after apply)
+      + rest_api_id          = (known after apply)
+      + timeout_milliseconds = 29000
+      + type                 = "MOCK"
+    }
+
+  # module.api_gateway.aws_api_gateway_integration_response.api_options_integration_response will be created
+  + resource "aws_api_gateway_integration_response" "api_options_integration_response" {
+      + http_method         = "OPTIONS"
+      + id                  = (known after apply)
+      + resource_id         = (known after apply)
+      + response_parameters = {
+          + "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          + "method.response.header.Access-Control-Allow-Methods" = "'GET,DELETE,POST,PUT,OPTIONS,HEAD,PATCH'"
+          + "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+          + "method.response.header.Access-Control-Max-Age"       = "'7200'"
+        }
+      + rest_api_id         = (known after apply)
+      + status_code         = "200"
+    }
+
+  # module.api_gateway.aws_api_gateway_integration_response.root_options_integration_response will be created
+  + resource "aws_api_gateway_integration_response" "root_options_integration_response" {
+      + http_method         = "OPTIONS"
+      + id                  = (known after apply)
+      + resource_id         = (known after apply)
+      + response_parameters = {
+          + "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          + "method.response.header.Access-Control-Allow-Methods" = "'GET,DELETE,POST,PUT,OPTIONS,HEAD,PATCH'"
+          + "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+          + "method.response.header.Access-Control-Max-Age"       = "'7200'"
+        }
+      + rest_api_id         = (known after apply)
+      + status_code         = "200"
+    }
+
+  # module.api_gateway.aws_api_gateway_method.api_options will be created
+  + resource "aws_api_gateway_method" "api_options" {
+      + api_key_required = false
+      + authorization    = "NONE"
+      + http_method      = "OPTIONS"
+      + id               = (known after apply)
+      + resource_id      = (known after apply)
+      + rest_api_id      = (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_method.api_proxy will be created
+  + resource "aws_api_gateway_method" "api_proxy" {
+      + api_key_required   = false
+      + authorization      = "COGNITO_USER_POOLS"
+      + authorizer_id      = (known after apply)
+      + http_method        = "ANY"
+      + id                 = (known after apply)
+      + request_parameters = {
+          + "method.request.header.Authorization" = true
+        }
+      + resource_id        = (known after apply)
+      + rest_api_id        = (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_method.root will be created
+  + resource "aws_api_gateway_method" "root" {
+      + api_key_required   = false
+      + authorization      = "COGNITO_USER_POOLS"
+      + authorizer_id      = (known after apply)
+      + http_method        = "ANY"
+      + id                 = (known after apply)
+      + request_parameters = {
+          + "method.request.header.Authorization" = true
+        }
+      + resource_id        = (known after apply)
+      + rest_api_id        = (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_method.root_options will be created
+  + resource "aws_api_gateway_method" "root_options" {
+      + api_key_required = false
+      + authorization    = "NONE"
+      + http_method      = "OPTIONS"
+      + id               = (known after apply)
+      + resource_id      = (known after apply)
+      + rest_api_id      = (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_method_response.api_options_response will be created
+  + resource "aws_api_gateway_method_response" "api_options_response" {
+      + http_method         = "OPTIONS"
+      + id                  = (known after apply)
+      + resource_id         = (known after apply)
+      + response_parameters = {
+          + "method.response.header.Access-Control-Allow-Headers" = true
+          + "method.response.header.Access-Control-Allow-Methods" = true
+          + "method.response.header.Access-Control-Allow-Origin"  = true
+          + "method.response.header.Access-Control-Max-Age"       = true
+        }
+      + rest_api_id         = (known after apply)
+      + status_code         = "200"
+    }
+
+  # module.api_gateway.aws_api_gateway_method_response.root_options_response will be created
+  + resource "aws_api_gateway_method_response" "root_options_response" {
+      + http_method         = "OPTIONS"
+      + id                  = (known after apply)
+      + resource_id         = (known after apply)
+      + response_parameters = {
+          + "method.response.header.Access-Control-Allow-Headers" = true
+          + "method.response.header.Access-Control-Allow-Methods" = true
+          + "method.response.header.Access-Control-Allow-Origin"  = true
+          + "method.response.header.Access-Control-Max-Age"       = true
+        }
+      + rest_api_id         = (known after apply)
+      + status_code         = "200"
+    }
+
+  # module.api_gateway.aws_api_gateway_method_settings.logging will be created
+  + resource "aws_api_gateway_method_settings" "logging" {
+      + id          = (known after apply)
+      + method_path = "*/*"
+      + rest_api_id = (known after apply)
+      + stage_name  = "prod"
+
+      + settings {
+          + cache_data_encrypted                       = (known after apply)
+          + cache_ttl_in_seconds                       = (known after apply)
+          + caching_enabled                            = (known after apply)
+          + data_trace_enabled                         = true
+          + logging_level                              = "INFO"
+          + metrics_enabled                            = true
+          + require_authorization_for_cache_control    = (known after apply)
+          + throttling_burst_limit                     = -1
+          + throttling_rate_limit                      = -1
+          + unauthorized_cache_control_header_strategy = (known after apply)
+        }
+    }
+
+  # module.api_gateway.aws_api_gateway_resource.api_proxy will be created
+  + resource "aws_api_gateway_resource" "api_proxy" {
+      + id          = (known after apply)
+      + parent_id   = (known after apply)
+      + path        = (known after apply)
+      + path_part   = "{proxy+}"
+      + rest_api_id = (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_rest_api.api will be created
+  + resource "aws_api_gateway_rest_api" "api" {
+      + api_key_source               = (known after apply)
+      + arn                          = (known after apply)
+      + binary_media_types           = (known after apply)
+      + created_date                 = (known after apply)
+      + description                  = "Job Search Assistant REST API with Cognito authentication"
+      + disable_execute_api_endpoint = (known after apply)
+      + execution_arn                = (known after apply)
+      + id                           = (known after apply)
+      + minimum_compression_size     = (known after apply)
+      + name                         = "job-search-api"
+      + policy                       = (known after apply)
+      + root_resource_id             = (known after apply)
+      + tags                         = {
+          + "Name" = "job-search-api"
+        }
+      + tags_all                     = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-api"
+          + "Project"     = "job-search-assistant"
+        }
+
+      + endpoint_configuration (known after apply)
+    }
+
+  # module.api_gateway.aws_api_gateway_stage.prod will be created
+  + resource "aws_api_gateway_stage" "prod" {
+      + arn                   = (known after apply)
+      + cache_cluster_enabled = false
+      + deployment_id         = (known after apply)
+      + execution_arn         = (known after apply)
+      + id                    = (known after apply)
+      + invoke_url            = (known after apply)
+      + rest_api_id           = (known after apply)
+      + stage_name            = "prod"
+      + tags                  = {
+          + "Name"  = "prod-stage"
+          + "Stage" = "prod"
+        }
+      + tags_all              = {
+          + "Environment" = "hackathon"
+          + "Name"        = "prod-stage"
+          + "Project"     = "job-search-assistant"
+          + "Stage"       = "prod"
+        }
+      + web_acl_arn           = (known after apply)
+    }
+
+  # module.api_gateway.aws_lambda_permission.api_gateway_invoke will be created
+  + resource "aws_lambda_permission" "api_gateway_invoke" {
+      + action              = "lambda:InvokeFunction"
+      + function_name       = "job-search-api"
+      + id                  = (known after apply)
+      + principal           = "apigateway.amazonaws.com"
+      + source_arn          = (known after apply)
+      + statement_id        = "AllowAPIGatewayInvoke"
+      + statement_id_prefix = (known after apply)
+    }
+
+  # module.cloudwatch.aws_cloudwatch_log_group.api will be created
+  + resource "aws_cloudwatch_log_group" "api" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/aws/lambda/job-search-api"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 7
+      + skip_destroy      = false
+      + tags              = {
+          + "Name" = "job-search-api-logs"
+        }
+      + tags_all          = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-api-logs"
+          + "Project"     = "job-search-assistant"
+        }
+    }
+
+  # module.cloudwatch.aws_cloudwatch_log_group.notificador will be created
+  + resource "aws_cloudwatch_log_group" "notificador" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/aws/lambda/job-search-notificador"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 7
+      + skip_destroy      = false
+      + tags              = {
+          + "Name" = "job-search-notificador-logs"
+        }
+      + tags_all          = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-notificador-logs"
+          + "Project"     = "job-search-assistant"
+        }
+    }
+
+  # module.cloudwatch.aws_cloudwatch_log_group.orquestador will be created
+  + resource "aws_cloudwatch_log_group" "orquestador" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/aws/lambda/job-search-orquestador"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 7
+      + skip_destroy      = false
+      + tags              = {
+          + "Name" = "job-search-orquestador-logs"
+        }
+      + tags_all          = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-orquestador-logs"
+          + "Project"     = "job-search-assistant"
+        }
+    }
+
+  # module.cloudwatch.aws_cloudwatch_log_group.scan_worker will be created
+  + resource "aws_cloudwatch_log_group" "scan_worker" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/aws/lambda/job-search-scan-worker"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 7
+      + skip_destroy      = false
+      + tags              = {
+          + "Name" = "job-search-scan-worker-logs"
+        }
+      + tags_all          = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-scan-worker-logs"
+          + "Project"     = "job-search-assistant"
+        }
+    }
+
+  # module.cloudwatch.aws_cloudwatch_log_group.scoring_worker will be created
+  + resource "aws_cloudwatch_log_group" "scoring_worker" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/aws/lambda/job-search-scoring-worker"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 7
+      + skip_destroy      = false
+      + tags              = {
+          + "Name" = "job-search-scoring-worker-logs"
+        }
+      + tags_all          = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-scoring-worker-logs"
+          + "Project"     = "job-search-assistant"
+        }
+    }
+
+  # module.cloudwatch.aws_cloudwatch_metric_alarm.billing_alarm will be created
+  + resource "aws_cloudwatch_metric_alarm" "billing_alarm" {
+      + actions_enabled                       = true
+      + alarm_actions                         = (known after apply)
+      + alarm_description                     = "Alert when estimated monthly charges exceed threshold (500 USD)"
+      + alarm_name                            = "job-search-billing-alarm"
+      + arn                                   = (known after apply)
+      + comparison_operator                   = "GreaterThanThreshold"
+      + dimensions                            = {
+          + "Currency" = "USD"
+        }
+      + evaluate_low_sample_count_percentiles = (known after apply)
+      + evaluation_periods                    = 1
+      + id                                    = (known after apply)
+      + metric_name                           = "EstimatedCharges"
+      + namespace                             = "AWS/Billing"
+      + period                                = 86400
+      + statistic                             = "Maximum"
+      + tags_all                              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+        }
+      + threshold                             = 500
+      + treat_missing_data                    = "missing"
+    }
+
+  # module.cloudwatch.aws_cloudwatch_metric_alarm.lambda_duration will be created
+  + resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
+      + actions_enabled                       = true
+      + alarm_actions                         = (known after apply)
+      + alarm_description                     = "Alert when Lambda function duration exceeds threshold"
+      + alarm_name                            = "job-search-lambda-duration"
+      + arn                                   = (known after apply)
+      + comparison_operator                   = "GreaterThanThreshold"
+      + dimensions                            = {
+          + "FunctionName" = "job-search-api"
+        }
+      + evaluate_low_sample_count_percentiles = (known after apply)
+      + evaluation_periods                    = 1
+      + id                                    = (known after apply)
+      + metric_name                           = "Duration"
+      + namespace                             = "AWS/Lambda"
+      + period                                = 300
+      + statistic                             = "Average"
+      + tags_all                              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+        }
+      + threshold                             = 50000
+      + treat_missing_data                    = "missing"
+    }
+
+  # module.cloudwatch.aws_cloudwatch_metric_alarm.lambda_errors will be created
+  + resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+      + actions_enabled                       = true
+      + alarm_actions                         = (known after apply)
+      + alarm_description                     = "Alert when Lambda functions have errors"
+      + alarm_name                            = "job-search-lambda-errors"
+      + arn                                   = (known after apply)
+      + comparison_operator                   = "GreaterThanThreshold"
+      + dimensions                            = {
+          + "FunctionName" = "job-search-api"
+        }
+      + evaluate_low_sample_count_percentiles = (known after apply)
+      + evaluation_periods                    = 1
+      + id                                    = (known after apply)
+      + metric_name                           = "Errors"
+      + namespace                             = "AWS/Lambda"
+      + period                                = 300
+      + statistic                             = "Sum"
+      + tags_all                              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+        }
+      + threshold                             = 0
+      + treat_missing_data                    = "missing"
+    }
+
+  # module.cloudwatch.aws_sns_topic.alerts will be created
+  + resource "aws_sns_topic" "alerts" {
+      + arn                         = (known after apply)
+      + beginning_archive_time      = (known after apply)
+      + content_based_deduplication = false
+      + fifo_throughput_scope       = (known after apply)
+      + fifo_topic                  = false
+      + id                          = (known after apply)
+      + name                        = "job-search-alerts"
+      + name_prefix                 = (known after apply)
+      + owner                       = (known after apply)
+      + policy                      = (known after apply)
+      + signature_version           = (known after apply)
+      + tags                        = {
+          + "Name" = "job-search-alerts-topic"
+        }
+      + tags_all                    = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-alerts-topic"
+          + "Project"     = "job-search-assistant"
+        }
+      + tracing_config              = (known after apply)
+    }
+
+  # module.cognito.data.aws_region.current will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "aws_region" "current" {
+      + description = (known after apply)
+      + endpoint    = (known after apply)
+      + id          = (known after apply)
+      + name        = (known after apply)
+    }
+
+  # module.cognito.aws_cognito_user_pool.user_pool will be updated in-place
+  ~ resource "aws_cognito_user_pool" "user_pool" {
+        id                         = "us-east-1_LreFyDA2b"
+        name                       = "job-search-assistant"
+        tags                       = {
+            "Entorno"  = "hackathon"
+            "Proyecto" = "job-search-assistant"
+        }
+      ~ tags_all                   = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+            # (2 unchanged elements hidden)
+        }
+        # (16 unchanged attributes hidden)
+
+        # (7 unchanged blocks hidden)
+    }
+
+  # module.cognito.aws_cognito_user_pool_client.frontend must be replaced
++/- resource "aws_cognito_user_pool_client" "frontend" {
+      ~ auth_session_validity                         = 3 -> (known after apply)
+      + client_secret                                 = (sensitive value)
+      + default_redirect_uri                          = (known after apply)
+      ~ enable_propagate_additional_user_context_data = false -> (known after apply)
+      + generate_secret                               = false # forces replacement
+      ~ id                                            = "c7dt8acog5t0ifssh05eq0gc4" -> (known after apply)
+        name                                          = "job-search-frontend"
+      + prevent_user_existence_errors                 = (known after apply)
+      ~ read_attributes                               = [] -> (known after apply)
+      # Warning: this attribute value will be marked as sensitive and will not
+      # display in UI output after applying this change. The value is unchanged.
+      ~ user_pool_id                                  = (sensitive value)
+      ~ write_attributes                              = [] -> (known after apply)
+        # (11 unchanged attributes hidden)
+
+        # (1 unchanged block hidden)
+    }
+
+  # module.cognito.aws_cognito_user_pool_domain.frontend will be updated in-place
+  ~ resource "aws_cognito_user_pool_domain" "frontend" {
+        id                              = "job-search-assistant-mvp"
+      # Warning: this attribute value will be marked as sensitive and will not
+      # display in UI output after applying this change. The value is unchanged.
+      ~ user_pool_id                    = (sensitive value)
+        # (9 unchanged attributes hidden)
+    }
+
+  # module.dynamodb.aws_dynamodb_table.empresas will be updated in-place
+  ~ resource "aws_dynamodb_table" "empresas" {
+        id                          = "Empresas"
+        name                        = "Empresas"
+      ~ tags                        = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Table"    = "Empresas"
+        }
+      ~ tags_all                    = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Table"       = "Empresas"
+        }
+        # (11 unchanged attributes hidden)
+
+        # (3 unchanged blocks hidden)
+    }
+
+  # module.dynamodb.aws_dynamodb_table.entradas will be updated in-place
+  ~ resource "aws_dynamodb_table" "entradas" {
+        id                          = "Entradas"
+        name                        = "Entradas"
+      ~ tags                        = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Table"    = "Entradas"
+        }
+      ~ tags_all                    = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Table"       = "Entradas"
+        }
+        # (12 unchanged attributes hidden)
+
+        # (4 unchanged blocks hidden)
+    }
+
+  # module.dynamodb.aws_dynamodb_table.perfiles will be updated in-place
+  ~ resource "aws_dynamodb_table" "perfiles" {
+        id                          = "Perfiles"
+        name                        = "Perfiles"
+      ~ tags                        = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Table"    = "Perfiles"
+        }
+      ~ tags_all                    = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Table"       = "Perfiles"
+        }
+        # (11 unchanged attributes hidden)
+
+        # (3 unchanged blocks hidden)
+    }
+
+  # module.dynamodb.aws_dynamodb_table.scan_jobs will be updated in-place
+  ~ resource "aws_dynamodb_table" "scan_jobs" {
+        id                          = "ScanJobs"
+        name                        = "ScanJobs"
+      + stream_arn                  = (known after apply)
+      ~ stream_enabled              = false -> true
+      + stream_view_type            = "NEW_AND_OLD_IMAGES"
+      ~ tags                        = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Table"    = "ScanJobs"
+        }
+      ~ tags_all                    = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Table"       = "ScanJobs"
+        }
+        # (8 unchanged attributes hidden)
+
+        # (3 unchanged blocks hidden)
+    }
+
+  # module.dynamodb.aws_dynamodb_table.suscripciones will be updated in-place
+  ~ resource "aws_dynamodb_table" "suscripciones" {
+        id                          = "Suscripciones"
+        name                        = "Suscripciones"
+      ~ tags                        = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Table"    = "Suscripciones"
+        }
+      ~ tags_all                    = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Table"       = "Suscripciones"
+        }
+        # (12 unchanged attributes hidden)
+
+        # (5 unchanged blocks hidden)
+    }
+
+  # module.dynamodb.aws_dynamodb_table.usuario_vacante will be updated in-place
+  ~ resource "aws_dynamodb_table" "usuario_vacante" {
+        id                          = "UsuarioVacante"
+        name                        = "UsuarioVacante"
+      ~ tags                        = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Table"    = "UsuarioVacante"
+        }
+      ~ tags_all                    = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Table"       = "UsuarioVacante"
+        }
+        # (12 unchanged attributes hidden)
+
+        # (4 unchanged blocks hidden)
+    }
+
+  # module.dynamodb.aws_dynamodb_table.vacantes will be updated in-place
+  ~ resource "aws_dynamodb_table" "vacantes" {
+        id                          = "Vacantes"
+        name                        = "Vacantes"
+      ~ tags                        = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Table"    = "Vacantes"
+        }
+      ~ tags_all                    = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Table"       = "Vacantes"
+        }
+        # (12 unchanged attributes hidden)
+
+        # (4 unchanged blocks hidden)
+    }
+
+  # module.eventbridge.aws_scheduler_schedule.orquestador will be created
+  + resource "aws_scheduler_schedule" "orquestador" {
+      + arn                          = (known after apply)
+      + group_name                   = (known after apply)
+      + id                           = (known after apply)
+      + name                         = "job-search-orquestador-schedule"
+      + name_prefix                  = (known after apply)
+      + schedule_expression          = "cron(0 8,12,18 * * ? *)"
+      + schedule_expression_timezone = "UTC"
+      + state                        = "ENABLED"
+
+      + flexible_time_window {
+          + mode = "OFF"
+        }
+
+      + target {
+          + arn      = (known after apply)
+          + input    = jsonencode(
+                {
+                  + detail = {
+                      + trigger = "eventbridge-scheduler"
+                    }
+                  + source = "scheduled"
+                }
+            )
+          + role_arn = (known after apply)
+        }
+    }
+
+  # module.iam.aws_iam_openid_connect_provider.github will be created
+  + resource "aws_iam_openid_connect_provider" "github" {
+      + arn             = (known after apply)
+      + client_id_list  = [
+          + "sts.amazonaws.com",
+        ]
+      + id              = (known after apply)
+      + tags            = {
+          + "Provider" = "GitHub OIDC"
+        }
+      + tags_all        = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Provider"    = "GitHub OIDC"
+        }
+      + thumbprint_list = [
+          + "6938fd4d98bab03faadb97b34396831e3780aea1",
+        ]
+      + url             = "https://token.actions.githubusercontent.com"
+    }
+
+  # module.iam.aws_iam_role.api_gateway_cloudwatch_role will be created
+  + resource "aws_iam_role" "api_gateway_cloudwatch_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "apigateway.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "job-search-api-gateway-cloudwatch-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Role" = "API Gateway CloudWatch Logging"
+        }
+      + tags_all              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Role"        = "API Gateway CloudWatch Logging"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.iam.aws_iam_role.api_role will be created
+  + resource "aws_iam_role" "api_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "job-search-api-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Role" = "API Lambda"
+        }
+      + tags_all              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Role"        = "API Lambda"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.iam.aws_iam_role.eventbridge_scheduler_role will be created
+  + resource "aws_iam_role" "eventbridge_scheduler_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "scheduler.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "job-search-eventbridge-scheduler-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Role" = "EventBridge Scheduler"
+        }
+      + tags_all              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Role"        = "EventBridge Scheduler"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.iam.aws_iam_role.github_actions will be created
+  + resource "aws_iam_role" "github_actions" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = (known after apply)
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "job-search-github-actions-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Role" = "GitHub Actions OIDC"
+        }
+      + tags_all              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Role"        = "GitHub Actions OIDC"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.iam.aws_iam_role.notificador_role will be created
+  + resource "aws_iam_role" "notificador_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "job-search-notificador-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Role" = "Notificador Lambda"
+        }
+      + tags_all              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Role"        = "Notificador Lambda"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.iam.aws_iam_role.orquestador_role will be created
+  + resource "aws_iam_role" "orquestador_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "job-search-orquestador-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Role" = "Orquestador Lambda"
+        }
+      + tags_all              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Role"        = "Orquestador Lambda"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.iam.aws_iam_role.scan_worker_role will be created
+  + resource "aws_iam_role" "scan_worker_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "job-search-scan-worker-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Role" = "Scan Worker Lambda"
+        }
+      + tags_all              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Role"        = "Scan Worker Lambda"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.iam.aws_iam_role.scoring_worker_role will be created
+  + resource "aws_iam_role" "scoring_worker_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "job-search-scoring-worker-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Role" = "Scoring Worker Lambda"
+        }
+      + tags_all              = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Role"        = "Scoring Worker Lambda"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.iam.aws_iam_role_policy.api_gateway_cloudwatch_policy will be created
+  + resource "aws_iam_role_policy" "api_gateway_cloudwatch_policy" {
+      + id          = (known after apply)
+      + name        = "job-search-api-gateway-cloudwatch-policy"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "logs:CreateLogGroup",
+                          + "logs:CreateLogStream",
+                          + "logs:PutLogEvents",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:logs:*:*:*"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.iam.aws_iam_role_policy.api_policy will be created
+  + resource "aws_iam_role_policy" "api_policy" {
+      + id          = (known after apply)
+      + name        = "job-search-api-policy"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "logs:CreateLogGroup",
+                          + "logs:CreateLogStream",
+                          + "logs:PutLogEvents",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:logs:*:*:*"
+                    },
+                  + {
+                      + Action   = [
+                          + "dynamodb:GetItem",
+                          + "dynamodb:PutItem",
+                          + "dynamodb:UpdateItem",
+                          + "dynamodb:Query",
+                          + "dynamodb:Scan",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = [
+                          + "arn:aws:dynamodb:*:*:table/Empresas",
+                          + "arn:aws:dynamodb:*:*:table/Vacantes",
+                          + "arn:aws:dynamodb:*:*:table/UsuarioVacante",
+                          + "arn:aws:dynamodb:*:*:table/Perfiles",
+                          + "arn:aws:dynamodb:*:*:table/Suscripciones",
+                          + "arn:aws:dynamodb:*:*:table/Entradas",
+                          + "arn:aws:dynamodb:*:*:table/ScanJobs",
+                        ]
+                    },
+                  + {
+                      + Action   = [
+                          + "bedrock:InvokeModel",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "execute-api:Invoke",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.iam.aws_iam_role_policy.eventbridge_scheduler_policy will be created
+  + resource "aws_iam_role_policy" "eventbridge_scheduler_policy" {
+      + id          = (known after apply)
+      + name        = "job-search-eventbridge-scheduler-policy"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "lambda:InvokeFunction",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:lambda:*:*:function/job-search-orquestador"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.iam.aws_iam_role_policy.github_actions_policy will be created
+  + resource "aws_iam_role_policy" "github_actions_policy" {
+      + id          = (known after apply)
+      + name        = "job-search-github-actions-policy"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "s3:GetObject",
+                          + "s3:PutObject",
+                          + "s3:ListBucket",
+                          + "s3:GetBucketVersioning",
+                          + "s3:PutBucketVersioning",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = [
+                          + "arn:aws:s3:::*-terraform-state-bucket",
+                          + "arn:aws:s3:::*-terraform-state-bucket/*",
+                          + "arn:aws:s3:::*-lambda-code-bucket",
+                          + "arn:aws:s3:::*-lambda-code-bucket/*",
+                        ]
+                    },
+                  + {
+                      + Action   = [
+                          + "lambda:CreateFunction",
+                          + "lambda:UpdateFunctionCode",
+                          + "lambda:UpdateFunctionConfiguration",
+                          + "lambda:DeleteFunction",
+                          + "lambda:GetFunction",
+                          + "lambda:ListFunctions",
+                          + "lambda:InvokeFunction",
+                          + "lambda:CreateEventSourceMapping",
+                          + "lambda:DeleteEventSourceMapping",
+                          + "lambda:UpdateEventSourceMapping",
+                          + "lambda:GetEventSourceMapping",
+                          + "lambda:ListEventSourceMappings",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "dynamodb:CreateTable",
+                          + "dynamodb:DescribeTable",
+                          + "dynamodb:DeleteTable",
+                          + "dynamodb:UpdateTable",
+                          + "dynamodb:ListTables",
+                          + "dynamodb:GetItem",
+                          + "dynamodb:PutItem",
+                          + "dynamodb:UpdateItem",
+                          + "dynamodb:Query",
+                          + "dynamodb:Scan",
+                          + "dynamodb:TagResource",
+                          + "dynamodb:UntagResource",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "sqs:CreateQueue",
+                          + "sqs:DeleteQueue",
+                          + "sqs:SetQueueAttributes",
+                          + "sqs:GetQueueAttributes",
+                          + "sqs:SendMessage",
+                          + "sqs:ReceiveMessage",
+                          + "sqs:GetQueueUrl",
+                          + "sqs:ListQueues",
+                          + "sqs:TagQueue",
+                          + "sqs:UntagQueue",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "cognito-idp:AdminCreateUser",
+                          + "cognito-idp:AdminSetUserPassword",
+                          + "cognito-idp:DescribeUserPool",
+                          + "cognito-idp:DescribeUserPoolClient",
+                          + "cognito-idp:CreateUserPoolClient",
+                          + "cognito-idp:UpdateUserPoolClient",
+                          + "cognito-idp:DeleteUserPoolClient",
+                          + "cognito-idp:ListUserPoolClients",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "apigateway:GET",
+                          + "apigateway:POST",
+                          + "apigateway:PUT",
+                          + "apigateway:DELETE",
+                          + "apigateway:PATCH",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "cloudfront:CreateDistribution",
+                          + "cloudfront:UpdateDistribution",
+                          + "cloudfront:DeleteDistribution",
+                          + "cloudfront:DescribeDistribution",
+                          + "cloudfront:ListDistributions",
+                          + "cloudfront:CreateInvalidation",
+                          + "cloudfront:GetInvalidation",
+                          + "cloudfront:CreateCloudFrontOriginAccessIdentity",
+                          + "cloudfront:DeleteCloudFrontOriginAccessIdentity",
+                          + "cloudfront:GetCloudFrontOriginAccessIdentity",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "s3:CreateBucket",
+                          + "s3:DeleteBucket",
+                          + "s3:GetBucketPolicy",
+                          + "s3:PutBucketPolicy",
+                          + "s3:DeleteBucketPolicy",
+                          + "s3:GetBucketVersioning",
+                          + "s3:PutBucketVersioning",
+                          + "s3:GetObjectVersioning",
+                          + "s3:PutBucketPublicAccessBlock",
+                          + "s3:GetBucketPublicAccessBlock",
+                          + "s3:ListBucketVersions",
+                          + "s3:PutObject",
+                          + "s3:GetObject",
+                          + "s3:DeleteObject",
+                          + "s3:TagResource",
+                          + "s3:UntagResource",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "iam:CreateRole",
+                          + "iam:DeleteRole",
+                          + "iam:AttachRolePolicy",
+                          + "iam:DetachRolePolicy",
+                          + "iam:PutRolePolicy",
+                          + "iam:DeleteRolePolicy",
+                          + "iam:GetRole",
+                          + "iam:GetRolePolicy",
+                          + "iam:ListRolePolicies",
+                          + "iam:CreatePolicy",
+                          + "iam:DeletePolicy",
+                          + "iam:GetPolicy",
+                          + "iam:GetPolicyVersion",
+                          + "iam:ListPolicyVersions",
+                          + "iam:PassRole",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "scheduler:CreateSchedule",
+                          + "scheduler:UpdateSchedule",
+                          + "scheduler:DeleteSchedule",
+                          + "scheduler:GetSchedule",
+                          + "scheduler:ListSchedules",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "ses:VerifyEmailIdentity",
+                          + "ses:VerifyDomainIdentity",
+                          + "ses:DeleteIdentity",
+                          + "ses:GetIdentityVerificationAttributes",
+                          + "ses:ListIdentities",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "logs:CreateLogGroup",
+                          + "logs:DeleteLogGroup",
+                          + "logs:DescribeLogGroups",
+                          + "logs:PutRetentionPolicy",
+                          + "logs:TagLogGroup",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "cloudwatch:PutMetricAlarm",
+                          + "cloudwatch:DeleteAlarms",
+                          + "cloudwatch:DescribeAlarms",
+                          + "cloudwatch:ListMetrics",
+                          + "cloudwatch:GetMetricStatistics",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "sns:CreateTopic",
+                          + "sns:DeleteTopic",
+                          + "sns:GetTopicAttributes",
+                          + "sns:SetTopicAttributes",
+                          + "sns:Subscribe",
+                          + "sns:Unsubscribe",
+                          + "sns:Publish",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "iam:CreateOpenIDConnectProvider",
+                          + "iam:DeleteOpenIDConnectProvider",
+                          + "iam:GetOpenIDConnectProvider",
+                          + "iam:AddClientIDToOpenIDConnectProvider",
+                          + "iam:RemoveClientIDFromOpenIDConnectProvider",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.iam.aws_iam_role_policy.notificador_policy will be created
+  + resource "aws_iam_role_policy" "notificador_policy" {
+      + id          = (known after apply)
+      + name        = "job-search-notificador-policy"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "logs:CreateLogGroup",
+                          + "logs:CreateLogStream",
+                          + "logs:PutLogEvents",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:logs:*:*:*"
+                    },
+                  + {
+                      + Action   = [
+                          + "ses:SendEmail",
+                          + "ses:SendRawEmail",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                  + {
+                      + Action   = [
+                          + "dynamodb:GetRecords",
+                          + "dynamodb:GetShardIterator",
+                          + "dynamodb:DescribeStream",
+                          + "dynamodb:ListStreams",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:dynamodb:*:*:table/ScanJobs/stream/*"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.iam.aws_iam_role_policy.orquestador_policy will be created
+  + resource "aws_iam_role_policy" "orquestador_policy" {
+      + id          = (known after apply)
+      + name        = "job-search-orquestador-policy"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "logs:CreateLogGroup",
+                          + "logs:CreateLogStream",
+                          + "logs:PutLogEvents",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:logs:*:*:*"
+                    },
+                  + {
+                      + Action   = [
+                          + "dynamodb:GetItem",
+                          + "dynamodb:PutItem",
+                          + "dynamodb:UpdateItem",
+                          + "dynamodb:Query",
+                          + "dynamodb:Scan",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = [
+                          + "arn:aws:dynamodb:*:*:table/Empresas",
+                          + "arn:aws:dynamodb:*:*:table/Vacantes",
+                          + "arn:aws:dynamodb:*:*:table/ScanJobs",
+                          + "arn:aws:dynamodb:*:*:table/Suscripciones",
+                          + "arn:aws:dynamodb:*:*:table/Perfiles",
+                        ]
+                    },
+                  + {
+                      + Action   = [
+                          + "sqs:SendMessage",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:sqs:*:*:scan-queue"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.iam.aws_iam_role_policy.scan_worker_policy will be created
+  + resource "aws_iam_role_policy" "scan_worker_policy" {
+      + id          = (known after apply)
+      + name        = "job-search-scan-worker-policy"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "logs:CreateLogGroup",
+                          + "logs:CreateLogStream",
+                          + "logs:PutLogEvents",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:logs:*:*:*"
+                    },
+                  + {
+                      + Action   = [
+                          + "dynamodb:GetItem",
+                          + "dynamodb:PutItem",
+                          + "dynamodb:UpdateItem",
+                          + "dynamodb:Query",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = [
+                          + "arn:aws:dynamodb:*:*:table/Empresas",
+                          + "arn:aws:dynamodb:*:*:table/Vacantes",
+                          + "arn:aws:dynamodb:*:*:table/ScanJobs",
+                        ]
+                    },
+                  + {
+                      + Action   = [
+                          + "sqs:ReceiveMessage",
+                          + "sqs:DeleteMessage",
+                          + "sqs:GetQueueAttributes",
+                          + "sqs:SendMessage",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = [
+                          + "arn:aws:sqs:*:*:scan-queue",
+                          + "arn:aws:sqs:*:*:scoring-queue",
+                        ]
+                    },
+                  + {
+                      + Action   = [
+                          + "bedrock:InvokeModel",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.iam.aws_iam_role_policy.scoring_worker_policy will be created
+  + resource "aws_iam_role_policy" "scoring_worker_policy" {
+      + id          = (known after apply)
+      + name        = "job-search-scoring-worker-policy"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "logs:CreateLogGroup",
+                          + "logs:CreateLogStream",
+                          + "logs:PutLogEvents",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:logs:*:*:*"
+                    },
+                  + {
+                      + Action   = [
+                          + "dynamodb:GetItem",
+                          + "dynamodb:PutItem",
+                          + "dynamodb:UpdateItem",
+                          + "dynamodb:Query",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = [
+                          + "arn:aws:dynamodb:*:*:table/Perfiles",
+                          + "arn:aws:dynamodb:*:*:table/UsuarioVacante",
+                          + "arn:aws:dynamodb:*:*:table/Vacantes",
+                          + "arn:aws:dynamodb:*:*:table/Empresas",
+                        ]
+                    },
+                  + {
+                      + Action   = [
+                          + "sqs:ReceiveMessage",
+                          + "sqs:DeleteMessage",
+                          + "sqs:GetQueueAttributes",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:sqs:*:*:scoring-queue"
+                    },
+                  + {
+                      + Action   = [
+                          + "bedrock:InvokeModel",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.lambda.aws_lambda_event_source_mapping.notificador_dynamodb_stream will be created
+  + resource "aws_lambda_event_source_mapping" "notificador_dynamodb_stream" {
+      + arn                           = (known after apply)
+      + enabled                       = true
+      + event_source_arn              = (known after apply)
+      + function_arn                  = (known after apply)
+      + function_name                 = (known after apply)
+      + id                            = (known after apply)
+      + last_modified                 = (known after apply)
+      + last_processing_result        = (known after apply)
+      + maximum_record_age_in_seconds = (known after apply)
+      + maximum_retry_attempts        = (known after apply)
+      + parallelization_factor        = (known after apply)
+      + starting_position             = "LATEST"
+      + state                         = (known after apply)
+      + state_transition_reason       = (known after apply)
+      + tags_all                      = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+        }
+      + uuid                          = (known after apply)
+
+      + amazon_managed_kafka_event_source_config (known after apply)
+
+      + self_managed_kafka_event_source_config (known after apply)
+    }
+
+  # module.lambda.aws_lambda_event_source_mapping.scan_worker_sqs will be created
+  + resource "aws_lambda_event_source_mapping" "scan_worker_sqs" {
+      + arn                           = (known after apply)
+      + batch_size                    = 1
+      + enabled                       = true
+      + event_source_arn              = "arn:aws:sqs:us-east-1:078716600427:scan-queue"
+      + function_arn                  = (known after apply)
+      + function_name                 = (known after apply)
+      + id                            = (known after apply)
+      + last_modified                 = (known after apply)
+      + last_processing_result        = (known after apply)
+      + maximum_record_age_in_seconds = (known after apply)
+      + maximum_retry_attempts        = (known after apply)
+      + parallelization_factor        = (known after apply)
+      + state                         = (known after apply)
+      + state_transition_reason       = (known after apply)
+      + tags_all                      = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+        }
+      + uuid                          = (known after apply)
+
+      + amazon_managed_kafka_event_source_config (known after apply)
+
+      + self_managed_kafka_event_source_config (known after apply)
+    }
+
+  # module.lambda.aws_lambda_event_source_mapping.scoring_worker_sqs will be created
+  + resource "aws_lambda_event_source_mapping" "scoring_worker_sqs" {
+      + arn                           = (known after apply)
+      + batch_size                    = 1
+      + enabled                       = true
+      + event_source_arn              = "arn:aws:sqs:us-east-1:078716600427:scoring-queue"
+      + function_arn                  = (known after apply)
+      + function_name                 = (known after apply)
+      + id                            = (known after apply)
+      + last_modified                 = (known after apply)
+      + last_processing_result        = (known after apply)
+      + maximum_record_age_in_seconds = (known after apply)
+      + maximum_retry_attempts        = (known after apply)
+      + parallelization_factor        = (known after apply)
+      + state                         = (known after apply)
+      + state_transition_reason       = (known after apply)
+      + tags_all                      = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+        }
+      + uuid                          = (known after apply)
+
+      + amazon_managed_kafka_event_source_config (known after apply)
+
+      + self_managed_kafka_event_source_config (known after apply)
+    }
+
+  # module.lambda.aws_lambda_function.api will be created
+  + resource "aws_lambda_function" "api" {
+      + architectures                  = (known after apply)
+      + arn                            = (known after apply)
+      + code_sha256                    = (known after apply)
+      + function_name                  = "job-search-api"
+      + handler                        = "main.handler"
+      + id                             = (known after apply)
+      + invoke_arn                     = (known after apply)
+      + last_modified                  = (known after apply)
+      + memory_size                    = 512
+      + package_type                   = "Zip"
+      + publish                        = false
+      + qualified_arn                  = (known after apply)
+      + qualified_invoke_arn           = (known after apply)
+      + reserved_concurrent_executions = -1
+      + role                           = (known after apply)
+      + runtime                        = "python3.12"
+      + s3_bucket                      = (sensitive value)
+      + s3_key                         = "lambda-code/api/code.zip"
+      + signing_job_arn                = (known after apply)
+      + signing_profile_version_arn    = (known after apply)
+      + skip_destroy                   = false
+      + source_code_hash               = (sensitive value)
+      + source_code_size               = (known after apply)
+      + tags                           = {
+          + "Name" = "job-search-api"
+        }
+      + tags_all                       = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-api"
+          + "Project"     = "job-search-assistant"
+        }
+      + timeout                        = 10
+      + version                        = (known after apply)
+
+      + environment {
+          + variables = {
+              + "BEDROCK_MODEL_MID"              = (sensitive value)
+              + "BEDROCK_MODEL_SMALL"            = (sensitive value)
+              + "BEDROCK_REGION"                 = "us-east-1"
+              + "COGNITO_USER_POOL_ID"           = (sensitive value)
+              + "CORS_ORIGINS"                   = "http://localhost:5173"
+              + "DYNAMODB_TABLE_EMPRESA"         = "Empresas"
+              + "DYNAMODB_TABLE_PERFIL"          = "Perfiles"
+              + "DYNAMODB_TABLE_SCAN_JOB"        = "ScanJobs"
+              + "DYNAMODB_TABLE_SUSCRIPCIONES"   = "Suscripciones"
+              + "DYNAMODB_TABLE_USUARIO_VACANTE" = "UsuarioVacante"
+              + "DYNAMODB_TABLE_VACANTE"         = "Vacantes"
+              + "LOG_LEVEL"                      = "INFO"
+              + "SES_EMAIL"                      = (sensitive value)
+              + "SQS_QUEUE_SCAN_URL"             = "https://sqs.us-east-1.amazonaws.com/078716600427/scan-queue"
+              + "SQS_QUEUE_SCORING_URL"          = "https://sqs.us-east-1.amazonaws.com/078716600427/scoring-queue"
+            }
+        }
+
+      + ephemeral_storage (known after apply)
+
+      + logging_config (known after apply)
+
+      + tracing_config (known after apply)
+    }
+
+  # module.lambda.aws_lambda_function.notificador will be created
+  + resource "aws_lambda_function" "notificador" {
+      + architectures                  = (known after apply)
+      + arn                            = (known after apply)
+      + code_sha256                    = (known after apply)
+      + function_name                  = "job-search-notificador"
+      + handler                        = "backend.workers.notificador.handler.handler"
+      + id                             = (known after apply)
+      + invoke_arn                     = (known after apply)
+      + last_modified                  = (known after apply)
+      + memory_size                    = 512
+      + package_type                   = "Zip"
+      + publish                        = false
+      + qualified_arn                  = (known after apply)
+      + qualified_invoke_arn           = (known after apply)
+      + reserved_concurrent_executions = -1
+      + role                           = (known after apply)
+      + runtime                        = "python3.12"
+      + s3_bucket                      = (sensitive value)
+      + s3_key                         = "lambda-code/notificador/code.zip"
+      + signing_job_arn                = (known after apply)
+      + signing_profile_version_arn    = (known after apply)
+      + skip_destroy                   = false
+      + source_code_hash               = (sensitive value)
+      + source_code_size               = (known after apply)
+      + tags                           = {
+          + "Name" = "job-search-notificador"
+        }
+      + tags_all                       = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-notificador"
+          + "Project"     = "job-search-assistant"
+        }
+      + timeout                        = 30
+      + version                        = (known after apply)
+
+      + environment {
+          + variables = {
+              + "LOG_LEVEL" = "INFO"
+              + "SES_EMAIL" = (sensitive value)
+            }
+        }
+
+      + ephemeral_storage (known after apply)
+
+      + logging_config (known after apply)
+
+      + tracing_config (known after apply)
+    }
+
+  # module.lambda.aws_lambda_function.orquestador will be created
+  + resource "aws_lambda_function" "orquestador" {
+      + architectures                  = (known after apply)
+      + arn                            = (known after apply)
+      + code_sha256                    = (known after apply)
+      + function_name                  = "job-search-orquestador"
+      + handler                        = "main.handler"
+      + id                             = (known after apply)
+      + invoke_arn                     = (known after apply)
+      + last_modified                  = (known after apply)
+      + memory_size                    = 512
+      + package_type                   = "Zip"
+      + publish                        = false
+      + qualified_arn                  = (known after apply)
+      + qualified_invoke_arn           = (known after apply)
+      + reserved_concurrent_executions = -1
+      + role                           = (known after apply)
+      + runtime                        = "python3.12"
+      + s3_bucket                      = (sensitive value)
+      + s3_key                         = "lambda-code/orquestador/code.zip"
+      + signing_job_arn                = (known after apply)
+      + signing_profile_version_arn    = (known after apply)
+      + skip_destroy                   = false
+      + source_code_hash               = (sensitive value)
+      + source_code_size               = (known after apply)
+      + tags                           = {
+          + "Name" = "job-search-orquestador"
+        }
+      + tags_all                       = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-orquestador"
+          + "Project"     = "job-search-assistant"
+        }
+      + timeout                        = 60
+      + version                        = (known after apply)
+
+      + environment {
+          + variables = {
+              + "BEDROCK_MODEL_MID"            = (sensitive value)
+              + "BEDROCK_MODEL_SMALL"          = (sensitive value)
+              + "BEDROCK_REGION"               = "us-east-1"
+              + "DYNAMODB_TABLE_EMPRESA"       = "Empresas"
+              + "DYNAMODB_TABLE_PERFIL"        = "Perfiles"
+              + "DYNAMODB_TABLE_SCAN_JOB"      = "ScanJobs"
+              + "DYNAMODB_TABLE_SUSCRIPCIONES" = "Suscripciones"
+              + "DYNAMODB_TABLE_VACANTE"       = "Vacantes"
+              + "LOG_LEVEL"                    = "INFO"
+              + "SQS_QUEUE_SCAN_URL"           = "https://sqs.us-east-1.amazonaws.com/078716600427/scan-queue"
+            }
+        }
+
+      + ephemeral_storage (known after apply)
+
+      + logging_config (known after apply)
+
+      + tracing_config (known after apply)
+    }
+
+  # module.lambda.aws_lambda_function.scan_worker will be created
+  + resource "aws_lambda_function" "scan_worker" {
+      + architectures                  = (known after apply)
+      + arn                            = (known after apply)
+      + code_sha256                    = (known after apply)
+      + function_name                  = "job-search-scan-worker"
+      + handler                        = "main.handler"
+      + id                             = (known after apply)
+      + invoke_arn                     = (known after apply)
+      + last_modified                  = (known after apply)
+      + memory_size                    = 1024
+      + package_type                   = "Zip"
+      + publish                        = false
+      + qualified_arn                  = (known after apply)
+      + qualified_invoke_arn           = (known after apply)
+      + reserved_concurrent_executions = 5
+      + role                           = (known after apply)
+      + runtime                        = "python3.12"
+      + s3_bucket                      = (sensitive value)
+      + s3_key                         = "lambda-code/scan_worker/code.zip"
+      + signing_job_arn                = (known after apply)
+      + signing_profile_version_arn    = (known after apply)
+      + skip_destroy                   = false
+      + source_code_hash               = (sensitive value)
+      + source_code_size               = (known after apply)
+      + tags                           = {
+          + "Name" = "job-search-scan-worker"
+        }
+      + tags_all                       = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-scan-worker"
+          + "Project"     = "job-search-assistant"
+        }
+      + timeout                        = 90
+      + version                        = (known after apply)
+
+      + environment {
+          + variables = {
+              + "BEDROCK_MODEL_MID"         = (sensitive value)
+              + "BEDROCK_MODEL_SMALL"       = (sensitive value)
+              + "BEDROCK_REGION"            = "us-east-1"
+              + "DYNAMODB_TABLE_EMPRESA"    = "Empresas"
+              + "DYNAMODB_TABLE_SCAN_JOB"   = "ScanJobs"
+              + "DYNAMODB_TABLE_VACANTE"    = "Vacantes"
+              + "HTML_CLEAN_MAX_KB"         = "100"
+              + "LOG_LEVEL"                 = "INFO"
+              + "PREFILTRO_TOKEN_THRESHOLD" = "1"
+              + "SQS_QUEUE_SCAN_URL"        = "https://sqs.us-east-1.amazonaws.com/078716600427/scan-queue"
+              + "SQS_QUEUE_SCORING_URL"     = "https://sqs.us-east-1.amazonaws.com/078716600427/scoring-queue"
+            }
+        }
+
+      + ephemeral_storage (known after apply)
+
+      + logging_config (known after apply)
+
+      + tracing_config (known after apply)
+    }
+
+  # module.lambda.aws_lambda_function.scoring_worker will be created
+  + resource "aws_lambda_function" "scoring_worker" {
+      + architectures                  = (known after apply)
+      + arn                            = (known after apply)
+      + code_sha256                    = (known after apply)
+      + function_name                  = "job-search-scoring-worker"
+      + handler                        = "main.handler"
+      + id                             = (known after apply)
+      + invoke_arn                     = (known after apply)
+      + last_modified                  = (known after apply)
+      + memory_size                    = 1024
+      + package_type                   = "Zip"
+      + publish                        = false
+      + qualified_arn                  = (known after apply)
+      + qualified_invoke_arn           = (known after apply)
+      + reserved_concurrent_executions = 3
+      + role                           = (known after apply)
+      + runtime                        = "python3.12"
+      + s3_bucket                      = (sensitive value)
+      + s3_key                         = "lambda-code/scoring_worker/code.zip"
+      + signing_job_arn                = (known after apply)
+      + signing_profile_version_arn    = (known after apply)
+      + skip_destroy                   = false
+      + source_code_hash               = (sensitive value)
+      + source_code_size               = (known after apply)
+      + tags                           = {
+          + "Name" = "job-search-scoring-worker"
+        }
+      + tags_all                       = {
+          + "Environment" = "hackathon"
+          + "Name"        = "job-search-scoring-worker"
+          + "Project"     = "job-search-assistant"
+        }
+      + timeout                        = 30
+      + version                        = (known after apply)
+
+      + environment {
+          + variables = {
+              + "BEDROCK_MODEL_MID"              = (sensitive value)
+              + "BEDROCK_MODEL_SMALL"            = (sensitive value)
+              + "BEDROCK_REGION"                 = "us-east-1"
+              + "DYNAMODB_TABLE_EMPRESA"         = "Empresas"
+              + "DYNAMODB_TABLE_PERFIL"          = "Perfiles"
+              + "DYNAMODB_TABLE_USUARIO_VACANTE" = "UsuarioVacante"
+              + "DYNAMODB_TABLE_VACANTE"         = "Vacantes"
+              + "LOG_LEVEL"                      = "INFO"
+              + "PREFILTRO_TOKEN_THRESHOLD"      = "1"
+              + "SQS_QUEUE_SCORING_URL"          = "https://sqs.us-east-1.amazonaws.com/078716600427/scoring-queue"
+            }
+        }
+
+      + ephemeral_storage (known after apply)
+
+      + logging_config (known after apply)
+
+      + tracing_config (known after apply)
+    }
+
+  # module.s3_cloudfront.aws_cloudfront_distribution.frontend will be created
+  + resource "aws_cloudfront_distribution" "frontend" {
+      + arn                             = (known after apply)
+      + caller_reference                = (known after apply)
+      + comment                         = "Job Search Assistant Frontend SPA"
+      + continuous_deployment_policy_id = (known after apply)
+      + default_root_object             = "index.html"
+      + domain_name                     = (known after apply)
+      + enabled                         = true
+      + etag                            = (known after apply)
+      + hosted_zone_id                  = (known after apply)
+      + http_version                    = "http2"
+      + id                              = (known after apply)
+      + in_progress_validation_batches  = (known after apply)
+      + is_ipv6_enabled                 = true
+      + last_modified_time              = (known after apply)
+      + price_class                     = "PriceClass_100"
+      + retain_on_delete                = false
+      + staging                         = false
+      + status                          = (known after apply)
+      + tags                            = {
+          + "Purpose" = "Frontend SPA distribution"
+        }
+      + tags_all                        = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Purpose"     = "Frontend SPA distribution"
+        }
+      + trusted_key_groups              = (known after apply)
+      + trusted_signers                 = (known after apply)
+      + wait_for_deployment             = true
+
+      + custom_error_response {
+          + error_caching_min_ttl = 300
+          + error_code            = 403
+          + response_code         = 200
+          + response_page_path    = "/index.html"
+        }
+      + custom_error_response {
+          + error_caching_min_ttl = 300
+          + error_code            = 404
+          + response_code         = 200
+          + response_page_path    = "/index.html"
+        }
+
+      + default_cache_behavior {
+          + allowed_methods        = [
+              + "DELETE",
+              + "GET",
+              + "HEAD",
+              + "OPTIONS",
+              + "PATCH",
+              + "POST",
+              + "PUT",
+            ]
+          + cached_methods         = [
+              + "GET",
+              + "HEAD",
+            ]
+          + compress               = false
+          + default_ttl            = 3600
+          + max_ttl                = 86400
+          + min_ttl                = 0
+          + target_origin_id       = "s3-frontend"
+          + trusted_key_groups     = (known after apply)
+          + trusted_signers        = (known after apply)
+          + viewer_protocol_policy = "redirect-to-https"
+
+          + forwarded_values {
+              + headers                 = [
+                  + "*",
+                ]
+              + query_string            = true
+              + query_string_cache_keys = (known after apply)
+
+              + cookies {
+                  + forward           = "all"
+                  + whitelisted_names = (known after apply)
+                }
+            }
+
+          + grpc_config (known after apply)
+        }
+
+      + origin {
+          + connection_attempts      = 3
+          + connection_timeout       = 10
+          + domain_name              = (known after apply)
+          + origin_id                = "s3-frontend"
+            # (2 unchanged attributes hidden)
+
+          + s3_origin_config {
+              + origin_access_identity = (known after apply)
+            }
+        }
+
+      + restrictions {
+          + geo_restriction {
+              + locations        = (known after apply)
+              + restriction_type = "none"
+            }
+        }
+
+      + viewer_certificate {
+          + cloudfront_default_certificate = true
+          + minimum_protocol_version       = "TLSv1"
+        }
+    }
+
+  # module.s3_cloudfront.aws_cloudfront_origin_access_identity.frontend will be created
+  + resource "aws_cloudfront_origin_access_identity" "frontend" {
+      + arn                             = (known after apply)
+      + caller_reference                = (known after apply)
+      + cloudfront_access_identity_path = (known after apply)
+      + comment                         = "Job Search Assistant CloudFront OAI"
+      + etag                            = (known after apply)
+      + iam_arn                         = (known after apply)
+      + id                              = (known after apply)
+      + s3_canonical_user_id            = (known after apply)
+    }
+
+  # module.s3_cloudfront.aws_s3_bucket.frontend will be created
+  + resource "aws_s3_bucket" "frontend" {
+      + acceleration_status         = (known after apply)
+      + acl                         = (known after apply)
+      + arn                         = (known after apply)
+      + bucket                      = "job-search-frontend-mvp"
+      + bucket_domain_name          = (known after apply)
+      + bucket_prefix               = (known after apply)
+      + bucket_regional_domain_name = (known after apply)
+      + force_destroy               = true
+      + hosted_zone_id              = (known after apply)
+      + id                          = (known after apply)
+      + object_lock_enabled         = (known after apply)
+      + policy                      = (known after apply)
+      + region                      = (known after apply)
+      + request_payer               = (known after apply)
+      + tags                        = {
+          + "Purpose" = "Frontend static assets for React SPA"
+        }
+      + tags_all                    = {
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          + "Purpose"     = "Frontend static assets for React SPA"
+        }
+      + website_domain              = (known after apply)
+      + website_endpoint            = (known after apply)
+
+      + cors_rule (known after apply)
+
+      + grant (known after apply)
+
+      + lifecycle_rule (known after apply)
+
+      + logging (known after apply)
+
+      + object_lock_configuration (known after apply)
+
+      + replication_configuration (known after apply)
+
+      + server_side_encryption_configuration (known after apply)
+
+      + versioning (known after apply)
+
+      + website (known after apply)
+    }
+
+  # module.s3_cloudfront.aws_s3_bucket_policy.frontend will be created
+  + resource "aws_s3_bucket_policy" "frontend" {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + policy = (known after apply)
+    }
+
+  # module.s3_cloudfront.aws_s3_bucket_public_access_block.frontend will be created
+  + resource "aws_s3_bucket_public_access_block" "frontend" {
+      + block_public_acls       = true
+      + block_public_policy     = true
+      + bucket                  = (known after apply)
+      + id                      = (known after apply)
+      + ignore_public_acls      = true
+      + restrict_public_buckets = true
+    }
+
+  # module.s3_cloudfront.aws_s3_bucket_versioning.frontend will be created
+  + resource "aws_s3_bucket_versioning" "frontend" {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+
+      + versioning_configuration {
+          + mfa_delete = (known after apply)
+          + status     = "Enabled"
+        }
+    }
+
+  # module.ses.aws_ses_email_identity.sender_emails["Jurado1-deploy.kiro.1@gmail.com"] will be created
+  + resource "aws_ses_email_identity" "sender_emails" {
+      + arn   = (known after apply)
+      + email = "Jurado1-deploy.kiro.1@gmail.com"
+      + id    = (known after apply)
+    }
+
+  # module.ses.aws_ses_email_identity.sender_emails["Jurado2-deploy.kiro.2@gmail.com"] will be created
+  + resource "aws_ses_email_identity" "sender_emails" {
+      + arn   = (known after apply)
+      + email = "Jurado2-deploy.kiro.2@gmail.com"
+      + id    = (known after apply)
+    }
+
+  # module.ses.aws_ses_email_identity.sender_emails["dev1-herrerajaramillomiguelangel@gmail.com"] will be created
+  + resource "aws_ses_email_identity" "sender_emails" {
+      + arn   = (known after apply)
+      + email = "dev1-herrerajaramillomiguelangel@gmail.com"
+      + id    = (known after apply)
+    }
+
+  # module.ses.aws_ses_email_identity.sender_emails["dev2-jprestrepo346@gmail.com"] will be created
+  + resource "aws_ses_email_identity" "sender_emails" {
+      + arn   = (known after apply)
+      + email = "dev2-jprestrepo346@gmail.com"
+      + id    = (known after apply)
+    }
+
+  # module.sqs.aws_sqs_queue.scan_dlq will be updated in-place
+  ~ resource "aws_sqs_queue" "scan_dlq" {
+        id                                = "https://sqs.us-east-1.amazonaws.com/078716600427/scan-dlq"
+      ~ max_message_size                  = 1048576 -> 262144
+        name                              = "scan-dlq"
+      ~ receive_wait_time_seconds         = 0 -> 10
+      ~ tags                              = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Purpose"  = "Dead Letter Queue for scan jobs"
+        }
+      ~ tags_all                          = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Purpose"     = "Dead Letter Queue for scan jobs"
+        }
+        # (16 unchanged attributes hidden)
+    }
+
+  # module.sqs.aws_sqs_queue.scan_queue will be updated in-place
+  ~ resource "aws_sqs_queue" "scan_queue" {
+        id                                = "https://sqs.us-east-1.amazonaws.com/078716600427/scan-queue"
+      ~ max_message_size                  = 1048576 -> 262144
+      ~ message_retention_seconds         = 345600 -> 1209600
+        name                              = "scan-queue"
+      ~ receive_wait_time_seconds         = 0 -> 10
+      ~ tags                              = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Purpose"  = "Main queue for scan jobs"
+        }
+      ~ tags_all                          = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Purpose"     = "Main queue for scan jobs"
+        }
+      ~ visibility_timeout_seconds        = 360 -> 540
+        # (14 unchanged attributes hidden)
+    }
+
+  # module.sqs.aws_sqs_queue.scoring_dlq will be updated in-place
+  ~ resource "aws_sqs_queue" "scoring_dlq" {
+        id                                = "https://sqs.us-east-1.amazonaws.com/078716600427/scoring-dlq"
+      ~ max_message_size                  = 1048576 -> 262144
+        name                              = "scoring-dlq"
+      ~ receive_wait_time_seconds         = 0 -> 10
+      ~ tags                              = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Purpose"  = "Dead Letter Queue for scoring jobs"
+        }
+      ~ tags_all                          = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Purpose"     = "Dead Letter Queue for scoring jobs"
+        }
+        # (16 unchanged attributes hidden)
+    }
+
+  # module.sqs.aws_sqs_queue.scoring_queue will be updated in-place
+  ~ resource "aws_sqs_queue" "scoring_queue" {
+        id                                = "https://sqs.us-east-1.amazonaws.com/078716600427/scoring-queue"
+      ~ max_message_size                  = 1048576 -> 262144
+      ~ message_retention_seconds         = 345600 -> 1209600
+        name                              = "scoring-queue"
+      ~ receive_wait_time_seconds         = 0 -> 10
+      ~ tags                              = {
+          - "Entorno"  = "hackathon" -> null
+          - "Proyecto" = "job-search-assistant" -> null
+          + "Purpose"  = "Main queue for scoring jobs"
+        }
+      ~ tags_all                          = {
+          - "Entorno"     = "hackathon" -> null
+          + "Environment" = "hackathon"
+          + "Project"     = "job-search-assistant"
+          - "Proyecto"    = "job-search-assistant" -> null
+          + "Purpose"     = "Main queue for scoring jobs"
+        }
+        # (15 unchanged attributes hidden)
+    }
+
+Plan: 66 to add, 14 to change, 1 to destroy.
+
+Changes to Outputs:
+  + alerts_topic_arn                 = (known after apply)
+  + alerts_topic_name                = "job-search-alerts"
+  ~ all_lambda_arns                  = {
+      + api            = (known after apply)
+      + notificador    = (known after apply)
+      + orquestador    = (known after apply)
+      + scan_worker    = (known after apply)
+      + scoring_worker = (known after apply)
+    }
+  ~ all_lambda_names                 = {
+      ~ api            = null -> "job-search-api"
+      ~ notificador    = null -> "job-search-notificador"
+      ~ orquestador    = null -> "job-search-orquestador"
+      ~ scan_worker    = null -> "job-search-scan-worker"
+      ~ scoring_worker = null -> "job-search-scoring-worker"
+    }
+  + api_endpoint_url                 = (known after apply)
+  + api_execution_arn                = (known after apply)
+  + api_gateway_rest_api_id          = (known after apply)
+  + api_gateway_stage_name           = "prod"
+  + api_lambda_arn                   = (known after apply)
+  + api_lambda_name                  = "job-search-api"
+  + api_log_group_arn                = (known after apply)
+  + api_log_group_name               = "/aws/lambda/job-search-api"
+  + api_role_arn                     = (known after apply)
+  + billing_alarm_arn                = (known after apply)
+  + cloudfront_distribution_id       = (known after apply)
+  + cloudfront_domain_name           = (known after apply)
+  ~ cognito_app_client_id            = "c7dt8acog5t0ifssh05eq0gc4" -> (known after apply)
+  ~ cognito_hosted_ui_domain_url     = "https://job-search-assistant-mvp.auth.us-east-1.amazoncognito.com" -> (known after apply)
+  ~ deployment_summary               = {
+      + api_endpoint         = (known after apply)
+      ~ cognito_login_url    = "https://job-search-assistant-mvp.auth.us-east-1.amazoncognito.com" -> (known after apply)
+      ~ eventbridge_schedule = null -> "cron(0 8,12,18 * * ? *)"
+      + frontend_url         = (known after apply)
+      + github_actions_role  = (known after apply)
+      ~ lambda_functions     = {
+          ~ api            = null -> "job-search-api"
+          ~ notificador    = null -> "job-search-notificador"
+          ~ orquestador    = null -> "job-search-orquestador"
+          ~ scan_worker    = null -> "job-search-scan-worker"
+          ~ scoring_worker = null -> "job-search-scoring-worker"
+        }
+        # (2 unchanged attributes hidden)
+    }
+  + eventbridge_scheduler_arn        = (known after apply)
+  + eventbridge_scheduler_expression = "cron(0 8,12,18 * * ? *)"
+  + eventbridge_scheduler_name       = "job-search-orquestador-schedule"
+  + eventbridge_scheduler_state      = "ENABLED"
+  + github_actions_role_arn          = (known after apply)
+  + github_oidc_provider_arn         = (known after apply)
+  + lambda_duration_alarm_arn        = (known after apply)
+  + lambda_errors_alarm_arn          = (known after apply)
+  + notificador_lambda_arn           = (known after apply)
+  + notificador_lambda_name          = "job-search-notificador"
+  + notificador_log_group_arn        = (known after apply)
+  + notificador_log_group_name       = "/aws/lambda/job-search-notificador"
+  + notificador_role_arn             = (known after apply)
+  + orquestador_lambda_arn           = (known after apply)
+  + orquestador_lambda_name          = "job-search-orquestador"
+  + orquestador_log_group_arn        = (known after apply)
+  + orquestador_log_group_name       = "/aws/lambda/job-search-orquestador"
+  + orquestador_role_arn             = (known after apply)
+  ~ post_deployment_steps            = {
+      + cloudfront_cache     = (known after apply)
+      + cognito_callback_url = (known after apply)
+      + cognito_logout_url   = (known after apply)
+      + frontend_deployment  = (known after apply)
+      + github_actions       = (known after apply)
+        # (1 unchanged attribute hidden)
+    }
+  + s3_frontend_bucket_name          = (known after apply)
+  + scan_worker_lambda_arn           = (known after apply)
+  + scan_worker_lambda_name          = "job-search-scan-worker"
+  + scan_worker_log_group_arn        = (known after apply)
+  + scan_worker_log_group_name       = "/aws/lambda/job-search-scan-worker"
+  + scan_worker_role_arn             = (known after apply)
+  + scoring_worker_lambda_arn        = (known after apply)
+  + scoring_worker_lambda_name       = "job-search-scoring-worker"
+  + scoring_worker_log_group_arn     = (known after apply)
+  + scoring_worker_log_group_name    = "/aws/lambda/job-search-scoring-worker"
+  + scoring_worker_role_arn          = (known after apply)
+
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.

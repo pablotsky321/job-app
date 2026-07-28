@@ -149,6 +149,7 @@ module "lambda" {
   vacantes_table_name        = module.dynamodb.vacantes_table_name
   usuario_vacante_table_name = module.dynamodb.usuario_vacante_table_name
   scan_jobs_table_name       = module.dynamodb.scan_jobs_table_name
+  scan_jobs_table_stream_arn = module.dynamodb.scan_jobs_table_stream_arn
   suscripciones_table_name   = module.dynamodb.suscripciones_table_name
   perfiles_table_name        = module.dynamodb.perfiles_table_name
   entradas_table_name        = module.dynamodb.entradas_table_name

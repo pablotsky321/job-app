@@ -27,22 +27,17 @@
 #        --public-access-block-configuration \
 #        "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
 #
-# 4. Provide the bucket name in terraform.tfvars:
-#      terraform_state_bucket = "my-terraform-state-bucket"
+# 4. Provide the actual bucket/key/region/encrypt values in backend-config.hcl
+#    (this file is gitignored — see terraform/backend-config.hcl for the real values)
 #
-# The backend configuration uses variables, which requires the following init command:
-#   terraform init -backend-config="bucket=<BUCKET_NAME>" \
-#                  -backend-config="key=<KEY>" \
-#                  -backend-config="region=us-east-1" \
-#                  -backend-config="encrypt=true"
+# The block below is intentionally empty. All backend settings (bucket, key,
+# region, encrypt) are supplied at init time via the -backend-config flag:
 #
-# Alternatively, you can pass the backend config via environment:
-#   export TF_BACKEND_CONFIG_BUCKET="my-terraform-state-bucket"
-#   terraform init
+#   terraform init -backend-config=backend-config.hcl
 #
+# This keeps real deployment values (bucket name, etc.) out of committed files,
+# consistent with how terraform.tfvars is handled.
 
 terraform {
-  backend "local" {
-    path = "terraform.tfstate"
-  }
+  backend "s3" {}
 }

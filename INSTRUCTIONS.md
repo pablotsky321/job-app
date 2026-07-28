@@ -1,5 +1,39 @@
 # Job Search Assistant - Manual AWS Setup Instructions
 
+## KNOWN BLOCKER — Read Before Deploying
+
+**This is a cross-spec dependency gap, not a Terraform problem.** The Terraform
+spec provisions all 5 Lambda functions correctly (roles, event source mappings,
+env vars, timeouts). But the backend code that gets zipped into 3 of those 5
+functions does not yet exist or does not match the Lambda entry point
+convention Terraform assumes. Specifically:
+
+- **`backend/workers/orquestador/` is an EMPTY directory.** No orquestador
+  Lambda implementation exists at all. The EventBridge Scheduler will
+  successfully invoke this Lambda on schedule, but there is no code to run.
+- **`backend/workers/scan_worker.py` and `backend/workers/scoring_worker.py`**
+  are flat modules with NO `handler()` function matching the Lambda entry
+  point convention (`main.handler`) that `modules/lambda/main.tf` assumes.
+  They cannot be packaged as-is.
+- **`backend/workers/notificador/handler.py`** DOES have a working
+  `handler(event, context)` function, but at path
+  `backend.workers.notificador.handler.handler`, not `main.handler` — this
+  Terraform-side fix has already been applied in `modules/lambda/main.tf`.
+- **`backend/main.py`** has `handler()` and is close to packageable for the
+  `api` function, but the deployment zip must preserve the `backend/` package
+  structure (not flatten it), since imports use `from backend.shared...`.
+  This is a packaging note, not a missing-code gap.
+
+**Bottom line:** `terraform apply` will create all 5 Lambda functions
+successfully (metadata only), but invoking `orquestador`, `scan-worker`, or
+`scoring-worker` will fail at runtime with an import/handler-not-found error
+until their respective backend specs (`backend-core`, `backend-scan-y-scoring`)
+implement matching `handler()` entry points. **This is NOT a Terraform gap** —
+it is a cross-spec dependency that must be resolved in the backend code specs
+before a real end-to-end deployment works.
+
+---
+
 ## Overview
 
 This document provides step-by-step instructions for all manual AWS setup that cannot be automated with Terraform. These steps must be completed **before** and **after** running `terraform apply`.
@@ -13,6 +47,12 @@ This document provides step-by-step instructions for all manual AWS setup that c
 ### 1. Create S3 Backend Bucket for Terraform State
 
 Terraform cannot manage its own backend bucket, so you must create this manually.
+
+> **Note:** For this deployment, the bucket has already been created manually
+> under the name `job-search-terraform-state-5543569870`. The
+> `job-search-terraform-state-YOUR_ACCOUNT_ID` placeholder pattern below is
+> kept as generic documentation for future re-deployments to a different AWS
+> account.
 
 #### Prerequisites
 

@@ -6,37 +6,100 @@
 
 ## Overview
 
-The Terraform plan has been generated and saved to `tfplan`. This summary reviews what the plan shows:
-- ✅ 15 existing resources ready to import
-- ✅ 20+ new resources planned for creation
-- ✅ No unexpected deletions
-- ✅ No errors in the plan output
+**UPDATE (bucket created, fresh plan captured):** The Terraform state bucket
+was manually created by the user under the real (globally-unique) name
+`job-search-terraform-state-5543569870`, resolving the earlier 403 blocker
+described below. `terraform init -backend-config=backend-config.hcl -reconfigure`
+now succeeds, and a fresh `terraform plan -out=tfplan` was run against this
+backend with **no errors**.
+
+**Actual result (this session):**
+
+```
+Plan: 80 to add, 0 to change, 0 to destroy.
+```
+
+The plan was saved to `terraform/tfplan`. All 80 resources are net-new
+creates — none of the "15 existing resources to import" were actually
+present in state, so nothing showed as "0 changes" for imports; the import
+step (`scripts/import_resources.sh` / `IMPORT_INSTRUCTIONS.md`) still needs
+to be run separately if those 15 pre-existing AWS resources (DynamoDB tables,
+SQS queues, Cognito User Pool/Client/Domain, Resource Group) should be
+adopted into state instead of recreated. **The historical resource counts
+below (74/75/"20+") were stale and are replaced with the real breakdown from
+this plan.**
+
+**Historical context (previous session, now resolved):** `terraform init`
+previously succeeded in configuring the S3 backend, but the subsequent state
+read failed with:
+
+```
+Error: Unable to access object "terraform.tfstate" in S3 bucket "job-search-terraform-state":
+operation error S3: HeadObject ... api error Forbidden: Forbidden
+```
+
+The IAM user running this (`arn:aws:iam::078716600427:user/ProgramacionMiguel`)
+has `AdministratorAccess`, and `aws s3api list-buckets` for this account
+showed only `aws-glue-assets-078716600427-us-east-1` and
+`nyc-mobility-lake-miguel-01` — the bucket `job-search-terraform-state`
+(without suffix) did not exist in this account. **Resolution:** the user
+manually created the bucket with an account-ID suffix,
+`job-search-terraform-state-5543569870`, with versioning enabled, and
+`terraform/backend-config.hcl` / `terraform/terraform.tfvars` were updated to
+reference it. The fresh plan below was captured against this real bucket.
 
 ---
 
 ## Resource Creation Summary
 
-**Total Resources Planned:** 75 create actions
+**Total Resources Planned (verified, this session):** 80 create actions, 0 to change, 0 to destroy
 
-### Breakdown by Resource Type:
+### Breakdown by Resource Type (from `terraform show tfplan`):
 
-| Resource Type | Count | Purpose |
-|---|---|---|
-| **IAM Roles** | 8 | 5 Lambda execution roles + EventBridge scheduler role + GitHub Actions OIDC role |
-| **IAM Role Policies** | 8 | Minimal-privilege policies for each role |
-| **DynamoDB Tables** | 7 | Empresas, Vacantes, UsuarioVacante, Entradas, Perfiles, Suscripciones, ScanJobs |
-| **Lambda Functions** | 5 | api, orquestador, scan-worker, scoring-worker, notificador |
-| **SQS Queues** | 4 | scan-queue, scan-dlq, scoring-queue, scoring-dlq |
-| **CloudWatch Log Groups** | 5 | One per Lambda function (7-day retention) |
-| **API Gateway Resources** | 10 | REST API, resource proxy, methods, integrations, deployment, stage, authorizer, account config |
-| **CloudWatch Metric Alarms** | 3 | Lambda errors, Lambda duration, Billing alarm |
-| **CloudFront** | 4 | Distribution, Origin Access Identity, S3 bucket policy, S3 bucket config |
-| **S3** | 3 | Frontend bucket, versioning, public access block |
-| **SES** | 1 | Email identity resource |
-| **EventBridge Scheduler** | 1 | Schedule resource for orquestador trigger |
-| **Cognito** | 3 | User Pool, App Client, Hosted UI Domain |
-| **SNS** | 1 | Alerts topic for CloudWatch alarms |
-| **Resource Group** | 1 | job-search-assistant resource group |
+| Resource Type | Count |
+|---|---|
+| `aws_iam_role` | 8 |
+| `aws_iam_role_policy` | 8 |
+| `aws_dynamodb_table` | 7 |
+| `aws_cloudwatch_log_group` | 5 |
+| `aws_lambda_function` | 5 |
+| `aws_sqs_queue` | 4 |
+| `aws_api_gateway_method` | 4 |
+| `aws_api_gateway_integration` | 4 |
+| `aws_ses_email_identity` | 4 |
+| `aws_cloudwatch_metric_alarm` | 3 |
+| `aws_lambda_event_source_mapping` | 3 |
+| `aws_api_gateway_method_response` | 2 |
+| `aws_api_gateway_integration_response` | 2 |
+| `aws_resourcegroups_group` | 1 |
+| `aws_cloudfront_distribution` | 1 |
+| `aws_cloudfront_origin_access_identity` | 1 |
+| `aws_s3_bucket` | 1 |
+| `aws_s3_bucket_versioning` | 1 |
+| `aws_s3_bucket_policy` | 1 |
+| `aws_s3_bucket_public_access_block` | 1 |
+| `aws_api_gateway_resource` | 1 |
+| `aws_api_gateway_rest_api` | 1 |
+| `aws_api_gateway_stage` | 1 |
+| `aws_api_gateway_method_settings` | 1 |
+| `aws_api_gateway_account` | 1 |
+| `aws_api_gateway_authorizer` | 1 |
+| `aws_api_gateway_deployment` | 1 |
+| `aws_cognito_user_pool` | 1 |
+| `aws_cognito_user_pool_client` | 1 |
+| `aws_cognito_user_pool_domain` | 1 |
+| `aws_scheduler_schedule` | 1 |
+| `aws_iam_openid_connect_provider` | 1 |
+| `aws_lambda_permission` | 1 |
+| `aws_sns_topic` | 1 |
+| **Total** | **80** |
+
+Note: this plan creates all resources fresh (including the 7 DynamoDB
+tables, 4 SQS queues, and 3 Cognito resources that already exist manually in
+AWS). Running `terraform apply` on this plan as-is would attempt to create
+duplicates and fail on the already-existing resources. The import step
+described in `scripts/IMPORT_INSTRUCTIONS.md` must be run first to bring
+those 15 existing resources into state before a clean apply.
 
 ---
 

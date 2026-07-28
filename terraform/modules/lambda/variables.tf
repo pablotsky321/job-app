@@ -76,6 +76,11 @@ variable "scan_jobs_table_name" {
   type        = string
 }
 
+variable "scan_jobs_table_stream_arn" {
+  description = "ARN of the ScanJobs DynamoDB table stream (NEW_AND_OLD_IMAGES), used to trigger the notificador Lambda"
+  type        = string
+}
+
 # ============================================================================
 # SQS Queue URLs (from sqs module)
 # ============================================================================

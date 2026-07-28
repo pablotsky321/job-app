@@ -200,6 +200,13 @@ resource "aws_dynamodb_table" "scan_jobs" {
     enabled        = true
   }
 
+  # DynamoDB Streams — drives the notificador Lambda's detection of scan job
+  # status transitions (e.g. RUNNING -> DONE). NEW_AND_OLD_IMAGES is required
+  # (not just NEW_IMAGE) because notificador must compare old vs new status
+  # to detect the transition, not just read the current value.
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
   lifecycle {
     prevent_destroy = true
   }

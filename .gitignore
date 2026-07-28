@@ -51,6 +51,7 @@ htmlcov/
 terraform.tfstate
 terraform.tfstate.lock.hcl
 terraform.tfvars
+backend-config.hcl
 override.tf
 crash.log
 

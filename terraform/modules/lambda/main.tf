@@ -45,10 +45,16 @@
 resource "aws_lambda_function" "api" {
   function_name = "job-search-api"
   role          = var.api_role_arn
-  handler       = "main.handler"
-  runtime       = "python3.12"
-  timeout       = 10
-  memory_size   = 512
+  # FLAGGED (not silently fixed): backend/main.py defines handler() at module
+  # level and imports use "from backend.shared...", so if the deployment zip
+  # preserves the backend/ package structure (not flattened), this handler
+  # string may need to become "backend.main.handler" instead of "main.handler"
+  # — same-shape concern as the notificador fix above. This depends on how
+  # the CI/CD packaging step (outside this Terraform module) builds the zip.
+  handler     = "main.handler"
+  runtime     = "python3.12"
+  timeout     = 10
+  memory_size = 512
 
   # Code packaging: reference S3 object
   # The .zip file is expected to be at:
@@ -293,10 +299,14 @@ resource "aws_lambda_function" "scoring_worker" {
 resource "aws_lambda_function" "notificador" {
   function_name = "job-search-notificador"
   role          = var.notificador_role_arn
-  handler       = "main.handler"
-  runtime       = "python3.12"
-  timeout       = 30
-  memory_size   = 512
+  # NOTE: real code lives at backend/workers/notificador/handler.py exposing
+  # handler(event, context). If the deployment zip preserves the backend/
+  # package structure (not flattened), the Lambda handler string must be the
+  # dotted module path to that function, not the generic "main.handler".
+  handler     = "backend.workers.notificador.handler.handler"
+  runtime     = "python3.12"
+  timeout     = 30
+  memory_size = 512
 
   # Code packaging: reference S3 object
   s3_bucket = var.lambda_code_bucket
@@ -317,4 +327,39 @@ resource "aws_lambda_function" "notificador" {
   tags = {
     Name = "job-search-notificador"
   }
+}
+
+# ============================================================================
+# Event Source Mappings — SQS triggers for scan-worker and scoring-worker
+# ============================================================================
+#
+# Without these, the scan-queue and scoring-queue SQS queues and their
+# respective Lambda functions would both deploy successfully but the workers
+# would never receive a single message (queues exist, but nothing polls them).
+
+resource "aws_lambda_event_source_mapping" "scan_worker_sqs" {
+  event_source_arn = var.scan_queue_arn
+  function_name    = aws_lambda_function.scan_worker.arn
+  batch_size       = 1
+}
+
+resource "aws_lambda_event_source_mapping" "scoring_worker_sqs" {
+  event_source_arn = var.scoring_queue_arn
+  function_name    = aws_lambda_function.scoring_worker.arn
+  batch_size       = 1
+}
+
+# ============================================================================
+# Event Source Mapping — DynamoDB Streams trigger for notificador
+# ============================================================================
+#
+# ScanJobs table stream (NEW_AND_OLD_IMAGES) drives notificador's detection of
+# status transitions (e.g. RUNNING -> DONE). Without this mapping, notificador
+# has working code but no trigger — this was an explicit infra gap noted in
+# backend/workers/notificador/handler.py's own docstring.
+
+resource "aws_lambda_event_source_mapping" "notificador_dynamodb_stream" {
+  event_source_arn  = var.scan_jobs_table_stream_arn
+  function_name     = aws_lambda_function.notificador.arn
+  starting_position = "LATEST"
 }

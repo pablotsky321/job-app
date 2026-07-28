@@ -398,6 +398,18 @@ resource "aws_iam_role_policy" "notificador_policy" {
           "ses:SendRawEmail"
         ]
         Resource = "*"
+      },
+      # DynamoDB Streams - read scan job status transitions from ScanJobs table
+      # Required for the notificador Lambda's DynamoDB Streams event source mapping
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:DescribeStream",
+          "dynamodb:ListStreams"
+        ]
+        Resource = "arn:aws:dynamodb:*:*:table/ScanJobs/stream/*"
       }
     ]
   })

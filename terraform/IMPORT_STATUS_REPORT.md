@@ -57,7 +57,7 @@ to point the command to a specific state location.
 
 | Category | Count | Details |
 |----------|-------|---------|
-| **IAM** | 16 | 8 roles + 8 policies (Lambda, EventBridge, GitHub Actions OIDC) |
+| **IAM** | 16 | 8 roles (5 Lambda execution roles + EventBridge Scheduler invoke role + GitHub Actions OIDC role + API Gateway CloudWatch logging role) + 8 policies |
 | **Lambda** | 5 | api, orquestador, scan-worker, scoring-worker, notificador |
 | **DynamoDB** | 7 | Tables: Empresas, Vacantes, UsuarioVacante, Entradas, Perfiles, Suscripciones, ScanJobs |
 | **SQS** | 4 | Queues: scan-queue, scan-dlq, scoring-queue, scoring-dlq |
@@ -191,7 +191,7 @@ terraform import aws_dynamodb_table.Empresas Empresas
 - [x] DynamoDB - All 7 tables with correct schema, `prevent_destroy=true`
 - [x] SQS - All 4 queues with correct visibility timeouts (540s, 180s)
 - [x] Lambda - All 5 functions with correct runtime, memory, timeouts, concurrency
-- [x] IAM - All 8 roles with minimal-privilege policies
+- [x] IAM - All 8 roles (5 Lambda execution roles + EventBridge Scheduler invoke role + GitHub Actions OIDC role + API Gateway CloudWatch logging role) with minimal-privilege policies
 - [x] API Gateway - Cognito authorizer configured, proxy integration set
 - [x] CloudFront - SPA error routing configured (403/404 → /index.html)
 - [x] CloudWatch - 7-day log retention, alarms configured

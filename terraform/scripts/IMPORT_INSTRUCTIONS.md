@@ -53,11 +53,11 @@ Before running the import script, ensure the following:
    - Create in us-east-1 with versioning enabled:
    ```bash
    aws s3api create-bucket \
-     --bucket job-search-terraform-state \
+     --bucket job-search-terraform-state-5543569870 \
      --region us-east-1
    
    aws s3api put-bucket-versioning \
-     --bucket job-search-terraform-state \
+     --bucket job-search-terraform-state-5543569870 \
      --versioning-configuration Status=Enabled
    ```
 
