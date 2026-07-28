@@ -77,6 +77,8 @@ La clave es la URL, no empresa+cargo+ubicación (título/ubicación los produce 
 | `cvGeneratedAt` | S | |
 | `updatedAt` | S | |
 
+> **Nota (desactualizado):** el valor `archivada` listado arriba fue una intención de diseño original que nunca se materializó en el código real. El backend implementado (`backend-vacantes-y-notificaciones/tasks.md`, tarea 1.1, y su `requirements.md`) persiste `estado` con exactamente estos cuatro valores: `nueva` \| `vista` \| `aplicada` \| `filtered_out`. `filtered_out` se asigna cuando el Scoring_Worker descarta una vacante por el Prefiltro_Cargos. Ver también `.kiro/specs/frontend-spa/design.md` (tipo `VacancyListItem`), que ya usa los valores reales.
+
 Sin GSI intencionalmente: se consulta por `userId` y se filtra/ordena en la Lambda.
 
 ### `Entradas` (banco de preguntas y notas)
