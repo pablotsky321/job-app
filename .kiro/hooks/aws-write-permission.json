@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "AWS Write Command Authorization",
+      "trigger": "PreToolUse",
+      "description": "Pide confirmación para comandos AWS/Terraform de escritura, pero permite lecturas sin preguntar",
+      "matcher": "execute_pwsh",
+      "action": {
+        "type": "command",
+        "command": "powershell -NoProfile -Command \"\nparam($input)\n\\$json = \\$input | ConvertFrom-Json\n\\$cmd = \\$json.toolInput.command\n\n# Comandos de solo lectura (no requieren confirmación)\n\\$readOnlyPatterns = @(\n    'aws\\s+\\w+\\s+describe',\n    'aws\\s+\\w+\\s+get',\n    'aws\\s+\\w+\\s+list',\n    'aws\\s+\\w+\\s+query',\n    'aws\\s+ec2\\s+describe',\n    'terraform\\s+plan',\n    'terraform\\s+show',\n    'terraform\\s+validate'\n)\n\n# Comandos de escritura (requieren confirmación)\n\\$writePatterns = @(\n    'aws\\s+\\w+\\s+create',\n    'aws\\s+\\w+\\s+put',\n    'aws\\s+\\w+\\s+update',\n    'aws\\s+\\w+\\s+delete',\n    'aws\\s+\\w+\\s+modify',\n    'terraform\\s+apply',\n    'terraform\\s+destroy'\n)\n\n\\$isReadOnly = \\$false\n\\$isWrite = \\$false\n\nforeach (\\$pattern in \\$readOnlyPatterns) {\n    if (\\$cmd -match \\$pattern) {\n        \\$isReadOnly = \\$true\n        break\n    }\n}\n\nforeach (\\$pattern in \\$writePatterns) {\n    if (\\$cmd -match \\$pattern) {\n        \\$isWrite = \\$true\n        break\n    }\n}\n\nif (\\$isWrite -and -not \\$isReadOnly) {\n    \\$output = @{\n        hookSpecificOutput = @{\n            permissionDecision = 'ask'\n            permissionDecisionReason = 'Este es un comando AWS/Terraform de escritura que puede modificar recursos'\n        }\n    }\n    Write-Output (\\$output | ConvertTo-Json)\n    exit 0\n} else {\n    exit 0\n}\n\"",
+        "timeout": 10
+      }
+    }
+  ]
+}
