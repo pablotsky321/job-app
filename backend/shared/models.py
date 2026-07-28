@@ -146,6 +146,14 @@ class Empresa(BaseModel):
     consecutiveFailures: int = Field(
         default=0, description="Count of consecutive failed scan attempts"
     )
+    boardToken: Optional[str] = Field(
+        default=None,
+        description="Board token for greenhouse/lever API (extracted from careersUrl or set manually)",
+    )
+    ultimoOrigenExitoso: Optional[str] = Field(
+        default=None,
+        description="Last successful extraction origin: 'board_api' | 'json_ld' | 'html_llm'",
+    )
     createdAt: datetime = Field(
         default_factory=datetime.utcnow, description="Timestamp when company was added"
     )
@@ -242,8 +250,120 @@ class Perfiles(BaseModel):
 
 
 # ============================================================================
-# VACANTES TABLE SHAPE (for reference, used by workers)
+# USUARIO-VACANTE TABLE SHAPE
 # ============================================================================
+
+
+class UsuarioVacante(BaseModel):
+    """User-vacancy relationship and scoring details.
+
+    PK: userId (S), SK: {companyId}#{vacancyId} (S). No GSI.
+    Requirements: 1.9, 1.10, 2.1, 3.7, 4.1, 5.6, 6.3, 17.5, 18.1
+    """
+
+    userId: str = Field(..., description="User ID (from JWT sub claim)")
+    companyId: str = Field(..., description="Company ID (SHA-256 hash)")
+    vacancyId: str = Field(..., description="Vacancy ID (SHA-256 of normalized URL)")
+    estado: str = Field(
+        ...,
+        description="'nueva' | 'vista' | 'aplicada' | 'filtered_out'",
+    )
+    score: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=100,
+        description="Match score 0-100; null if filtered_out or pending",
+    )
+    scoreDetalle: Optional[dict] = Field(
+        default=None,
+        description="ScoringResult dict (veredicto, coincidencias, faltantes, resumen)",
+    )
+    scoreProfileVersion: Optional[int] = Field(
+        default=None,
+        description="Profile version when score was computed (for staleness detection)",
+    )
+    cvAtsTexto: Optional[str] = Field(
+        default=None,
+        description="Generated ATS-optimized CV text for this vacancy",
+    )
+    cvGeneratedAt: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp when cvAtsTexto was generated",
+    )
+    appliedAt: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp when user marked this vacancy as applied",
+    )
+    createdAt: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp when record was created"
+    )
+    updatedAt: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp of last update"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class ScoringMessage(BaseModel):
+    """Message payload for SQS_Scoring queue.
+
+    Published by Scan_Worker, consumed by Scoring_Worker.
+    Requirement 12.4: One message per (userId, Vacante) pair of NEW vacancy.
+    """
+
+    userId: str = Field(..., description="User ID (from JWT sub claim)")
+    vacancyId: str = Field(..., description="Vacancy ID (SHA-256 of normalized URL, 64 hex chars)")
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class BedRockExtractVacancyOutput(BaseModel):
+    """Pydantic model for validating Bedrock's vacancy extraction output.
+
+    Used by Manual_Vacancy_Service to validate the LLM extraction of job posting fields
+    from pasted text.
+    Requirements: 3.1, 10.1
+    """
+
+    titulo: str = Field(..., min_length=1, description="Job title extracted from text")
+    descripcion: str = Field(..., min_length=1, description="Job description extracted from text")
+    modalidad: str = Field(default="sin_dato", description="Work modality (remote/hybrid/onsite/sin_dato)")
+    ubicacion: str = Field(default="", description="Job location extracted from text")
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class CVATSOutput(BaseModel):
+    """Output from Bedrock for ATS-optimized CV generation.
+
+    Requirements: 5.4, 10.1
+    """
+
+    texto: str = Field(..., min_length=1, description="Plain text CV-ATS (no tables, no columns)")
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class ScoringResult(BaseModel):
+    """Output from Bedrock_Client scoring invocation.
+
+    Validates score, veredicto, coincidencias, faltantes, resumen.
+    Requirements: 1.10, 17.1
+    """
+
+    score: int = Field(..., ge=0, le=100, description="Match score 0-100")
+    veredicto: str = Field(
+        ..., description="'excelente' | 'buen_encaje' | 'parcial' | 'bajo'"
+    )
+    coincidencias: List[str] = Field(
+        default_factory=list, description="Matched requirements/skills"
+    )
+    faltantes: List[str] = Field(
+        default_factory=list, description="Missing requirements/skills"
+    )
+    resumen: str = Field(..., description="Short match summary")
+
+    model_config = ConfigDict(extra="ignore")
 
 
 class Vacante(BaseModel):
@@ -280,5 +400,40 @@ class Vacante(BaseModel):
         default=False,
         description="Whether posting has been marked as closed (missCount >= 2, origen != 'manual')",
     )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+# ============================================================================
+# ENTRADAS TABLE SHAPE
+# ============================================================================
+
+
+class Entrada(BaseModel):
+    """User entry (questions or interview notes) for a vacancy.
+
+    PK: {userId}#{companyId}#{vacancyId} (S), SK: entryId (S, ULID). No GSI.
+    Requirements: 6.3
+    """
+
+    pk: str = Field(
+        ..., description="Partition key: {userId}#{companyId}#{vacancyId}"
+    )
+    entryId: str = Field(..., description="Entry ID (ULID string)")
+    tipo: str = Field(
+        ..., description="'preguntas' | 'nota_entrevista'"
+    )
+    contenido: str = Field(..., description="Entry content text")
+    createdAt: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp when entry was created"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class SuggestedAnswerOutput(BaseModel):
+    """Output from Bedrock for suggested interview answer."""
+
+    respuesta: str = Field(..., min_length=1, description="Suggested interview answer")
 
     model_config = ConfigDict(extra="ignore")

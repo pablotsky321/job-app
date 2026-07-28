@@ -3,7 +3,7 @@ Pure text processing functions for HTML and content normalization.
 
 No AWS calls, no network calls. 100% testable with deterministic inputs/outputs.
 
-**Requirements: 7.5**
+**Requirements: 5.3, 7.5**
 
 Functions:
 - html_to_clean_text(html: str) -> str: BeautifulSoup with html.parser
@@ -11,6 +11,7 @@ Functions:
 - extract_page_title(html: str) -> str | None: Extract <title> tag content
 - extract_json_ld(html: str) -> dict | None: Parse application/ld+json block
 - extract_careers_url_from_html(html: str, base_url: str) -> str | None: Find href matching 'career' or 'job'
+- detect_language(titulo: str, descripcion: str) -> str: Heuristic language detection (es/en)
 """
 
 import json
@@ -210,3 +211,75 @@ def extract_careers_url_from_html(html: str, base_url: str) -> Optional[str]:
         return None
     except Exception:
         return None
+
+
+import re as _re
+
+
+# ============================================================================
+# LANGUAGE DETECTION HEURISTIC
+# ============================================================================
+
+# Spanish indicator words (common in job postings)
+_SPANISH_INDICATORS = {
+    "empresa", "experiencia", "requisitos", "trabajo", "ingeniero",
+    "desarrollador", "ubicación", "ubicacion", "modalidad",
+    "responsabilidades", "habilidades", "conocimientos", "años",
+    "remoto", "híbrido", "hibrido", "presencial", "puesto",
+    "vacante", "descripción", "descripcion", "salario", "beneficios",
+    "contrato", "jornada", "funciones", "perfil", "profesional",
+}
+
+# English indicator words (common in job postings)
+_ENGLISH_INDICATORS = {
+    "company", "experience", "requirements", "work", "engineer",
+    "developer", "location", "responsibilities", "skills",
+    "knowledge", "years", "remote", "hybrid", "onsite", "position",
+    "vacancy", "description", "salary", "benefits", "contract",
+    "schedule", "role", "team", "about", "qualifications",
+    "proficiency", "collaborate", "opportunity", "apply",
+}
+
+
+def detect_language(titulo: str, descripcion: str) -> str:
+    """
+    Detect language of a vacancy from its title and description using keyword heuristics.
+
+    Counts matches of Spanish and English indicator words in the combined text.
+    Returns "en" if English indicators win, otherwise defaults to "es" (Spanish).
+
+    Args:
+        titulo: Vacancy title
+        descripcion: Vacancy description
+
+    Returns:
+        "en" if English detected, "es" otherwise (default for tie, empty, or ambiguous)
+
+    Requirements: 5.3
+
+    Examples:
+        >>> detect_language("Desarrollador Backend", "Requisitos: experiencia en Python")
+        "es"
+        >>> detect_language("Backend Developer", "Requirements: experience with Python")
+        "en"
+        >>> detect_language("", "")
+        "es"
+    """
+    # Combine and normalize text
+    combined = f"{titulo or ''} {descripcion or ''}".lower()
+
+    if not combined.strip():
+        return "es"
+
+    # Tokenize: split on non-alphanumeric (supports accented chars)
+    words = set(_re.findall(r"[a-záéíóúñü]+", combined))
+
+    spanish_count = len(words & _SPANISH_INDICATORS)
+    english_count = len(words & _ENGLISH_INDICATORS)
+
+    # English wins only if strictly more matches than Spanish
+    if english_count > spanish_count:
+        return "en"
+
+    # Default: Spanish (tie, undetermined, empty)
+    return "es"

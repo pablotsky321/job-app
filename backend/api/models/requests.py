@@ -75,3 +75,25 @@ class ToggleSubscriptionRequest(BaseModel):
     activa: bool = Field(..., description="Whether the subscription is active (true) or inactive (false)")
 
     model_config = ConfigDict(extra="ignore")
+
+
+class ManualVacancyRequest(BaseModel):
+    """Request body for POST /me/vacancies/manual.
+    
+    Contains pasted job posting text, URL, and company name for manual vacancy registration.
+    """
+
+    textoPegado: str = Field(..., min_length=1, max_length=20000, description="Pasted job posting text (1-20000 chars)")
+    enlace: str = Field(..., description="Job posting URL (absolute http/https)")
+    nombreEmpresa: str = Field(..., min_length=1, max_length=200, description="Company name (1-200 chars after trim)")
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class CreateEntryRequest(BaseModel):
+    """Request body for POST /me/vacancies/{companyId}/{vacancyId}/entries."""
+
+    tipo: str = Field(..., description="Entry type: 'preguntas' or 'nota_entrevista'")
+    contenido: str = Field(..., min_length=1, max_length=5000, description="Entry content (1-5000 chars)")
+
+    model_config = ConfigDict(extra="ignore")
