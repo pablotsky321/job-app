@@ -14,14 +14,14 @@ Terraform, frontend, and `.docx` generation are out of scope. Infrastructure (Ev
 
 ## Tasks
 
-- [ ] 1. Extend shared domain models for this feature
+- [x] 1. Extend shared domain models for this feature
   - 1.1 Add `UsuarioVacante` and `Entrada` Pydantic models to `backend/shared/models.py`
     - Add `UsuarioVacante`: `userId`, `companyId`, `vacancyId`, `estado` (`nueva`/`vista`/`aplicada`/`filtered_out`), `score` (Optional), `scoreProfileVersion` (Optional), `cvAtsTexto` (Optional), `cvGeneratedAt` (Optional), `appliedAt` (Optional), `createdAt`, using `ConfigDict(extra="ignore")` per project convention
     - Add `Entrada`: `pk` (`{userId}#{companyId}#{vacancyId}`), `entryId` (ULID string), `tipo` (`preguntas`/`nota_entrevista`), `contenido`, `createdAt`, using `ConfigDict(extra="ignore")`
     - Do NOT redefine `Empresa`, `Vacante`, `ScanJob`, `Suscripcion`, or `Perfiles` — those remain owned by `backend-core` / `backend-scan-y-scoring`; only add the two models this spec introduces
     - _Requirements: Glossary (UsuarioVacante, Entradas), 1.10, 2.1, 3.7, 4.1, 5.6, 6.3, tech rule 5_
 
-- [ ] 2. Implement Vacancy_Listing_API (`GET /me/vacancies`)
+- [x] 2. Implement Vacancy_Listing_API (`GET /me/vacancies`)
   - 2.1 Implement pure filter/sort/staleness function
     - In `backend/shared/services/vacancy_service.py`, implement `build_vacancy_listing(usuario_vacantes: list[dict], vacantes_by_id: dict, profile_version: int | None, estado_filter: str) -> list[dict]` (or equivalent), taking only plain dicts/values, with no I/O
     - Filters records: `activas` → estado ∈ {nueva, vista}; `aplicadas` → estado == aplicada
@@ -42,7 +42,7 @@ Terraform, frontend, and `.docx` generation are out of scope. Infrastructure (Ev
     - Log structured JSON without vacancy descriptions, profile content, or PII (opaque `userId` only)
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.9, 1.10, 1.11, 9.1, 9.2, 9.3, 9.4, 11.1, 11.2, 11.3_
 
-- [ ] 3. Implement Vacancy_Detail_API (`GET /me/vacancies/{companyId}/{vacancyId}`)
+- [x] 3. Implement Vacancy_Detail_API (`GET /me/vacancies/{companyId}/{vacancyId}`)
   - 3.1 Implement the endpoint in `backend/api/routes/vacancies.py`
     - Extract `userId` from JWT (401 if claim missing)
     - Read `Vacante` by `(companyId, vacancyId)`, `UsuarioVacante` by `(userId, {companyId}#{vacancyId})`, and `Empresa` by `companyId`; return 404 if any is missing
@@ -51,9 +51,9 @@ Terraform, frontend, and `.docx` generation are out of scope. Infrastructure (Ev
     - Return the same response structure for `cerrada` vacancies as for open ones (no special-casing)
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 9.1, 9.2, 9.3, 9.4, 11.1, 11.2, 11.3_
 
-- [ ] 4. Checkpoint - Ensure all tests pass, ask the user if questions arise.
+- [x] 4. Checkpoint - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Implement Manual_Vacancy_Service (`POST /me/vacancies/manual`)
+- [x] 5. Implement Manual_Vacancy_Service (`POST /me/vacancies/manual`)
   - 5.1 Implement the `POST /me/vacancies/manual` endpoint
     - Add `ManualVacancyRequest` to `backend/api/models/requests.py`: `textoPegado` (1-20000 chars), `enlace` (absolute http/https URL), `nombreEmpresa` (1-200 chars after trim)
     - Add endpoint to `backend/api/routes/vacancies.py`; validate input per the above constraints, returning HTTP 400 with a descriptive message and creating no records on failure
@@ -65,14 +65,14 @@ Terraform, frontend, and `.docx` generation are out of scope. Infrastructure (Ev
     - Never make an HTTP request to `enlace`; persist it only in `Vacante.url`
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12, 9.1, 9.2, 9.3, 9.4, 10.1, 10.2, 10.3, 10.4, 11.1, 11.2, 11.3, 11.4_
 
-- [ ] 6. Implement Apply_Service (`POST /me/vacancies/{companyId}/{vacancyId}/apply`)
+- [x] 6. Implement Apply_Service (`POST /me/vacancies/{companyId}/{vacancyId}/apply`)
   - 6.1 Implement the endpoint in `backend/api/routes/vacancies.py`
     - Extract `userId` from JWT; read `UsuarioVacante` by `(userId, {companyId}#{vacancyId})`; return 404 if missing
     - Set `estado=aplicada` and `appliedAt=now()` only when `estado` was not already `aplicada`; if it was already `aplicada`, return HTTP 200 without modifying `appliedAt`
     - Behavior is identical regardless of `Vacante.estado` (`abierta` or `cerrada`)
     - _Requirements: 4.1, 4.2, 4.3, 9.1, 9.2, 9.3, 9.4, 11.1, 11.2, 11.3_
 
-- [ ] 7. Implement CV_ATS_Service (`POST /me/vacancies/{companyId}/{vacancyId}/cv`)
+- [x] 7. Implement CV_ATS_Service (`POST /me/vacancies/{companyId}/{vacancyId}/cv`)
   - 7.1 Implement the language-detection heuristic as a pure function
     - Add `detect_language(titulo: str, descripcion: str) -> str` to `backend/shared/normalization.py` (or a new `backend/shared/language_detection.py`): a simple keyword/heuristic-based detector over `titulo` + `descripcion`, defaulting to Spanish (`"es"`) when undetermined
     - _Requirements: 5.3, design Section 9.9 (Language Detection)_
@@ -88,9 +88,9 @@ Terraform, frontend, and `.docx` generation are out of scope. Infrastructure (Ev
     - On success: persist `cvAtsTexto` and `cvGeneratedAt` (overwriting any previous value), and return HTTP 200 with the text as `text/plain` (never uploaded to object storage, never a URL)
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 9.1, 9.2, 9.3, 9.4, 10.1, 10.2, 10.3, 10.4, 11.1, 11.2, 11.3, 11.4_
 
-- [ ] 8. Checkpoint - Ensure all tests pass, ask the user if questions arise.
+- [x] 8. Checkpoint - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Implement Entries_Service (question bank and notes)
+- [x] 9. Implement Entries_Service (question bank and notes)
   - 9.1 Implement `GET /me/vacancies/{companyId}/{vacancyId}/entries`
     - Create `backend/api/routes/entries.py`, add a router, and register it in `backend/main.py`
     - Extract `userId` from JWT; return HTTP 404 if `UsuarioVacante` or `Vacante` for `(userId, companyId, vacancyId)` do not exist
@@ -111,9 +111,9 @@ Terraform, frontend, and `.docx` generation are out of scope. Infrastructure (Ev
     - On success, create a NEW append-only `Entrada` with `tipo=nota_entrevista` containing the original question and the suggested answer (never modify the referenced `Entrada`)
     - _Requirements: 6.7, 6.8, 6.9, 6.10, 6.11, 9.1, 9.2, 9.3, 9.4, 10.1, 10.2, 10.3, 10.4, 11.1, 11.2, 11.3, 11.4_
 
-- [ ] 10. Checkpoint - Ensure all tests pass, ask the user if questions arise.
+- [x] 10. Checkpoint - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 11. Implement Notificador_Lambda stream handling and qualification logic
+- [x] 11. Implement Notificador_Lambda stream handling and qualification logic
   - **Prerequisite / External Blocker**: DynamoDB Streams (`NEW_AND_OLD_IMAGES`) on the `ScanJobs` table, and the Lambda Event Source Mapping wiring that stream to this handler with the terminal-status `FilterPolicy`, must be provisioned by the infrastructure/Terraform spec BEFORE task 11 (and its sub-tasks 11.1–11.8) can be executed end-to-end or deployed. Per `.kiro/steering/infraestructura-desplegada.md`, `ScanJobs` was created with only `update-time-to-live` run against it — no `update-table` call ever set a `StreamSpecification`, so this stream currently does NOT exist. The code below can still be implemented and unit-tested (11.2/11.3 and 11.4/11.5 are pure functions with no AWS dependency), but the handler has no possible source of events until that infra gap is closed. Do not attempt to create the stream or event source mapping as part of this spec — that remains explicitly out of scope here.
   - 11.1 Implement DynamoDB Stream event parsing and filtering
     - Create `backend/workers/notificador/handler.py` with a Lambda entry point that, for each stream record, extracts `scanJobId`, `userId`, `status`, `empresasCompletadas`, `startedAt` from the new image
@@ -145,14 +145,14 @@ Terraform, frontend, and `.docx` generation are out of scope. Infrastructure (Ev
     - In `backend/workers/notificador/handler.py`, integrate stream parsing (11.1) → qualification + zero-vacancies guard (11.2) → idempotency check (11.7) → email construction (11.4) → SES sending (11.6), emitting structured JSON logs to stdout that never include vacancy descriptions, profile content, or full email addresses
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 11.1, 11.2, 11.3, 11.4_
 
-- [ ] 12. Implement Orquestador_Lambda programmed-mode integration (EventBridge Scheduler)
+- [x] 12. Implement Orquestador_Lambda programmed-mode integration (EventBridge Scheduler)
   - 12.1 Add the programmed-mode branch to the existing Orquestador Lambda
     - When invoked with `event.get("source") == "eventbridge-scheduler"` (no `userId`, no JWT claim, no other user-identifying value in the payload), resolve the set of companies to scan as the deduplicated union of `companyId` across ALL users' `Suscripciones` with `activa=true` (instead of a single user's subscriptions)
     - Create the `ScanJob` with `userId` left unset (null) in this mode
     - Leave the existing JWT-authenticated (manual) invocation path unchanged
     - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 13. Final checkpoint - Ensure all tests pass, ask the user if questions arise.
+- [x] 13. Final checkpoint - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
 

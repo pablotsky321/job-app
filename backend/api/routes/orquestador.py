@@ -337,7 +337,7 @@ async def post_scans(user_id: str = Depends(get_current_user_id)):
 
 def _build_scan_job(
     scan_job_id: str,
-    user_id: str,
+    user_id: Optional[str],
     status: str,
     empresas_total: int,
     empresas_omitidas: List[str],
@@ -348,9 +348,8 @@ def _build_scan_job(
     now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     started_iso = started_at.isoformat().replace("+00:00", "Z")
 
-    return {
+    item = {
         "scanJobId": scan_job_id,
-        "userId": user_id,
         "status": status,
         "empresasTotal": empresas_total,
         "empresasCompletadas": [],  # String Set starts empty
@@ -359,6 +358,11 @@ def _build_scan_job(
         "startedAt": started_iso,
         "updatedAt": now_iso,
     }
+
+    if user_id is not None:
+        item["userId"] = user_id
+
+    return item
 
 
 # ============================================================================

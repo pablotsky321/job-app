@@ -27,10 +27,11 @@ class TestIsScoreStale:
     def _make_usuario_vacante(self, score_profile_version: int) -> UsuarioVacante:
         return UsuarioVacante(
             userId="user-1",
+            companyId="company-1",
             vacancyId="vac-1",
             score=75,
             scoreProfileVersion=score_profile_version,
-            estado="scored",
+            estado="nueva",
             updatedAt=datetime(2024, 1, 1),
         )
 
@@ -65,10 +66,11 @@ class TestIsScoreStale:
         """scoreProfileVersion=None means never scored → stale relative to any version."""
         uv = UsuarioVacante(
             userId="user-1",
+            companyId="company-1",
             vacancyId="vac-1",
             score=None,
             scoreProfileVersion=None,
-            estado="pending",
+            estado="nueva",
             updatedAt=datetime(2024, 1, 1),
         )
         perfil = self._make_perfil(profile_version=1)

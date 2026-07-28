@@ -161,24 +161,27 @@ class TestScoringMessageValidation:
 class TestUsuarioVacanteModel:
     """Test UsuarioVacante model."""
 
-    def test_scored_state(self):
-        """UsuarioVacante in 'scored' state has all fields."""
+    def test_nueva_state_with_score(self):
+        """UsuarioVacante in 'nueva' state with score has all fields."""
         uv = UsuarioVacante(
             userId="user-1",
+            companyId="company-1",
             vacancyId="vac-1",
             score=85,
             scoreDetalle={"veredicto": "excelente"},
             scoreProfileVersion=3,
-            estado="scored",
+            estado="nueva",
         )
         assert uv.score == 85
-        assert uv.estado == "scored"
+        assert uv.estado == "nueva"
         assert uv.scoreProfileVersion == 3
+        assert uv.companyId == "company-1"
 
     def test_filtered_out_state(self):
         """UsuarioVacante in 'filtered_out' state has no score."""
         uv = UsuarioVacante(
             userId="user-1",
+            companyId="company-1",
             vacancyId="vac-1",
             estado="filtered_out",
         )
@@ -190,9 +193,10 @@ class TestUsuarioVacanteModel:
         with pytest.raises(ValidationError):
             UsuarioVacante(
                 userId="user-1",
+                companyId="company-1",
                 vacancyId="vac-1",
                 score=150,
-                estado="scored",
+                estado="nueva",
             )
 
 
