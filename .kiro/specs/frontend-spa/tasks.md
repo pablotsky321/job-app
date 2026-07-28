@@ -62,7 +62,7 @@ requirements.md.
 
 ## Tasks
 
-- [ ] 1. Setup del proyecto
+- [x] 1. Setup del proyecto
   - 1.1 Scaffold Vite + React + TypeScript, dependencias y scripts
     - Crear el proyecto con `npm create vite@latest frontend -- --template react-ts` reutilizando el
       `frontend/` existente (ya tiene `openapi/`, `package.json` y `vite.config.ts` vacíos)
@@ -114,7 +114,7 @@ requirements.md.
     - **Tiempo estimado**: 2h
     - _Requirements: 3.2 (Inter como única familia tipográfica)_
 
-- [ ] 2. Auth_Module (Requirement 1)
+- [x] 2. Auth_Module (Requirement 1)
   - 2.1 Token_Store: `src/auth/tokenStore.ts`
     - Implementar `tokenStore` exactamente como en `design.md` §1 (Auth_Module): `getAccessToken`,
       `getIdToken`, `setTokens`, `clear` — wrapper delgado sobre `sessionStorage`, nunca `localStorage`
@@ -169,7 +169,7 @@ requirements.md.
     - **Tiempo estimado**: 4h
     - _Requirements: 1.1, 1.2, 1.7, 1.11, 1.13_
 
-- [ ] 3. API_Client (Requirement 2)
+- [x] 3. API_Client (Requirement 2)
   - 3.1 Generación de tipos desde openapi.json
     - Implementar el script `generate:types` en `package.json`:
       `openapi-typescript openapi/openapi.json -o src/api/generated/schema.d.ts`, y confirmar que
@@ -214,7 +214,7 @@ requirements.md.
     - **Tiempo estimado**: 1.5h
     - _Requirements: 1.9, 2.7_
 
-- [ ] 4. TanStack Query — configuración global (Requirement 2 criterio 6)
+- [x] 4. TanStack Query — configuración global (Requirement 2 criterio 6)
   - 4.1 QueryClient config + convención de queryKeys
     - Actualizar `src/main.tsx` para usar un `QueryClient` configurado explícitamente (no el default
       implícito de 1.3): `staleTime: 0` por defecto (cada pantalla sobreescribe según necesidad, per
@@ -232,7 +232,7 @@ requirements.md.
     - **Tiempo estimado**: 2h
     - _Requirements: 2.6_
 
-- [ ] 5. Funciones puras en `lib/` con tests Vitest + fast-check (Requirement 13)
+- [x] 5. Funciones puras en `lib/` con tests Vitest + fast-check (Requirement 13)
   - 5.1 Tipos locales de estado derivado de UI: `src/lib/types.ts`
     - Crear `src/lib/types.ts` con los tipos que `design.md` §Data Models asigna explícitamente a `lib/`
       (no a `api/`): `ScanJobStatus`, `VacancyListItem`, `BadgeColor`, `ScanOutcome`, `StoredTokens` —
@@ -334,7 +334,7 @@ requirements.md.
     - **Tiempo estimado**: 2h
     - _Requirements: 12.5, 12.6, 13.5_
 
-- [ ] 6. Componentes UI compartidos (Requirement 3)
+- [x] 6. Componentes UI compartidos (Requirement 3)
   - 6.1 shadcn: `Select`, `Tabs`, `Progress` — copiar y re-tematizar
     - `npx shadcn add select tabs progress`; en el mismo commit, sustituir toda variable `zinc`/`slate`
       por los tokens `primary`/`gray`/semánticos de §4.2 antes de usarlos en cualquier ruta real
@@ -394,7 +394,7 @@ requirements.md.
     - **Tiempo estimado**: 2h
     - _Requirements: 4.9, 8.10, 9.4, 10.13_
 
-- [ ] 7. Onboarding (Requirements 4, 5, 6, 7)
+- [x] 7. Onboarding (Requirements 4, 5, 6, 7)
   - 7.1 `OnboardingWizard` — contenedor y stepper
     - `src/screens/onboarding/OnboardingWizard.tsx`: maneja el paso actual vía el param de ruta
       `/onboarding/:step` (1-4), renderiza el stepper visual y delega a `Step1..Step4` (implementados en
@@ -521,7 +521,7 @@ requirements.md.
     - **Tiempo estimado**: 5h
     - _Requirements: 7.1, 7.2, 7.6, 7.8, 7.9, 7.10_
 
-- [ ] 8. Listado de vacantes (Requirement 8)
+- [x] 8. Listado de vacantes (Requirement 8)
   - 8.1 `useVacancies` — query hook
     <!-- TODO: Dependencia externa — GET /me/vacancies no existe en `openapi.json` vigente (confirmado
          por grep). Se implementa contra el tipo local `VacancyListItem` de src/lib/types.ts (tarea 5.1)
@@ -567,7 +567,7 @@ requirements.md.
     - **Tiempo estimado**: 3h
     - _Requirements: 8.7, 8.8, 8.12, 8.13_
 
-- [ ] 9. Detalle de vacante (Requirement 9)
+- [x] 9. Detalle de vacante (Requirement 9)
   - 9.1 `useVacancyDetail` — query hook con manejo de 404
     <!-- TODO: Dependencia externa — GET /me/vacancies/{companyId}/{vacancyId} no existe en
          `openapi.json` vigente (confirmado por grep). A diferencia de `useVacancies` (8.1), que
@@ -616,7 +616,7 @@ requirements.md.
     - **Tiempo estimado**: 6h
     - _Requirements: 9.5, 9.6, 9.7, 9.8, 9.9, 9.10, 9.11, 9.12_
 
-- [ ] 10. Postulaciones (Requirement 10, Requirement 11)
+- [x] 10. Postulaciones (Requirement 10, Requirement 11)
   - 10.1 `ApplicationsListView`
     - `src/screens/applications/ApplicationsListView.tsx`: invoca `useVacancies("aplicadas")` (tarea
       8.1) y reutiliza `VacancyCard` (6.5) con la prop que oculta el check de "ya aplicada"
@@ -684,7 +684,7 @@ requirements.md.
     - **Tiempo estimado**: 3h
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
-- [ ] 11. Fuentes (Requirement 12)
+- [x] 11. Fuentes (Requirement 12)
   - 11.1 `useSubscriptions` + listado con indicador de salud
     - `src/api/queries/useSubscriptions.ts`: `GET /me/companies` (ya disponible en `openapi.json`
       vigente — sin dependencia externa)
@@ -749,7 +749,7 @@ requirements.md.
     - **Tiempo estimado**: 5h
     - _Requirements: 12.3, 12.5, 12.6, 12.11, 12.12_
 
-- [ ] 12. Checkpoint final
+- [x] 12. Checkpoint final
   - 12.1 QA manual contra Acceptance Criteria + verificación de reglas transversales
     - Recorrer manualmente cada Acceptance Criteria de `requirements.md` (Requirements 1-12) contra la
       app corriendo, dado que Requirement 13.6 excluye explícitamente tests de componentes/e2e de esta
