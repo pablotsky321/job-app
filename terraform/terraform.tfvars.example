@@ -1,0 +1,270 @@
+# ============================================================================
+# Terraform Variables Example
+# ============================================================================
+#
+# This file is a TEMPLATE showing all required variables for the Job Search
+# Assistant infrastructure. To use it:
+#
+# 1. Copy this file to terraform.tfvars:
+#      cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+#
+# 2. Replace all placeholder values with your actual configuration
+#
+# 3. DO NOT commit terraform.tfvars to version control (it's gitignored)
+#
+# 4. Make terraform.tfvars available to Terraform during apply:
+#    - Option A: Place it in the terraform/ directory (recommended)
+#    - Option B: Pass via command line: terraform apply -var-file=terraform.tfvars
+#    - Option C: Use environment variables: export TF_VAR_variable_name="value"
+#
+
+# ============================================================================
+# AWS Configuration
+# ============================================================================
+
+# AWS region for all resources (must be us-east-1 for Bedrock availability)
+aws_region = "us-east-1"
+
+# Environment name for resource tagging and identification
+# Common values: "development", "staging", "production", "hackathon"
+# Resources will be tagged with Environment={environment}
+environment = "hackathon"
+
+# Project name for resource tagging and identification
+# All resources will be tagged with Project={project_name}
+project_name = "job-search-assistant"
+
+# ============================================================================
+# Terraform State Management (S3 Backend)
+# ============================================================================
+#
+# IMPORTANT: Before using Terraform, you must manually create an S3 bucket
+# for state storage. This cannot be done by Terraform itself (chicken-and-egg
+# problem). The bucket must have versioning enabled.
+#
+# Steps to create the S3 bucket:
+# 1. Create bucket in us-east-1:
+#    aws s3api create-bucket \
+#      --bucket my-terraform-state-bucket \
+#      --region us-east-1
+#
+# 2. Enable versioning:
+#    aws s3api put-bucket-versioning \
+#      --bucket my-terraform-state-bucket \
+#      --versioning-configuration Status=Enabled
+#
+# 3. Block public access (recommended):
+#    aws s3api put-public-access-block \
+#      --bucket my-terraform-state-bucket \
+#      --public-access-block-configuration \
+#      "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+#
+# 4. Provide the bucket name below:
+
+terraform_state_bucket = "my-terraform-state-bucket"
+
+# S3 key where Terraform state file is stored (can include path)
+terraform_state_key = "terraform.tfstate"
+
+# ============================================================================
+# Cognito User Pool Configuration
+# ============================================================================
+#
+# The Cognito User Pool already exists in AWS and will be IMPORTED
+# (not created fresh, to preserve existing users and configuration).
+#
+# To find your User Pool ID:
+#   aws cognito-idp list-user-pools --max-results 1 --region us-east-1
+#
+# Format: region_id (e.g., "us-east-1_abc123xyz")
+
+cognito_user_pool_id = "us-east-1_YOUR_USER_POOL_ID"
+
+# ============================================================================
+# Frontend Configuration
+# ============================================================================
+
+# S3 bucket name for hosting frontend React SPA assets
+# Must be GLOBALLY UNIQUE across all AWS accounts
+# Example: "job-search-frontend-12345"
+# Recommendation: use a unique identifier like your company name + random suffix
+frontend_bucket_name = "job-search-frontend-your-org-12345"
+
+# Frontend domain for CloudFront and CORS configuration
+# This is used for:
+# - CORS allowed origins during development
+# - Documentation purposes
+frontend_domain = "job-search-assistant.mvp"
+
+# ============================================================================
+# Email Configuration (SES)
+# ============================================================================
+#
+# SES (Simple Email Service) is used for sending notifications.
+# The email address must be verified in SES before sending.
+#
+# NOTE: If you're in SES Sandbox mode, you must manually verify email
+# addresses by clicking the verification link sent to each address.
+#
+# To request production access (higher sending limits):
+# https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html
+#
+# Sandbox Mode Limits:
+#   - 200 emails/day
+#   - 1 message/second
+#   - Must verify all sender addresses
+#   - Requires pre-verification of recipient addresses
+#
+# Production Mode:
+#   - Send to any recipient without pre-verification
+#   - Higher daily sending quota (apply via support)
+
+ses_email = "noreply@example.com"
+
+# ============================================================================
+# Bedrock Configuration
+# ============================================================================
+#
+# IMPORTANT CROSS-REGION INFERENCE PROFILE NOTE:
+# Several current Claude models in Bedrock are only invocable via cross-region
+# inference profile IDs when using AWS regions outside the primary Claude
+# region (us-west-2). In us-east-1, these models require the "us."-prefixed
+# model ID, NOT the bare base model ID.
+#
+# Example (CORRECT):
+#   bedrock_model_small = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+#   bedrock_model_mid = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+#
+# Example (INCORRECT - will fail with cryptic error):
+#   bedrock_model_small = "anthropic.claude-3-5-haiku-20241022-v1:0"  # WRONG
+#   bedrock_model_mid = "anthropic.claude-3-5-sonnet-20241022-v2:0"    # WRONG
+#
+# To find available model IDs in us-east-1:
+#   aws bedrock list-foundation-models --region us-east-1
+#
+# PLACEHOLDER: These values below are examples and may need verification
+# from the AWS Bedrock console or your team's model configuration.
+
+# Small model (Claude 3.5 Haiku) for quick classifications
+# Use for: rapid content analysis, lightweight inference
+bedrock_model_small = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+
+# Mid-tier model (Claude 3.5 Sonnet) for more complex reasoning
+# Use for: detailed vacancy analysis, complex CV scoring
+bedrock_model_mid = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+
+# ============================================================================
+# Lambda Configuration
+# ============================================================================
+
+# S3 bucket where Lambda function code is stored (zip files)
+# This is different from the terraform_state_bucket
+# Example: "my-lambda-code-bucket"
+# You need to create this bucket and upload Lambda code to it
+lambda_code_bucket = "my-lambda-code-bucket"
+
+# S3 key prefix where Lambda function code is stored
+# Lambda code will be stored in: s3://lambda_code_bucket/lambda_code_key_prefix/
+lambda_code_key_prefix = "lambda-code"
+
+# ============================================================================
+# Lambda Timeout Configuration
+# ============================================================================
+#
+# These timeouts MUST match the values from the backend-scan-y-scoring design:
+# - scan_worker_timeout: 90 seconds (FIXED VALUE - affects SQS visibility timeout)
+# - scoring_worker_timeout: 30 seconds (FIXED VALUE - affects SQS visibility timeout)
+#
+# Changing these values will automatically update SQS visibility timeouts
+# to maintain the 6x multiplier formula (Visibility Timeout = 6 × Lambda Timeout)
+#
+# See design.md "SQS Visibility Timeout Calculation" section for details.
+
+scan_worker_timeout = 90
+scoring_worker_timeout = 30
+
+# ============================================================================
+# CloudWatch Alarms Configuration
+# ============================================================================
+
+# Billing alarm threshold in USD
+# Alarm will trigger when estimated monthly charges exceed this amount
+# Set to your expected budget (e.g., 100 for $100/month)
+billing_alarm_threshold = 500
+
+# Lambda duration threshold for alarms (in milliseconds)
+# Alarm triggers when p95 duration exceeds this threshold
+# Default: 50000ms (50 seconds)
+lambda_duration_threshold_ms = 50000
+
+# ============================================================================
+# CORS Configuration
+# ============================================================================
+#
+# Comma-separated list of origins allowed to make cross-origin requests to the API
+# During development, include localhost with your frontend port (default Vite port: 5173)
+# Example for development: "http://localhost:5173,http://localhost:3000"
+# Example for production: "https://app.example.com"
+
+cors_origins = "http://localhost:5173"
+
+# ============================================================================
+# EventBridge Scheduler Configuration
+# ============================================================================
+#
+# Cron expression for triggering the orquestador Lambda function
+# The orquestador orchestrates the scanning process
+#
+# Format: cron(minute hour day_of_month month day_of_week year)
+#
+# Examples:
+#   cron(0 8,12,18 * * ? *)  # Run at 8 AM, 12 PM, and 6 PM daily (default)
+#   cron(0 */6 * * ? *)      # Run every 6 hours
+#   cron(0 0 * * ? *)        # Run daily at midnight
+#   cron(0 */4 * * MON-FRI ?) # Run every 4 hours on weekdays
+#
+# For more info: https://docs.aws.amazon.com/scheduler/latest/UserguideScheduleExpressions.html
+
+orchestration_schedule_expression = "cron(0 8,12,18 * * ? *)"
+
+# Timezone for interpreting the cron expression
+# Examples: "UTC", "America/New_York", "Europe/London", "Asia/Tokyo"
+orchestration_timezone = "UTC"
+
+# ============================================================================
+# Prefix Filtering Configuration
+# ============================================================================
+#
+# Token overlap threshold for job title prefix filtering
+# Used in scan-worker to detect similarity between job titles
+# Higher values require more token overlap (stricter filtering)
+
+prefiltro_token_threshold = 1
+
+# Maximum HTML size in KB before truncation
+# Large HTML documents are truncated before LLM processing to stay within token limits
+html_clean_max_kb = 100
+
+# ============================================================================
+# Logging Configuration
+# ============================================================================
+#
+# Logging level for all Lambda functions
+# Valid values: "DEBUG", "INFO", "WARN", "ERROR"
+# - DEBUG: Very verbose, includes request/response bodies (not recommended for production)
+# - INFO: Standard logging, includes key operations
+# - WARN: Only warnings and errors
+# - ERROR: Only errors
+
+log_level = "INFO"
+
+# ============================================================================
+# Session Duration
+# ============================================================================
+#
+# Refresh token validity in days (for Cognito sessions)
+# This affects how long user sessions remain valid
+# Default: 60 days (standard AWS Cognito setting)
+
+refresh_token_validity_days = 60
+

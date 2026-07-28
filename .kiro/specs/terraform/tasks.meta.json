@@ -1,0 +1,434 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Create Terraform directory structure": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213606654
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213614424
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213744579
+      }
+    ],
+    "1.2 Create terraform.tf file (version constraints)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213606832
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213614787
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213744694
+      }
+    ],
+    "1.3 Create backend.tf for S3 state management": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213606916
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213615144
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213744968
+      }
+    ],
+    "1.4 Create providers.tf with region and tagging": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213606999
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213615502
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213745471
+      }
+    ],
+    "2.1 Implement IAM module (modules/iam/main.tf)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607111
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213748912
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785214167755
+      }
+    ],
+    "2.2 Implement DynamoDB module (modules/dynamodb/main.tf)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607222
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213749166
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785214168125
+      }
+    ],
+    "2.3 Implement SQS module (modules/sqs/main.tf)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607314
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213749570
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785214168474
+      }
+    ],
+    "2.4 Implement Lambda module (modules/lambda/main.tf)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607397
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785214267572
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785214893740
+      }
+    ],
+    "2.5 Implement API Gateway module (modules/api-gateway/main.tf)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607474
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215010044
+      }
+    ],
+    "2.6 Implement Cognito module (modules/cognito/main.tf) — import existing App Client and Hosted UI Domain": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607574
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213750008
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785214168943
+      }
+    ],
+    "2.7 Implement S3 + CloudFront module (modules/s3-cloudfront/main.tf)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607723
+      },
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213750509
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785214169239
+      }
+    ],
+    "2.8 Implement EventBridge Scheduler module (modules/eventbridge/main.tf)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607816
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215009260
+      }
+    ],
+    "2.9 Implement SES module (modules/ses/main.tf)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607916
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785214175898
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785214263668
+      }
+    ],
+    "2.10 Implement CloudWatch module (modules/cloudwatch/main.tf)": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213607998
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215010322
+      }
+    ],
+    "3.1 Create variables.tf with all required variables": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608073
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215385536
+      }
+    ],
+    "3.2 Create terraform.tfvars.example": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608145
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215385764
+      }
+    ],
+    "3.3 Create outputs.tf with useful outputs": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608219
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215386255
+      }
+    ],
+    "3.4 Create main.tf to wire everything together": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608302
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215386583
+      }
+    ],
+    "4.1 Create README.md in terraform directory": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608387
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215602811
+      }
+    ],
+    "4.2 Create scripts/import_resources.sh": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608466
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215602223
+      }
+    ],
+    "4.3 Create INSTRUCTIONS.md for manual setup steps": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608565
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215603243
+      }
+    ],
+    "4.4 Update .gitignore if needed": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608657
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785215603651
+      }
+    ],
+    "5.1 Create terraform.tfvars with actual values": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608734
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216300259
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216305899
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216519301
+      }
+    ],
+    "5.2 Run terraform validate and terraform fmt": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608811
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216300389
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216306105
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216519542
+      }
+    ],
+    "5.3 Run terraform plan and review": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608894
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216300498
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216306501
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216519857
+      }
+    ],
+    "6.1 Test import status with terraform state list": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213608966
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216300596
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216525130
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216680994
+      }
+    ],
+    "6.2 Verify CloudFront distribution and Lambda functions": [
+      {
+        "executionId": "fd974c92-6a53-44c7-a097-e6bdee649a33",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785213609055
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216300711
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216525573
+      },
+      {
+        "executionId": "645cf9a3-0a7d-432f-8bcc-05dc5d9f8222",
+        "chatSessionId": "sess_e27f865b-4735-41d2-b0a6-57948df52f5b",
+        "timestamp": 1785216681291
+      }
+    ]
+  }
+}

@@ -50,6 +50,9 @@ htmlcov/
 *.tfstate.*
 terraform.tfstate
 terraform.tfstate.lock.hcl
+terraform.tfvars
+override.tf
+crash.log
 
 # AWS
 .aws-sam/

@@ -32,44 +32,44 @@ The workflow follows a top-down approach:
 
 ### Phase 1: Terraform Setup and Configuration
 
-- [ ] 1.1 Create Terraform directory structure
+- [x] 1.1 Create Terraform directory structure
   - Create terraform/ directory at project root
   - Create terraform/modules/ subdirectory with subdirectories for: dynamodb, sqs, iam, lambda, api-gateway, cognito, s3-cloudfront, eventbridge, ses, cloudwatch
   - Create terraform/scripts/ directory for import script
   - _Requirements: 16_
 
-- [ ] 1.2 Create terraform.tf file (version constraints)
+- [x] 1.2 Create terraform.tf file (version constraints)
   - Set Terraform version >= 1.5.0
   - Configure AWS provider ~> 5.0
   - _Requirements: 21_
 
-- [ ] 1.3 Create backend.tf for S3 state management
+- [x] 1.3 Create backend.tf for S3 state management
   - Configure S3 backend with bucket and key from variables
   - Enable encryption for state file
   - Add comment about manual S3 bucket creation requirement (Requirement 1)
   - _Requirements: 1, 16, 17_
 
-- [ ] 1.4 Create providers.tf with region and tagging
+- [x] 1.4 Create providers.tf with region and tagging
   - Configure provider "aws" with region from variable (default us-east-1)
   - Set default_tags with Environment and Project from variables
   - _Requirements: 2, 16, 21_
 
 ### Phase 2: Module Implementation
 
-- [ ] 2.1 Implement IAM module (modules/iam/main.tf)
+- [x] 2.1 Implement IAM module (modules/iam/main.tf)
   - Create 5 IAM roles (api_role, orquestador_role, scan_worker_role, scoring_worker_role, notificador_role), each with its own least-privilege policy per design.md's differentiated permissions (DynamoDB tables actually touched, Bedrock, SQS, SES) — no shared generic role
   - Create the EventBridge Scheduler invoke role (eventbridge_scheduler_role) with lambda:InvokeFunction scoped to the orquestador Lambda ARN
   - Create the GitHub Actions OIDC provider (aws_iam_openid_connect_provider) and the github_actions role with trust policy scoped to the repo
   - _Requirements: 6, 13, 16_
 
-- [ ] 2.2 Implement DynamoDB module (modules/dynamodb/main.tf)
+- [x] 2.2 Implement DynamoDB module (modules/dynamodb/main.tf)
   - Create 7 DynamoDB tables: Empresas, Vacantes, UsuarioVacante, Entradas, Perfiles, Suscripciones, ScanJobs
   - Configure correct PK/SK/GSI/TTL for each table per design
   - Set billing_mode = PAY_PER_REQUEST for all tables
   - Add prevent_destroy lifecycle policy to ALL 7 tables (Empresas, Vacantes, UsuarioVacante, Entradas, Perfiles, Suscripciones, ScanJobs) — no principled reason to protect some tables and not others; Perfiles holds parsed CVs, Entradas holds the interview question bank (the project's innovation differentiator), Suscripciones and UsuarioVacante hold all user relationship state
   - _Requirements: 3, 16, 22_
 
-- [ ] 2.3 Implement SQS module (modules/sqs/main.tf)
+- [x] 2.3 Implement SQS module (modules/sqs/main.tf)
   - Create 4 SQS queues: scan-dlq, scan-queue, scoring-dlq, scoring-queue
   - Configure visibility_timeout_seconds = 540 for scan-queue (6 × 90s timeout)
   - Configure visibility_timeout_seconds = 180 for scoring-queue (6 × 30s timeout)
@@ -78,7 +78,7 @@ The workflow follows a top-down approach:
   - Source: these visibility timeout values come directly from `backend-scan-y-scoring/design.md`'s "SQS Queue Configuration & Visibility Timeout Formulas" section (Lambda Timeout Scan_Worker=90s → Visibility Timeout=540s; Lambda Timeout Scoring_Worker=30s → Visibility Timeout=180s) — not assumptions made by this spec.
   - _Requirements: 4, 16_
 
-- [ ] 2.4 Implement Lambda module (modules/lambda/main.tf)
+- [x] 2.4 Implement Lambda module (modules/lambda/main.tf)
   - Create 5 Lambda functions: api, orquestador, scan-worker, scoring-worker, notificador
   - Configure correct runtime (python3.12), handler, and role for each (role ARNs consumed as input variables from the IAM module)
   - Set timeouts: api=10s, orquestador=60s, scan-worker=90s, scoring-worker=30s, notificador=30s
@@ -89,14 +89,14 @@ The workflow follows a top-down approach:
   - Source: scan-worker=90s and scoring-worker=30s timeouts come directly from `backend-scan-y-scoring/design.md`'s "SQS Queue Configuration & Visibility Timeout Formulas" section, not assumptions made by this spec.
   - _Requirements: 5, 15, 16_
 
-- [ ] 2.5 Implement API Gateway module (modules/api-gateway/main.tf)
+- [x] 2.5 Implement API Gateway module (modules/api-gateway/main.tf)
   - Create REST API with root resource and {proxy+} path
   - Configure AWS_PROXY integration to api Lambda function
   - Create COGNITO authorizer pointing to Cognito User Pool ARN from variable
   - Create API Gateway stage (prod) and method settings for metrics/logging
   - _Requirements: 7, 16_
 
-- [ ] 2.6 Implement Cognito module (modules/cognito/main.tf) — import existing App Client and Hosted UI Domain
+- [x] 2.6 Implement Cognito module (modules/cognito/main.tf) — import existing App Client and Hosted UI Domain
   - Import the existing Cognito User Pool using var.cognito_user_pool_id (already covered)
   - Import the EXISTING Cognito App Client (`job-search-frontend`, ID `c7dt8acog5t0ifssh05eq0gc4`) — do NOT create a new client. Match its real attributes exactly: generate_secret=false, allowed_oauth_flows=["code"] only (no "implicit"), explicit_auth_flows=["ALLOW_ADMIN_USER_PASSWORD_AUTH","ALLOW_USER_SRP_AUTH","ALLOW_REFRESH_TOKEN_AUTH"], callback_urls=["http://localhost:5173/callback"] and logout_urls=["http://localhost:5173/logout"] as SEPARATE attributes
   - Match refresh_token_validity=60 (days) — CONFIRMED via `aws cognito-idp describe-user-pool-client` on 2026-07-27. Note: infraestructura-desplegada.md's creation-command record said 30, but the live resource has since changed to 60; the live AWS value takes precedence over the static creation log.
@@ -107,7 +107,7 @@ The workflow follows a top-down approach:
   - Add prevent_destroy lifecycle policy to the User Pool
   - _Requirements: 8, 16, 22_
 
-- [ ] 2.7 Implement S3 + CloudFront module (modules/s3-cloudfront/main.tf)
+- [x] 2.7 Implement S3 + CloudFront module (modules/s3-cloudfront/main.tf)
   - Create S3 bucket for frontend with versioning and public access blocked
   - Create CloudFront distribution with S3 origin, using the CloudFront default certificate (`cloudfront_default_certificate = true`) — no ACM certificate, no custom domain
   - Configure custom error responses for SPA routing (403/404 → /index.html with 200)
@@ -115,18 +115,18 @@ The workflow follows a top-down approach:
   - Configure default_cache_behavior to forward all headers for SPA routing
   - _Requirements: 9, 16_
 
-- [ ] 2.8 Implement EventBridge Scheduler module (modules/eventbridge/main.tf)
+- [x] 2.8 Implement EventBridge Scheduler module (modules/eventbridge/main.tf)
   - Create scheduler that triggers orquestador Lambda, consuming the eventbridge_scheduler_role ARN as an input variable from the IAM module (do not declare the role here)
   - Configure schedule_expression from variable (default: cron(0 8,12,18 * * ? *))
   - _Requirements: 10, 16_
 
-- [ ] 2.9 Implement SES module (modules/ses/main.tf)
+- [x] 2.9 Implement SES module (modules/ses/main.tf)
   - Create SES email identities for team emails from variable list
   - Add documentation comments about sandbox mode (200 emails/day, 1 msg/sec)
   - Add documentation about manual verification requirement
   - _Requirements: 11, 16_
 
-- [ ] 2.10 Implement CloudWatch module (modules/cloudwatch/main.tf)
+- [x] 2.10 Implement CloudWatch module (modules/cloudwatch/main.tf)
   - Create CloudWatch log groups for all 5 Lambda functions
   - Set retention_in_days = 7 for each log group (Requirement 12)
   - Create billing alarm triggered when estimated charges > threshold
@@ -136,19 +136,19 @@ The workflow follows a top-down approach:
 
 ### Phase 3: Main Terraform Configuration
 
-- [ ] 3.1 Create variables.tf with all required variables
+- [x] 3.1 Create variables.tf with all required variables
   - Define all 12+ variables from requirements (aws_region, environment, project_name, terraform_state_bucket, cognito_user_pool_id, etc.)
   - Mark sensitive variables with sensitive = true
   - Mark required variables with required = true where appropriate
   - _Requirements: 15, 16, 21_
 
-- [ ] 3.2 Create terraform.tfvars.example
+- [x] 3.2 Create terraform.tfvars.example
   - Create template with placeholder values for all variables
   - Document which variables require manual setup (terraform_state_bucket, cognito_user_pool_id, ses_email)
   - Add inline comments next to `bedrock_model_small` and `bedrock_model_mid` documenting the `us.`-prefix requirement for cross-region inference profiles in us-east-1 (e.g. `us.anthropic.claude-...`, not the bare base model ID) — mark as placeholder pending confirmation of the real model IDs from the AWS console
   - _Requirements: 15, 16, 21_
 
-- [ ] 3.3 Create outputs.tf with useful outputs
+- [x] 3.3 Create outputs.tf with useful outputs
   - Export Lambda function ARNs for all 5 functions
   - Export SQS queue URLs for scan-queue and scoring-queue
   - Export CloudFront distribution domain and ID
@@ -158,7 +158,7 @@ The workflow follows a top-down approach:
   - Note: the Cognito module itself (task 2.6) must expose this as a module-level output (`modules/cognito/outputs.tf`) before the root `outputs.tf` can re-export it
   - _Requirements: 16, 21_
 
-- [ ] 3.4 Create main.tf to wire everything together
+- [x] 3.4 Create main.tf to wire everything together
   - Call all submodules with appropriate variables
   - Declare the `aws_resourcegroups_group.job_search_assistant` resource block at root level (required before its import command can be documented in the import script, since `terraform import` needs an existing resource address to bind to)
   - Use depends_on where implicit dependencies are insufficient
@@ -169,7 +169,7 @@ The workflow follows a top-down approach:
 
 ### Phase 4: Documentation
 
-- [ ] 4.1 Create README.md in terraform directory
+- [x] 4.1 Create README.md in terraform directory
   - Document directory structure
   - Explain setup instructions (Requirements 21)
   - List environment variables and their purposes
@@ -177,7 +177,7 @@ The workflow follows a top-down approach:
   - Provide cost estimation and monitoring guidance
   - _Requirements: 21_
 
-- [ ] 4.2 Create scripts/import_resources.sh
+- [x] 4.2 Create scripts/import_resources.sh
   - Document import commands for 7 DynamoDB tables
   - Document import commands for 4 SQS queues
   - Document import command for 1 Cognito User Pool
@@ -187,33 +187,33 @@ The workflow follows a top-down approach:
   - Include steps for getting actual ARNs/IDs from AWS console
   - _Requirements: 14, 16, 21_
 
-- [ ] 4.3 Create INSTRUCTIONS.md for manual setup steps
+- [x] 4.3 Create INSTRUCTIONS.md for manual setup steps
   - Document S3 bucket creation requirement (Requirement 1)
   - Document SES email verification process (Requirement 11)
   - Document post-deploy step of updating Cognito Callback URLs to the real CloudFront domain
   - _Requirements: 2, 11, 18, 21_
 
-- [ ] 4.4 Update .gitignore if needed
+- [x] 4.4 Update .gitignore if needed
   - Add terraform/terraform.tfvars to gitignore (Requirement 15)
   - Ensure backend state files are not committed
   - _Requirements: 15, 17_
 
 ### Phase 5: Import Existing Resources
 
-- [ ] 5.1 Create terraform.tfvars with actual values
+- [x] 5.1 Create terraform.tfvars with actual values
   - Get terraform_state_bucket from existing S3 bucket or create new one
   - Get cognito_user_pool_id from existing Cognito User Pool (job-search-assistant)
   - Set ses_email to team email address
   - Set all other variables as appropriate (environment, aws_region, etc.)
   - _Requirements: 14, 15_
 
-- [ ] 5.2 Run terraform validate and terraform fmt
+- [x] 5.2 Run terraform validate and terraform fmt
   - Run terraform init (with backend configuration)
   - Run terraform validate to ensure no syntax errors
   - Run terraform fmt -check or terraform fmt -write to ensure formatting
   - _Requirements: 20_
 
-- [ ] 5.3 Run terraform plan and review
+- [x] 5.3 Run terraform plan and review
   - Run terraform plan to see all changes
   - Verify 15 existing resources are imported (no planned changes for those)
   - Verify 20+ new resources are planned for creation
@@ -222,12 +222,12 @@ The workflow follows a top-down approach:
 
 ### Phase 6: Final Validation
 
-- [ ] 6.1 Test import status with terraform state list
+- [x] 6.1 Test import status with terraform state list
   - Run terraform state list to verify all 15 resources are imported
   - Verify resource names match expected (aws_dynamodb_table.*, aws_sqs_queue.*, etc.)
   - _Requirements: 14, 20_
 
-- [ ] 6.2 Verify CloudFront distribution and Lambda functions
+- [x] 6.2 Verify CloudFront distribution and Lambda functions
   - After terraform apply, verify CloudFront distribution is active
   - Test Lambda functions can be invoked (via test button or CLI)
   - Verify API Gateway routes work (test with curl or Postman)
