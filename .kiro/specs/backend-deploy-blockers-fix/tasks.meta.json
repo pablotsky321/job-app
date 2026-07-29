@@ -1,0 +1,436 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Exploration test — **Property 1: Bug Condition** - Handler/Zip Consistency (`api`/`orquestador`)": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346259899
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346271669
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346585834
+      }
+    ],
+    "2. Exploration test — **Property 2: Bug Condition** - Handler Name Match (`scan_worker`/`scoring_worker`)": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346260109
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346588542
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346687297
+      }
+    ],
+    "3. Exploration check — **Property 3: Bug Condition** - Ausencia de script de empaquetado (C3)": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346260363
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346690139
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346754684
+      }
+    ],
+    "4. Exploration check — **Property 4: Bug Condition** - Permiso IAM faltante para auto-invocación (C4)": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346260483
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346757384
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346798086
+      }
+    ],
+    "5. Exploration check — **Property 6: Bug Condition** - Patrón S3 roto (bucket de código Lambda, C5)": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346260580
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346800911
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785348717746
+      }
+    ],
+    "6. Exploration check — **Property 6.1: Bug Condition** - Patrón S3 roto (bucket de Terraform state, C6)": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346260705
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785348721834
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785348864750
+      }
+    ],
+    "7. Preservation baseline — **Property 7: Preservation** - Baseline de `pytest` y `terraform plan`": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346260808
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785348867680
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349148251
+      }
+    ],
+    "8.1 Renombrar `def handler_scan_worker(event, context)` → `def handler(event, context)` en `backend/workers/scan_worker.py` (última función, sección \"LAMBDA HANDLER\"). Cuerpo sin cambios.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346260903
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349151926
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349417198
+      }
+    ],
+    "8.2 Renombrar `def handler_scoring_worker(event, context)` → `def handler(event, context)` en `backend/workers/scoring_worker.py` (línea ~132, sección \"MAIN HANDLER\"). Cuerpo sin cambios.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346261066
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349420212
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349454967
+      }
+    ],
+    "8.3 Actualizar `backend/tests/test_scan_worker.py`: reemplazar las 5 ocurrencias de `from backend.workers.scan_worker import handler_scan_worker` (líneas 140, 179, 273, 302, 331) por `from backend.workers.scan_worker import handler`, y las 5 invocaciones `handler_scan_worker(...)` (líneas 160, 209, 286, 315, 343) por `handler(...)`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346261195
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349459147
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349504321
+      }
+    ],
+    "8.4 Actualizar `backend/tests/test_scoring_worker.py`: reemplazar las ocurrencias de `from backend.workers.scoring_worker import handler_scoring_worker` (líneas 225, 263, 315, 375, 418) por `from backend.workers.scoring_worker import handler`, y las invocaciones `handler_scoring_worker(...)` (líneas 242, 292, 349, 393, 446) por `handler(...)`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346261361
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349508455
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349654907
+      }
+    ],
+    "8.5 Ejecutar `pytest` completo y comparar el conteo de `passed` contra el baseline de la tarea 7 — debe ser idéntico (mismos passed, mismos fallos preexistentes documentados, ninguno nuevo).": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346261540
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349658162
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349706958
+      }
+    ],
+    "9.1 `aws_lambda_function.api` (líneas ~46-56): reemplazar `handler = \"main.handler\"` por `handler = \"backend.main.handler\"`; eliminar el bloque de comentario `FLAGGED` (ya resuelto).": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346261651
+      }
+    ],
+    "9.2 `aws_lambda_function.orquestador` (línea ~119): reemplazar `handler = \"main.handler\"` por `handler = \"backend.main.handler\"`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346261738
+      }
+    ],
+    "9.3 `aws_lambda_function.scan_worker` (línea ~178): reemplazar `handler = \"main.handler\"` por `handler = \"backend.workers.scan_worker.handler\"`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346261829
+      }
+    ],
+    "9.4 `aws_lambda_function.scoring_worker` (línea ~229): reemplazar `handler = \"main.handler\"` por `handler = \"backend.workers.scoring_worker.handler\"`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346261900
+      }
+    ],
+    "9.5 Confirmar que `aws_lambda_function.notificador` no se toca (verificación de preservación 3.1).": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346261971
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785350050344
+      }
+    ],
+    "9.6 Ejecutar `terraform validate` y `terraform plan` sobre el módulo `lambda` y confirmar: (a) sin errores de sintaxis, (b) el diff se limita exactamente a los 4 atributos `handler` de 9.1-9.4, sin diff en `notificador`, timeouts, memoria, env vars, concurrencia reservada ni `event_source_mapping`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346262046
+      },
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785350051921
+      }
+    ],
+    "10.1 Implementar el script (Decisión 3 de design.md): para cada una de las 5 Lambdas, crea un directorio de build temporal, copia `backend/` completo preservando estructura de paquete, instala dependencias de `backend/pyproject.toml` (nunca un `requirements.txt` duplicado), genera el `.zip` vía `zipfile.ZipFile`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346262117
+      }
+    ],
+    "10.2 Para `api`/`orquestador`: construir el `.zip` una sola vez (mismo contenido) y subirlo a las dos rutas S3 distintas (`lambda-code/api/code.zip`, `lambda-code/orquestador/code.zip`), evitando reconstrucción duplicada.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346262321
+      }
+    ],
+    "10.3 Leer `lambda_code_bucket`/`lambda_code_key_prefix` de variables de entorno o argumentos CLI (`--bucket`, `--key-prefix`), nunca hardcodeados.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346262559
+      }
+    ],
+    "10.4 Soportar `--dry-run`: construye el `.zip` localmente, imprime/inspecciona su listado de archivos, omite la subida a S3. Sin Docker/contenedores (regla de stack cerrado).": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346262638
+      }
+    ],
+    "10.5 Ejecutar `python scripts/build_lambda_packages.py --dry-run` para las 5 Lambdas e inspeccionar que cada `.zip` contiene `backend/__init__.py` y el módulo correspondiente (`backend/main.py` para api/orquestador, `backend/workers/scan_worker.py`/`scoring_worker.py`, estructura ya vigente para `notificador`) en las rutas esperadas.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346262721
+      }
+    ],
+    "11.1 Agregar el nuevo statement a `aws_iam_role_policy.api_policy` en `terraform/modules/iam/main.tf`:": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346262855
+      }
+    ],
+    "11.2 Ejecutar `terraform validate`/`terraform plan` sobre el módulo `iam` y confirmar: el nuevo statement aparece con el `Resource` literal esperado, sin errores de ciclo de dependencia entre módulos `iam` y `lambda`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346262961
+      }
+    ],
+    "12.1 Crear `terraform/modules/iam/variables.tf` (nuevo archivo) declarando:": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263117
+      }
+    ],
+    "12.2 Actualizar el bloque `module \"iam\"` en `terraform/main.tf` para pasar ambas variables explícitamente:": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263222
+      }
+    ],
+    "12.3 Ejecutar `terraform validate` sobre el árbol completo y confirmar que el módulo `iam` ahora acepta ambas variables sin error.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263313
+      }
+    ],
+    "13.1 Corregir `lambda_code_bucket = \"job-search-lambda-code\"` → `lambda_code_bucket = \"job-search-lambda-code-5155151158151\"` en el archivo local `terraform/terraform.tfvars`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263385
+      }
+    ],
+    "13.2 Confirmar que `terraform.tfvars` sigue listado en `.gitignore` y que el cambio NO se añade a ningún commit (verificar con `git status` que el archivo no aparece como staged/tracked).": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263555
+      }
+    ],
+    "14.1 En `terraform/modules/iam/main.tf`, reemplazar el `Resource` del statement S3 de `aws_iam_role_policy.github_actions_policy` (líneas ~421-436):": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263632
+      }
+    ],
+    "14.2 Ejecutar `terraform plan` sobre el módulo `iam` y confirmar que el único diff es el `Resource` de ambos sub-patrones (código Lambda y Terraform state) en ese statement específico — sin cambios de `Action`, sin diff en ningún otro rol (`orquestador_role`, `scan_worker_role`, `scoring_worker_role`, `notificador_role`, `eventbridge_scheduler_role`).": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263705
+      }
+    ],
+    "15.1 Reemplazar el archivo vacío por un workflow con: trigger `workflow_dispatch` únicamente; job con `aws-actions/configure-aws-credentials@v4` (OIDC, `role-to-assume` apuntando a `aws_iam_role.github_actions`, sin claves de larga vida); `actions/setup-python@v5` con Python 3.12; ejecución de `python scripts/build_lambda_packages.py` (sin `--dry-run`) para las 5 Lambdas.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263782
+      }
+    ],
+    "15.2 Confirmar por inspección del YAML que no se usan claves de larga vida y que el rol referenciado coincide con `aws_iam_role.github_actions` ya existente en `terraform/modules/iam/main.tf`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263855
+      }
+    ],
+    "16. (Opcional, no bloqueante) Eliminar `lambda_handler.py`": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346263933
+      }
+    ],
+    "17.1 Ejecutar `terraform validate` sobre el árbol completo de `terraform/`.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346264010
+      }
+    ],
+    "17.2 Ejecutar `terraform plan` (contra el backend S3 real de state, sin `apply`) sobre el árbol completo y confirmar que el diff se limita EXACTAMENTE a lo descrito en \"Preservation Checking\" de design.md: 4 atributos `handler` en el módulo `lambda`, 2 statements + 2 variables nuevas en el módulo `iam` — ningún otro recurso, rol o statement cambia. `aws_lambda_function.notificador` no debe aparecer en el plan.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346264084
+      }
+    ],
+    "17.3 Ejecutar la suite `pytest` completa y comparar el conteo de `passed` contra el baseline capturado en la tarea 7 — deben coincidir (mismos passed, mismos fallos preexistentes ya documentados, ningún fallo nuevo).": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346264207
+      }
+    ],
+    "18.1 Releer `.kiro/specs/backend-core/design.md`, sección \"Lambda Packaging and Deployment (ZIP Format)\", y confirmar que la contradicción con la Decisión 1 de esta spec (`backend.main.handler` vs. `lambda_handler.py`) sigue siendo exactamente la ya documentada y conscientemente resuelta en `design.md` de esta spec — no una contradicción nueva ni distinta.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346264300
+      }
+    ],
+    "18.2 Releer `.kiro/specs/backend-scan-y-scoring/design.md` (líneas ~960-961, ~1079-1080) y confirmar que el pseudocódigo `handler_scan_worker`/`handler_scoring_worker` ahí presente nunca comprometió el nombre del entry point de Lambda/Terraform como contrato — por lo tanto el renombrado a `handler` (tarea 8) no rompe ningún contrato de ese documento.": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346264465
+      }
+    ],
+    "18.3 Confirmar que timeouts (`scan_worker: 90s`, `scoring_worker: 30s`), concurrencia reservada (`scan_worker: 5`, `scoring_worker: 3`), nombres de variables de entorno y esquemas de mensajes SQS (`ScanMessage`, `ScoringMessage`) permanecen sin cambios tras todas las tareas de esta spec (cita archivo+línea de ambos documentos de diseño reales, no resúmenes).": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346264539
+      }
+    ],
+    "19. Checkpoint final — Asegurar que todos los tests pasan": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785346264618
+      }
+    ],
+    "8. Fix Bloqueador 2 — Renombrar `handler_scan_worker`/`handler_scoring_worker` → `handler`": [
+      {
+        "executionId": "a6cac7cf-9909-42bd-a92a-a5913d3326d0",
+        "chatSessionId": "sess_0367b467-0ebb-4b1e-8425-5d25d6fa5fe0",
+        "timestamp": 1785349707053
+      }
+    ]
+  }
+}

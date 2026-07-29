@@ -45,13 +45,7 @@
 resource "aws_lambda_function" "api" {
   function_name = "job-search-api"
   role          = var.api_role_arn
-  # FLAGGED (not silently fixed): backend/main.py defines handler() at module
-  # level and imports use "from backend.shared...", so if the deployment zip
-  # preserves the backend/ package structure (not flattened), this handler
-  # string may need to become "backend.main.handler" instead of "main.handler"
-  # — same-shape concern as the notificador fix above. This depends on how
-  # the CI/CD packaging step (outside this Terraform module) builds the zip.
-  handler     = "main.handler"
+  handler       = "backend.main.handler"
   runtime     = "python3.12"
   timeout     = 10
   memory_size = 512
@@ -120,7 +114,7 @@ resource "aws_lambda_function" "api" {
 resource "aws_lambda_function" "orquestador" {
   function_name = "job-search-orquestador"
   role          = var.orquestador_role_arn
-  handler       = "main.handler"
+  handler       = "backend.main.handler"
   runtime       = "python3.12"
   timeout       = 60
   memory_size   = 512
@@ -175,7 +169,7 @@ resource "aws_lambda_function" "orquestador" {
 resource "aws_lambda_function" "scan_worker" {
   function_name = "job-search-scan-worker"
   role          = var.scan_worker_role_arn
-  handler       = "main.handler"
+  handler       = "backend.workers.scan_worker.handler"
   runtime       = "python3.12"
   timeout       = 90
   memory_size   = 1024
@@ -238,7 +232,7 @@ resource "aws_lambda_function" "scan_worker" {
 resource "aws_lambda_function" "scoring_worker" {
   function_name = "job-search-scoring-worker"
   role          = var.scoring_worker_role_arn
-  handler       = "main.handler"
+  handler       = "backend.workers.scoring_worker.handler"
   runtime       = "python3.12"
   timeout       = 30
   memory_size   = 1024

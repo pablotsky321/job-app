@@ -1,0 +1,15 @@
+terraform : [31m‘Ú¿[0m[0m
+En lÌnea: 1 Car·cter: 92
++ ...  ; cd terraform; terraform plan -out=tfplan_baseline.txt 2>&1 | Out-S ...
++                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([31m‘Ú¿[0m[0m:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31m‘ˆÈ[0m [0m[1m[31mError: [0m[0m[1mToo many command line arguments[0m
+[31m‘ˆÈ[0m [0m
+[31m‘ˆÈ[0m [0m[0mTo specify a working directory for the plan, use the global -chdir flag.
+[31m‘Ú¡[0m[0m
+
+For more help on using this command, run:
+  terraform plan -help
+

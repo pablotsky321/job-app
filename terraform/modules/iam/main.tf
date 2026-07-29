@@ -92,6 +92,14 @@ resource "aws_iam_role_policy" "api_policy" {
           "execute-api:Invoke"
         ]
         Resource = "*"
+      },
+      # Lambda - self-invocation for async resume generation
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = "arn:aws:lambda:*:*:function/job-search-api"
       }
     ]
   })
@@ -544,10 +552,10 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "s3:PutBucketVersioning"
         ]
         Resource = [
-          "arn:aws:s3:::*-terraform-state-bucket",
-          "arn:aws:s3:::*-terraform-state-bucket/*",
-          "arn:aws:s3:::*-lambda-code-bucket",
-          "arn:aws:s3:::*-lambda-code-bucket/*"
+          "arn:aws:s3:::${var.terraform_state_bucket}",
+          "arn:aws:s3:::${var.terraform_state_bucket}/*",
+          "arn:aws:s3:::${var.lambda_code_bucket}",
+          "arn:aws:s3:::${var.lambda_code_bucket}/*"
         ]
       },
       # Lambda - for updating function code and managing functions

@@ -527,7 +527,7 @@ def _handle_failed_or_sospechoso(
 # ============================================================================
 
 
-def handler_scan_worker(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """Lambda entry point for Scan_Worker (SQS_Scan consumer).
 
     Processes each SQS record sequentially. On any unhandled exception,

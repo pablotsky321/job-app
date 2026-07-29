@@ -126,7 +126,7 @@ def _put_usuario_vacante(item: Dict[str, Any]) -> None:
 # ============================================================================
 
 
-def handler_scoring_worker(event: Dict[str, Any], context: Any) -> None:
+def handler(event: Dict[str, Any], context: Any) -> None:
     """
     Lambda entry point for Scoring_Worker.
 

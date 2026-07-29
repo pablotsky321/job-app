@@ -46,7 +46,8 @@
 module "iam" {
   source = "./modules/iam"
 
-  # No input variables - IAM module creates all roles with hardcoded names
+  lambda_code_bucket     = var.lambda_code_bucket
+  terraform_state_bucket = var.terraform_state_bucket
 }
 
 # ============================================================================

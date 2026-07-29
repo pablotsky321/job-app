@@ -1,0 +1,1016 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\an-ge\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend
+configfile: pyproject.toml
+plugins: anyio-3.7.1, hypothesis-6.163.0
+collecting ... collected 737 items
+
+backend\tests\test_auth.py::TestExtractUserIdPureFunction::test_extract_user_id_returns_sub_claim PASSED [  0%]
+backend\tests\test_auth.py::TestExtractUserIdPureFunction::test_extract_user_id_with_multiple_claims PASSED [  0%]
+backend\tests\test_auth.py::TestExtractUserIdPureFunction::test_extract_user_id_with_complex_sub_value PASSED [  0%]
+backend\tests\test_auth.py::TestExtractUserIdPureFunction::test_extract_user_id_raises_when_sub_missing PASSED [  0%]
+backend\tests\test_auth.py::TestExtractUserIdPureFunction::test_extract_user_id_raises_when_sub_is_none PASSED [  0%]
+backend\tests\test_auth.py::TestExtractUserIdPureFunction::test_extract_user_id_raises_when_sub_is_empty_string PASSED [  0%]
+backend\tests\test_auth.py::TestExtractUserIdPureFunction::test_extract_user_id_raises_when_claims_is_empty_dict PASSED [  0%]
+backend\tests\test_auth.py::TestExtractUserIdPureFunction::test_extract_user_id_raises_when_claims_is_none PASSED [  1%]
+backend\tests\test_auth.py::TestExtractUserIdPureFunction::test_extract_user_id_ignores_irrelevant_claims PASSED [  1%]
+backend\tests\test_auth.py::TestExtractUserIdRobustness::test_extract_user_id_with_unicode_sub PASSED [  1%]
+backend\tests\test_auth.py::TestExtractUserIdRobustness::test_extract_user_id_with_very_long_sub PASSED [  1%]
+backend\tests\test_auth.py::TestExtractUserIdRobustness::test_extract_user_id_with_numeric_sub_as_string PASSED [  1%]
+backend\tests\test_auth.py::TestExtractUserIdRobustness::test_extract_user_id_parametrized[user-1] PASSED [  1%]
+backend\tests\test_auth.py::TestExtractUserIdRobustness::test_extract_user_id_parametrized[12345] PASSED [  1%]
+backend\tests\test_auth.py::TestExtractUserIdRobustness::test_extract_user_id_parametrized[550e8400-e29b-41d4-a716-446655440000] PASSED [  2%]
+backend\tests\test_auth.py::TestExtractUserIdRobustness::test_extract_user_id_parametrized[us-east-1:12345678-1234-1234-1234-123456789012] PASSED [  2%]
+backend\tests\test_auth.py::TestExtractUserIdRobustness::test_extract_user_id_parametrized[john.doe@example.com] PASSED [  2%]
+backend\tests\test_auth.py::TestExtractUserIdPurity::test_extract_user_id_is_pure_same_input_same_output PASSED [  2%]
+backend\tests\test_auth.py::TestExtractUserIdPurity::test_extract_user_id_does_not_modify_claims_dict PASSED [  2%]
+backend\tests\test_auth.py::TestExtractUserIdPurity::test_extract_user_id_does_not_read_from_global_state PASSED [  2%]
+backend\tests\test_auth.py::TestInvalidAuthorizationContextException::test_invalid_authorization_context_has_correct_status PASSED [  2%]
+backend\tests\test_auth.py::TestInvalidAuthorizationContextException::test_invalid_authorization_context_has_correct_error_code PASSED [  2%]
+backend\tests\test_auth.py::TestInvalidAuthorizationContextException::test_invalid_authorization_context_to_dict PASSED [  3%]
+backend\tests\test_auth.py::TestInvalidAuthorizationContextException::test_invalid_authorization_context_without_details PASSED [  3%]
+backend\tests\test_auth.py::TestAuthRequirements::test_requirement_13_1_user_id_from_jwt PASSED [  3%]
+backend\tests\test_auth.py::TestAuthRequirements::test_requirement_13_2_never_from_body_query_headers PASSED [  3%]
+backend\tests\test_auth.py::TestAuthRequirements::test_requirement_13_6_never_logs_jwt_tokens PASSED [  3%]
+backend\tests\test_auth.py::TestDocumentation::test_extract_user_id_has_docstring PASSED [  3%]
+backend\tests\test_auth.py::TestDocumentation::test_extract_user_id_docstring_includes_requirements PASSED [  3%]
+backend\tests\test_auth_dependency.py::TestGetCurrentUserIdDependency::test_valid_jwt_extraction_from_aws_event PASSED [  4%]
+backend\tests\test_auth_dependency.py::TestGetCurrentUserIdDependency::test_jwt_extraction_fallback_scope_structure PASSED [  4%]
+backend\tests\test_auth_dependency.py::TestGetCurrentUserIdDependency::test_missing_sub_claim_raises_error PASSED [  4%]
+backend\tests\test_auth_dependency.py::TestGetCurrentUserIdDependency::test_empty_claims_dict_raises_error PASSED [  4%]
+backend\tests\test_auth_dependency.py::TestGetCurrentUserIdDependency::test_missing_authorizer_context_raises_error PASSED [  4%]
+backend\tests\test_auth_dependency.py::TestGetCurrentUserIdDependency::test_malformed_aws_event_structure_handled_gracefully PASSED [  4%]
+backend\tests\test_auth_dependency.py::TestGetCurrentUserIdDependency::test_no_aws_event_in_scope_tries_fallback PASSED [  4%]
+backend\tests\test_auth_dependency.py::TestGetCurrentUserIdDependency::test_sub_claim_with_various_user_id_formats PASSED [  5%]
+backend\tests\test_auth_dependency.py::TestGetCurrentUserIdIntegration::test_dependency_integration_example PASSED [  5%]
+backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_successful_extraction FAILED [  5%]
+backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_excludes_entries_without_url FAILED [  5%]
+backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_modalidad_always_sin_dato FAILED [  5%]
+backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_empty_jobs_list FAILED [  5%]
+backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_uses_correct_endpoint FAILED [  5%]
+backend\tests\test_board_api_client.py::TestLeverExtraction::test_successful_extraction FAILED [  5%]
+backend\tests\test_board_api_client.py::TestLeverExtraction::test_excludes_entries_without_url FAILED [  6%]
+backend\tests\test_board_api_client.py::TestLeverExtraction::test_uses_correct_endpoint FAILED [  6%]
+backend\tests\test_board_api_client.py::TestHttpErrorHandling::test_http_404 FAILED [  6%]
+backend\tests\test_board_api_client.py::TestHttpErrorHandling::test_http_500 FAILED [  6%]
+backend\tests\test_board_api_client.py::TestHttpErrorHandling::test_timeout FAILED [  6%]
+backend\tests\test_board_api_client.py::TestHttpErrorHandling::test_connection_error FAILED [  6%]
+backend\tests\test_board_api_client.py::TestInvalidJson::test_invalid_json_response FAILED [  6%]
+backend\tests\test_board_api_client.py::TestInvalidJson::test_unexpected_json_structure FAILED [  7%]
+backend\tests\test_board_api_client.py::TestMissingBoardToken::test_no_board_token FAILED [  7%]
+backend\tests\test_board_api_client.py::TestMissingBoardToken::test_empty_board_token FAILED [  7%]
+backend\tests\test_board_api_client.py::TestUnsupportedPlatform::test_html_platform_not_supported PASSED [  7%]
+backend\tests\test_cascada_descubrimiento.py::TestManualPlatform::test_manual_returns_empty_tuple PASSED [  7%]
+backend\tests\test_cascada_descubrimiento.py::TestManualPlatform::test_manual_never_calls_extractors PASSED [  7%]
+backend\tests\test_cascada_descubrimiento.py::TestGreenhouseLeverCascade::test_stops_at_board_api_when_vacancies_found PASSED [  7%]
+backend\tests\test_cascada_descubrimiento.py::TestGreenhouseLeverCascade::test_falls_through_board_api_zero_vacancies_to_json_ld PASSED [  8%]
+backend\tests\test_cascada_descubrimiento.py::TestGreenhouseLeverCascade::test_falls_through_board_api_error_to_json_ld PASSED [  8%]
+backend\tests\test_cascada_descubrimiento.py::TestGreenhouseLeverCascade::test_falls_through_to_html_llm_when_all_prior_fail PASSED [  8%]
+backend\tests\test_cascada_descubrimiento.py::TestGreenhouseLeverCascade::test_html_llm_result_accepted_even_with_zero_vacancies PASSED [  8%]
+backend\tests\test_cascada_descubrimiento.py::TestGreenhouseLeverCascade::test_html_llm_error_is_returned_as_final PASSED [  8%]
+backend\tests\test_cascada_descubrimiento.py::TestHtmlJsonldCascade::test_html_platform_skips_board_api PASSED [  8%]
+backend\tests\test_cascada_descubrimiento.py::TestHtmlJsonldCascade::test_jsonld_platform_skips_board_api PASSED [  8%]
+backend\tests\test_cascada_descubrimiento.py::TestHtmlJsonldCascade::test_jsonld_falls_through_to_html_llm PASSED [  8%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorExceptions::test_board_api_exception_falls_through_to_json_ld PASSED [  9%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorExceptions::test_json_ld_exception_falls_through_to_html_llm PASSED [  9%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorExceptions::test_html_llm_exception_returns_error PASSED [  9%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorExceptions::test_all_extractors_exception_for_html_platform PASSED [  9%]
+backend\tests\test_cascada_descubrimiento.py::TestStopLogic::test_board_api_with_error_and_vacancies_still_falls_through PASSED [  9%]
+backend\tests\test_cascada_descubrimiento.py::TestStopLogic::test_json_ld_zero_vacancies_no_error_falls_through PASSED [  9%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_determinism_same_url PASSED [  9%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_determinism_multiple_calls PASSED [ 10%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_output_format_64_hex_lowercase PASSED [ 10%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_normalizes_host_case PASSED [ 10%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_normalizes_scheme_case PASSED [ 10%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_normalizes_fragment_removal PASSED [ 10%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_normalizes_trailing_slash PASSED [ 10%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_combined_normalization PASSED [ 10%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_different_paths_different_ids PASSED [ 10%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_different_schemes_different_ids PASSED [ 11%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_preserves_path_case PASSED [ 11%]
+backend\tests\test_cascada_descubrimiento.py::TestComputeVacancyId::test_preserves_query_params PASSED [ 11%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_ok_when_vacancies_present_no_error PASSED [ 11%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_ok_with_many_vacancies PASSED [ 11%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_failed_when_error_present PASSED [ 11%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_failed_even_with_vacancies_if_error PASSED [ 11%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_empty_sospechoso_zero_vacancies_lastcount_positive PASSED [ 12%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_empty_sospechoso_with_none_vacancies_list PASSED [ 12%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_empty_legitimo_zero_vacancies_lastcount_zero PASSED [ 12%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_empty_legitimo_none_vacancies_lastcount_zero PASSED [ 12%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_exactly_one_classification_per_input PASSED [ 12%]
+backend\tests\test_cascada_descubrimiento.py::TestClassifyScanResult::test_failed_various_error_types PASSED [ 12%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorErrorHandling::test_board_api_timeout_error_continues_cascade PASSED [ 12%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorErrorHandling::test_board_api_http_error_continues_cascade PASSED [ 13%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorErrorHandling::test_json_ld_connection_error_continues_to_html_llm PASSED [ 13%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorErrorHandling::test_json_ld_invalid_json_error_continues PASSED [ 13%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorErrorHandling::test_html_llm_bedrock_timeout_returns_error PASSED [ 13%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorErrorHandling::test_html_llm_validation_error_returns_error PASSED [ 13%]
+backend\tests\test_cascada_descubrimiento.py::TestExtractorErrorHandling::test_all_methods_raise_exceptions_greenhouse PASSED [ 13%]
+backend\tests\test_companies.py::test_decide_subscription_action_property PASSED [ 13%]
+backend\tests\test_companies.py::test_decide_subscription_action_idempotent_convergence PASSED [ 13%]
+backend\tests\test_companies.py::test_list_companies_returns_200 PASSED  [ 14%]
+backend\tests\test_companies.py::test_list_companies_sorted_case_insensitive PASSED [ 14%]
+backend\tests\test_companies.py::test_list_companies_pagination_default PASSED [ 14%]
+backend\tests\test_companies.py::test_list_companies_pagination_limit PASSED [ 14%]
+backend\tests\test_companies.py::test_list_companies_pagination_offset PASSED [ 14%]
+backend\tests\test_companies.py::test_list_companies_has_more_true PASSED [ 14%]
+backend\tests\test_companies.py::test_list_companies_limit_validation_min PASSED [ 14%]
+backend\tests\test_companies.py::test_list_companies_limit_validation_max PASSED [ 15%]
+backend\tests\test_companies.py::test_list_companies_returns_raw_fields PASSED [ 15%]
+backend\tests\test_companies.py::test_list_companies_no_auth_required PASSED [ 15%]
+backend\tests\test_companies.py::test_list_companies_empty_table PASSED  [ 15%]
+backend\tests\test_companies.py::test_add_company_success_greenhouse PASSED [ 15%]
+backend\tests\test_companies.py::test_add_company_success_lever PASSED   [ 15%]
+backend\tests\test_companies.py::test_add_company_success_html PASSED    [ 15%]
+backend\tests\test_companies.py::test_add_company_invalid_url_no_scheme PASSED [ 16%]
+backend\tests\test_companies.py::test_add_company_invalid_url_empty PASSED [ 16%]
+backend\tests\test_companies.py::test_add_company_duplicate_returns_409 PASSED [ 16%]
+backend\tests\test_companies.py::test_add_company_normalizes_url PASSED  [ 16%]
+backend\tests\test_companies.py::test_add_company_no_auth_required PASSED [ 16%]
+backend\tests\test_companies.py::test_add_company_nombre_extracted_from_hostname PASSED [ 16%]
+backend\tests\test_companies.py::test_list_subscriptions_returns_active_only PASSED [ 16%]
+backend\tests\test_companies.py::test_list_subscriptions_sorted_by_added_at_desc PASSED [ 16%]
+backend\tests\test_companies.py::test_list_subscriptions_returns_correct_fields PASSED [ 17%]
+backend\tests\test_companies.py::test_list_subscriptions_empty_when_no_active PASSED [ 17%]
+backend\tests\test_companies.py::test_list_subscriptions_skips_missing_company PASSED [ 17%]
+backend\tests\test_companies.py::test_list_subscriptions_requires_auth PASSED [ 17%]
+backend\tests\test_companies.py::test_toggle_subscription_activate PASSED [ 17%]
+backend\tests\test_companies.py::test_toggle_subscription_deactivate PASSED [ 17%]
+backend\tests\test_companies.py::test_toggle_subscription_not_found_404 PASSED [ 17%]
+backend\tests\test_companies.py::test_toggle_subscription_company_not_found_400 PASSED [ 18%]
+backend\tests\test_companies.py::test_toggle_subscription_requires_auth PASSED [ 18%]
+backend\tests\test_companies.py::test_toggle_subscription_missing_body PASSED [ 18%]
+backend\tests\test_companies.py::test_create_subscription_new_returns_201 PASSED [ 18%]
+backend\tests\test_companies.py::test_create_subscription_no_op_returns_200 PASSED [ 18%]
+backend\tests\test_companies.py::test_create_subscription_reactivate_returns_200 PASSED [ 18%]
+backend\tests\test_companies.py::test_create_subscription_company_not_found_404 PASSED [ 18%]
+backend\tests\test_companies.py::test_create_subscription_write_failed_returns_500 PASSED [ 18%]
+backend\tests\test_companies.py::test_create_subscription_conditional_check_failed_falls_to_no_op PASSED [ 19%]
+backend\tests\test_companies.py::test_create_subscription_requires_auth PASSED [ 19%]
+backend\tests\test_db.py::TestTableNameLoading::test_load_table_names_success PASSED [ 19%]
+backend\tests\test_db.py::TestTableNameLoading::test_load_table_names_missing_one_var PASSED [ 19%]
+backend\tests\test_db.py::TestTableNameLoading::test_load_table_names_empty_var PASSED [ 19%]
+backend\tests\test_db.py::TestQueryByPk::test_query_by_pk_with_pk_only PASSED [ 19%]
+backend\tests\test_db.py::TestQueryByPk::test_query_by_pk_with_sk PASSED [ 19%]
+backend\tests\test_db.py::TestQueryByPk::test_query_by_pk_unknown_table PASSED [ 20%]
+backend\tests\test_db.py::TestQueryByPk::test_query_by_pk_returns_empty_list PASSED [ 20%]
+backend\tests\test_db.py::TestQueryBySk::test_query_by_sk_success PASSED [ 20%]
+backend\tests\test_db.py::TestPutItem::test_put_item_success PASSED      [ 20%]
+backend\tests\test_db.py::TestPutItem::test_put_item_unknown_table PASSED [ 20%]
+backend\tests\test_db.py::TestUpdateItem::test_update_item_success PASSED [ 20%]
+backend\tests\test_db.py::TestUpdateItem::test_update_item_multiple_attributes PASSED [ 20%]
+backend\tests\test_db.py::TestDeleteItem::test_delete_item_success PASSED [ 21%]
+backend\tests\test_db.py::TestDeleteItem::test_delete_item_unknown_table PASSED [ 21%]
+backend\tests\test_db.py::TestScanItems::test_scan_items_no_filter PASSED [ 21%]
+backend\tests\test_db.py::TestScanItems::test_scan_items_with_filter PASSED [ 21%]
+backend\tests\test_db.py::TestEnvVarIntegration::test_tables_global_loaded PASSED [ 21%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_lowercases_scheme PASSED [ 21%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_lowercases_host PASSED [ 21%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_lowercases_scheme_and_host PASSED [ 21%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_removes_fragment PASSED [ 22%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_removes_trailing_slash PASSED [ 22%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_removes_fragment_and_trailing_slash PASSED [ 22%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_preserves_path_case PASSED [ 22%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_preserves_query_params PASSED [ 22%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_empty_path PASSED [ 22%]
+backend\tests\test_extraction.py::TestNormalizeUrl::test_http_and_https_produce_different_results PASSED [ 22%]
+backend\tests\test_extraction.py::TestComputeVacancyId::test_returns_64_hex_chars PASSED [ 23%]
+backend\tests\test_extraction.py::TestComputeVacancyId::test_lowercase_output PASSED [ 23%]
+backend\tests\test_extraction.py::TestComputeVacancyId::test_deterministic_same_url PASSED [ 23%]
+backend\tests\test_extraction.py::TestComputeVacancyId::test_normalizes_case_in_host PASSED [ 23%]
+backend\tests\test_extraction.py::TestComputeVacancyId::test_normalizes_https_http_scheme_case PASSED [ 23%]
+backend\tests\test_extraction.py::TestComputeVacancyId::test_normalizes_fragment_removal PASSED [ 23%]
+backend\tests\test_extraction.py::TestComputeVacancyId::test_normalizes_trailing_slash PASSED [ 23%]
+backend\tests\test_extraction.py::TestComputeVacancyId::test_different_urls_produce_different_ids PASSED [ 24%]
+backend\tests\test_extraction.py::TestComputeVacancyId::test_different_schemes_produce_different_ids PASSED [ 24%]
+backend\tests\test_extraction.py::TestVacancyExtracted::test_minimal_required_fields PASSED [ 24%]
+backend\tests\test_extraction.py::TestVacancyExtracted::test_all_fields PASSED [ 24%]
+backend\tests\test_extraction.py::TestVacancyExtracted::test_extra_fields_ignored PASSED [ 24%]
+backend\tests\test_extraction.py::TestExtractionResult::test_successful_result PASSED [ 24%]
+backend\tests\test_extraction.py::TestExtractionResult::test_error_result PASSED [ 24%]
+backend\tests\test_extraction.py::TestExtractionResult::test_default_empty_vacancies PASSED [ 24%]
+backend\tests\test_extraction.py::TestExtractionResult::test_extra_fields_ignored PASSED [ 25%]
+backend\tests\test_get_scan_job.py::TestGetScanJobNotFound::test_returns_404_when_job_not_found PASSED [ 25%]
+backend\tests\test_get_scan_job.py::TestGetScanJobNotFound::test_returns_404_when_user_mismatch PASSED [ 25%]
+backend\tests\test_get_scan_job.py::TestGetScanJobNotFound::test_allows_access_when_no_userid_set PASSED [ 25%]
+backend\tests\test_get_scan_job.py::TestGetScanJobZombieDetection::test_zombie_detection_triggers_at_601_seconds PASSED [ 25%]
+backend\tests\test_get_scan_job.py::TestGetScanJobZombieDetection::test_no_zombie_detection_at_599_seconds PASSED [ 25%]
+backend\tests\test_get_scan_job.py::TestGetScanJobAutoDone::test_auto_done_when_all_completed PASSED [ 25%]
+backend\tests\test_get_scan_job.py::TestGetScanJobAutoDone::test_no_auto_done_when_incomplete PASSED [ 26%]
+backend\tests\test_get_scan_job.py::TestGetScanJobResponseFields::test_response_fields_complete PASSED [ 26%]
+backend\tests\test_get_scan_job.py::TestGetScanJobResponseFields::test_canstop_false_when_running PASSED [ 26%]
+backend\tests\test_get_scan_job.py::TestGetScanJobResponseFields::test_canstop_true_for_failed PASSED [ 26%]
+backend\tests\test_get_scan_job.py::TestGetScanJobResponseFields::test_parcial_includes_pending_companies PASSED [ 26%]
+backend\tests\test_health.py::test_health_check_returns_ok PASSED        [ 26%]
+backend\tests\test_health.py::test_health_check_content_type PASSED      [ 26%]
+backend\tests\test_health.py::test_health_check_multiple_calls PASSED    [ 27%]
+backend\tests\test_health.py::test_cors_middleware_configured PASSED     [ 27%]
+backend\tests\test_health.py::test_health_endpoint_no_auth PASSED        [ 27%]
+backend\tests\test_html_cleaner.py::TestTagRemoval::test_removes_script_tags_and_content PASSED [ 27%]
+backend\tests\test_html_cleaner.py::TestTagRemoval::test_removes_style_tags_and_content PASSED [ 27%]
+backend\tests\test_html_cleaner.py::TestTagRemoval::test_removes_noscript_tags_and_content PASSED [ 27%]
+backend\tests\test_html_cleaner.py::TestTagRemoval::test_removes_svg_tags_and_content PASSED [ 27%]
+backend\tests\test_html_cleaner.py::TestTagRemoval::test_removes_iframe_tags_and_content PASSED [ 27%]
+backend\tests\test_html_cleaner.py::TestTagRemoval::test_removes_meta_tags PASSED [ 28%]
+backend\tests\test_html_cleaner.py::TestTagRemoval::test_removes_nested_script_in_head PASSED [ 28%]
+backend\tests\test_html_cleaner.py::TestTagRemoval::test_removes_multiple_scripts_and_styles PASSED [ 28%]
+backend\tests\test_html_cleaner.py::TestCommentRemoval::test_removes_simple_comment PASSED [ 28%]
+backend\tests\test_html_cleaner.py::TestCommentRemoval::test_removes_multiline_comment PASSED [ 28%]
+backend\tests\test_html_cleaner.py::TestCommentRemoval::test_removes_conditional_ie_comment PASSED [ 28%]
+backend\tests\test_html_cleaner.py::TestWhitespaceNormalization::test_multiple_spaces_become_one PASSED [ 28%]
+backend\tests\test_html_cleaner.py::TestWhitespaceNormalization::test_tabs_and_newlines_become_spaces PASSED [ 29%]
+backend\tests\test_html_cleaner.py::TestWhitespaceNormalization::test_no_leading_or_trailing_whitespace PASSED [ 29%]
+backend\tests\test_html_cleaner.py::TestWhitespaceNormalization::test_whitespace_between_tags_normalized PASSED [ 29%]
+backend\tests\test_html_cleaner.py::TestSizeTruncation::test_small_content_not_truncated PASSED [ 29%]
+backend\tests\test_html_cleaner.py::TestSizeTruncation::test_large_content_truncated_to_limit PASSED [ 29%]
+backend\tests\test_html_cleaner.py::TestSizeTruncation::test_truncation_respects_utf8_boundary PASSED [ 29%]
+backend\tests\test_html_cleaner.py::TestSizeTruncation::test_default_limit_is_100kb PASSED [ 29%]
+backend\tests\test_html_cleaner.py::TestSizeTruncation::test_truncation_never_skips PASSED [ 29%]
+backend\tests\test_html_cleaner.py::TestEdgeCases::test_empty_string_returns_empty PASSED [ 30%]
+backend\tests\test_html_cleaner.py::TestEdgeCases::test_none_returns_empty PASSED [ 30%]
+backend\tests\test_html_cleaner.py::TestEdgeCases::test_non_string_returns_empty PASSED [ 30%]
+backend\tests\test_html_cleaner.py::TestEdgeCases::test_plain_text_passthrough PASSED [ 30%]
+backend\tests\test_html_cleaner.py::TestEdgeCases::test_only_removed_tags_returns_empty PASSED [ 30%]
+backend\tests\test_html_cleaner.py::TestEdgeCases::test_complex_real_world_page PASSED [ 30%]
+backend\tests\test_html_cleaner.py::TestEdgeCases::test_uses_html_parser_not_lxml PASSED [ 30%]
+backend\tests\test_html_cleaner.py::TestHtmlParserOnly::test_source_does_not_import_lxml PASSED [ 31%]
+backend\tests\test_html_cleaner.py::TestHtmlParserOnly::test_beautifulsoup_uses_html_parser PASSED [ 31%]
+backend\tests\test_html_cleaner.py::TestNoContentLeakage::test_script_with_text_content_does_not_leak PASSED [ 31%]
+backend\tests\test_html_cleaner.py::TestNoContentLeakage::test_style_with_class_names_does_not_leak PASSED [ 31%]
+backend\tests\test_html_cleaner.py::TestNoContentLeakage::test_noscript_fallback_text_does_not_leak PASSED [ 31%]
+backend\tests\test_html_cleaner.py::TestNoContentLeakage::test_svg_path_data_does_not_leak PASSED [ 31%]
+backend\tests\test_html_cleaner.py::TestNoContentLeakage::test_iframe_with_nested_content_does_not_leak PASSED [ 31%]
+backend\tests\test_html_cleaner.py::TestNoContentLeakage::test_multiple_removed_tags_interleaved_with_content PASSED [ 32%]
+backend\tests\test_html_llm_extractor.py::TestLlmExtractionResponse::test_valid_response_with_vacancies PASSED [ 32%]
+backend\tests\test_html_llm_extractor.py::TestLlmExtractionResponse::test_valid_response_empty_vacancies PASSED [ 32%]
+backend\tests\test_html_llm_extractor.py::TestLlmExtractionResponse::test_defaults_for_optional_fields PASSED [ 32%]
+backend\tests\test_html_llm_extractor.py::TestLlmExtractionResponse::test_extra_fields_ignored PASSED [ 32%]
+backend\tests\test_html_llm_extractor.py::TestMapLlmResponseToVacancies::test_maps_valid_items PASSED [ 32%]
+backend\tests\test_html_llm_extractor.py::TestMapLlmResponseToVacancies::test_filters_empty_titulo PASSED [ 32%]
+backend\tests\test_html_llm_extractor.py::TestMapLlmResponseToVacancies::test_filters_whitespace_only_titulo PASSED [ 32%]
+backend\tests\test_html_llm_extractor.py::TestMapLlmResponseToVacancies::test_modalidad_defaults_to_sin_dato PASSED [ 33%]
+backend\tests\test_html_llm_extractor.py::TestMapLlmResponseToVacancies::test_strips_whitespace_from_fields PASSED [ 33%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_successful_extraction PASSED [ 33%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_fetch_timeout_returns_error PASSED [ 33%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_fetch_http_error_returns_error PASSED [ 33%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_fetch_connection_error_returns_error PASSED [ 33%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_bedrock_validation_error_returns_error PASSED [ 33%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_bedrock_service_error_returns_error PASSED [ 34%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_empty_html_after_clean_returns_empty_no_error PASSED [ 34%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_bedrock_returns_zero_vacancies PASSED [ 34%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_modalidad_sin_dato_when_not_specified PASSED [ 34%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_invoke_uses_model_small PASSED [ 34%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_value_error_from_json_parsing_returns_error PASSED [ 34%]
+backend\tests\test_html_llm_extractor.py::TestHtmlLlmExtractor::test_never_raises_to_caller PASSED [ 34%]
+backend\tests\test_json_ld_extractor.py::TestExtractJobPostingsFromData::test_standalone_job_posting PASSED [ 35%]
+backend\tests\test_json_ld_extractor.py::TestExtractJobPostingsFromData::test_array_of_job_postings PASSED [ 35%]
+backend\tests\test_json_ld_extractor.py::TestExtractJobPostingsFromData::test_graph_nesting PASSED [ 35%]
+backend\tests\test_json_ld_extractor.py::TestExtractJobPostingsFromData::test_non_job_posting_objects_ignored PASSED [ 35%]
+backend\tests\test_json_ld_extractor.py::TestExtractJobPostingsFromData::test_job_posting_with_type_as_list PASSED [ 35%]
+backend\tests\test_json_ld_extractor.py::TestExtractJobPostingsFromData::test_empty_graph PASSED [ 35%]
+backend\tests\test_json_ld_extractor.py::TestExtractJobPostingsFromData::test_mixed_array PASSED [ 35%]
+backend\tests\test_json_ld_extractor.py::TestMapModalidad::test_no_employment_type_returns_sin_dato PASSED [ 35%]
+backend\tests\test_json_ld_extractor.py::TestMapModalidad::test_telecommute_job_location_type PASSED [ 36%]
+backend\tests\test_json_ld_extractor.py::TestMapModalidad::test_remote_employment_type_string PASSED [ 36%]
+backend\tests\test_json_ld_extractor.py::TestMapModalidad::test_remote_in_list PASSED [ 36%]
+backend\tests\test_json_ld_extractor.py::TestMapModalidad::test_full_time_only_returns_sin_dato PASSED [ 36%]
+backend\tests\test_json_ld_extractor.py::TestMapModalidad::test_part_time_returns_sin_dato PASSED [ 36%]
+backend\tests\test_json_ld_extractor.py::TestExtractUbicacion::test_no_job_location PASSED [ 36%]
+backend\tests\test_json_ld_extractor.py::TestExtractUbicacion::test_string_location PASSED [ 36%]
+backend\tests\test_json_ld_extractor.py::TestExtractUbicacion::test_place_with_address_object PASSED [ 37%]
+backend\tests\test_json_ld_extractor.py::TestExtractUbicacion::test_place_with_address_string PASSED [ 37%]
+backend\tests\test_json_ld_extractor.py::TestExtractUbicacion::test_place_with_name_only PASSED [ 37%]
+backend\tests\test_json_ld_extractor.py::TestExtractUbicacion::test_multiple_locations PASSED [ 37%]
+backend\tests\test_json_ld_extractor.py::TestMapJobPostingToVacancy::test_valid_posting_with_title_and_url PASSED [ 37%]
+backend\tests\test_json_ld_extractor.py::TestMapJobPostingToVacancy::test_posting_with_name_instead_of_title PASSED [ 37%]
+backend\tests\test_json_ld_extractor.py::TestMapJobPostingToVacancy::test_posting_without_title_excluded PASSED [ 37%]
+backend\tests\test_json_ld_extractor.py::TestMapJobPostingToVacancy::test_posting_without_url_excluded PASSED [ 37%]
+backend\tests\test_json_ld_extractor.py::TestMapJobPostingToVacancy::test_posting_with_empty_title_excluded PASSED [ 38%]
+backend\tests\test_json_ld_extractor.py::TestMapJobPostingToVacancy::test_posting_with_empty_url_excluded PASSED [ 38%]
+backend\tests\test_json_ld_extractor.py::TestMapJobPostingToVacancy::test_modalidad_defaults_sin_dato PASSED [ 38%]
+backend\tests\test_json_ld_extractor.py::TestMapJobPostingToVacancy::test_posting_with_sameAs_as_url PASSED [ 38%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_successful_extraction_standalone PASSED [ 38%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_successful_extraction_array PASSED [ 38%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_successful_extraction_graph PASSED [ 38%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_timeout_returns_error PASSED [ 39%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_connection_error_returns_error PASSED [ 39%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_http_404_returns_error PASSED [ 39%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_http_500_returns_error PASSED [ 39%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_no_json_ld_blocks_returns_zero_vacancies PASSED [ 39%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_json_ld_without_job_posting_returns_zero PASSED [ 39%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_malformed_json_ld_returns_zero PASSED [ 39%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_posting_without_title_excluded PASSED [ 40%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_posting_without_url_excluded PASSED [ 40%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_mixed_valid_and_invalid_postings PASSED [ 40%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_multiple_ld_json_blocks PASSED [ 40%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_modalidad_sin_dato_default PASSED [ 40%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_modalidad_remote_telecommute PASSED [ 40%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_ubicacion_extracted PASSED [ 40%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_request_uses_10s_timeout PASSED [ 40%]
+backend\tests\test_json_ld_extractor.py::TestJsonLdExtractor::test_origen_is_json_ld PASSED [ 41%]
+backend\tests\test_language_detection.py::TestDetectLanguage::test_clearly_spanish_text_returns_es PASSED [ 41%]
+backend\tests\test_language_detection.py::TestDetectLanguage::test_clearly_english_text_returns_en PASSED [ 41%]
+backend\tests\test_language_detection.py::TestDetectLanguage::test_empty_text_returns_es PASSED [ 41%]
+backend\tests\test_language_detection.py::TestDetectLanguage::test_none_like_empty_returns_es PASSED [ 41%]
+backend\tests\test_language_detection.py::TestDetectLanguage::test_ambiguous_mixed_text_returns_es PASSED [ 41%]
+backend\tests\test_language_detection.py::TestDetectLanguage::test_spanish_title_only PASSED [ 41%]
+backend\tests\test_language_detection.py::TestDetectLanguage::test_english_title_only PASSED [ 42%]
+backend\tests\test_language_detection.py::TestDetectLanguage::test_tie_defaults_to_spanish PASSED [ 42%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_produces_valid_json PASSED [ 42%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_includes_timestamp PASSED [ 42%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_includes_level PASSED [ 42%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_includes_message PASSED [ 42%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_excludes_requestid_when_not_set PASSED [ 42%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_excludes_userid_when_not_set PASSED [ 43%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_supports_all_log_levels[10-DEBUG] PASSED [ 43%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_supports_all_log_levels[20-INFO] PASSED [ 43%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_supports_all_log_levels[30-WARNING] PASSED [ 43%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_supports_all_log_levels[40-ERROR] PASSED [ 43%]
+backend\tests\test_logging_config.py::TestJSONFormatter::test_formatter_supports_all_log_levels[50-CRITICAL] PASSED [ 43%]
+backend\tests\test_logging_config.py::TestRequestContext::test_request_context_sets_request_id PASSED [ 43%]
+backend\tests\test_logging_config.py::TestRequestContext::test_request_context_sets_user_id PASSED [ 43%]
+backend\tests\test_logging_config.py::TestRequestContext::test_request_context_generates_request_id_if_not_provided PASSED [ 44%]
+backend\tests\test_logging_config.py::TestRequestContext::test_request_context_injects_into_logs PASSED [ 44%]
+backend\tests\test_logging_config.py::TestRequestContext::test_request_context_clears_after_exit PASSED [ 44%]
+backend\tests\test_logging_config.py::TestRequestContext::test_request_context_only_sets_userid_if_provided PASSED [ 44%]
+backend\tests\test_logging_config.py::TestRequestContext::test_request_context_nested PASSED [ 44%]
+backend\tests\test_logging_config.py::TestLoggerFactory::test_get_logger_returns_logger PASSED [ 44%]
+backend\tests\test_logging_config.py::TestLoggerFactory::test_get_logger_configures_json_formatter PASSED [ 44%]
+backend\tests\test_logging_config.py::TestLoggerFactory::test_get_logger_returns_same_logger_on_second_call PASSED [ 45%]
+backend\tests\test_logging_config.py::TestLoggerFactory::test_get_logger_does_not_duplicate_handlers PASSED [ 45%]
+backend\tests\test_logging_config.py::TestContextualLogger::test_contextual_logger_accepts_context_parameter PASSED [ 45%]
+backend\tests\test_logging_config.py::TestContextualLogger::test_contextual_logger_all_methods_support_context PASSED [ 45%]
+backend\tests\test_logging_config.py::TestContextManagement::test_set_request_context_sets_values PASSED [ 45%]
+backend\tests\test_logging_config.py::TestContextManagement::test_set_request_context_partial PASSED [ 45%]
+backend\tests\test_logging_config.py::TestContextManagement::test_clear_request_context_clears_all PASSED [ 45%]
+backend\tests\test_logging_config.py::TestSecurityAndSanitization::test_logger_message_can_contain_text_safely PASSED [ 45%]
+backend\tests\test_logging_config.py::TestSecurityAndSanitization::test_context_sanitization_responsibility PASSED [ 46%]
+backend\tests\test_logging_config.py::TestLogFormat::test_multiple_logs_each_valid_json PASSED [ 46%]
+backend\tests\test_logging_config.py::TestLogFormat::test_log_with_string_formatting PASSED [ 46%]
+backend\tests\test_logging_config.py::TestLogFormat::test_timestamp_format_is_iso8601_with_z PASSED [ 46%]
+backend\tests\test_main.py::test_async_resumen_generation_success PASSED [ 46%]
+backend\tests\test_main.py::test_async_resumen_generation_bedrock_invocation_failure PASSED [ 46%]
+backend\tests\test_main.py::test_async_resumen_generation_validation_error_after_retry PASSED [ 46%]
+backend\tests\test_main.py::test_async_resumen_generation_missing_perfil_treated_as_failure PASSED [ 47%]
+backend\tests\test_main.py::test_handler_dispatches_async_resumen_generation_mode PASSED [ 47%]
+backend\tests\test_main.py::test_handler_does_not_dispatch_other_events_to_resumen_handler PASSED [ 47%]
+backend\tests\test_misscount_logic.py::TestMissCountIncrement::test_increment_when_vacancy_missing_from_scan PASSED [ 47%]
+backend\tests\test_misscount_logic.py::TestMissCountIncrement::test_increment_multiple_missing_vacancies PASSED [ 47%]
+backend\tests\test_misscount_logic.py::TestMissCountIncrement::test_increment_only_missing_vacancy PASSED [ 47%]
+backend\tests\test_misscount_logic.py::TestMissCountIncrement::test_no_increment_for_already_closed_vacancy PASSED [ 47%]
+backend\tests\test_misscount_logic.py::TestMissCountReset::test_reset_misscount_when_found_in_scan PASSED [ 48%]
+backend\tests\test_misscount_logic.py::TestMissCountReset::test_reset_from_high_misscount PASSED [ 48%]
+backend\tests\test_misscount_logic.py::TestReopen::test_reopen_closed_vacancy_when_found PASSED [ 48%]
+backend\tests\test_misscount_logic.py::TestReopen::test_open_vacancy_stays_open_when_found PASSED [ 48%]
+backend\tests\test_misscount_logic.py::TestClose::test_close_at_misscount_2 PASSED [ 48%]
+backend\tests\test_misscount_logic.py::TestClose::test_close_at_misscount_above_2 PASSED [ 48%]
+backend\tests\test_misscount_logic.py::TestClose::test_no_close_at_misscount_1 PASSED [ 48%]
+backend\tests\test_misscount_logic.py::TestClose::test_close_with_json_ld_origen PASSED [ 48%]
+backend\tests\test_misscount_logic.py::TestClose::test_close_with_html_llm_origen PASSED [ 49%]
+backend\tests\test_misscount_logic.py::TestManualProtection::test_manual_not_closed_even_with_high_misscount PASSED [ 49%]
+backend\tests\test_misscount_logic.py::TestManualProtection::test_manual_not_closed_at_very_high_misscount PASSED [ 49%]
+backend\tests\test_misscount_logic.py::TestManualProtection::test_manual_misscount_increments_but_never_triggers_close PASSED [ 49%]
+backend\tests\test_misscount_logic.py::TestNewVacancyCreation::test_new_vacancy_created_with_correct_defaults PASSED [ 49%]
+backend\tests\test_misscount_logic.py::TestNewVacancyCreation::test_new_vacancy_uses_provided_origen PASSED [ 49%]
+backend\tests\test_misscount_logic.py::TestNewVacancyCreation::test_new_vacancy_defaults_to_automated_origen PASSED [ 49%]
+backend\tests\test_misscount_logic.py::TestNewVacancyCreation::test_multiple_new_vacancies_created PASSED [ 50%]
+backend\tests\test_misscount_logic.py::TestNewVacancyCreation::test_new_vacancy_gets_empresa_plataforma PASSED [ 50%]
+backend\tests\test_misscount_logic.py::TestNewVacancyCreation::test_new_vacancy_has_timestamps PASSED [ 50%]
+backend\tests\test_misscount_logic.py::TestExistingVacancyUpdate::test_verificada_at_updated_when_found PASSED [ 50%]
+backend\tests\test_misscount_logic.py::TestExistingVacancyUpdate::test_crawled_at_unchanged_when_found PASSED [ 50%]
+backend\tests\test_misscount_logic.py::TestExistingVacancyUpdate::test_verificada_at_not_updated_when_not_found PASSED [ 50%]
+backend\tests\test_misscount_logic.py::TestCombinedScenarios::test_mix_of_found_missing_new PASSED [ 50%]
+backend\tests\test_misscount_logic.py::TestCombinedScenarios::test_sequence_of_scans_leading_to_closure PASSED [ 51%]
+backend\tests\test_misscount_logic.py::TestCombinedScenarios::test_sequence_close_then_reopen PASSED [ 51%]
+backend\tests\test_misscount_logic.py::TestCombinedScenarios::test_closed_vacancy_stays_closed_when_still_missing PASSED [ 51%]
+backend\tests\test_misscount_logic.py::TestCombinedScenarios::test_empty_existing_and_empty_scan PASSED [ 51%]
+backend\tests\test_misscount_logic.py::TestCombinedScenarios::test_all_existing_found_in_scan PASSED [ 51%]
+backend\tests\test_misscount_logic.py::TestCombinedScenarios::test_url_normalization_matches_correctly PASSED [ 51%]
+backend\tests\test_models_new.py::TestUsuarioVacanteUpdated::test_required_fields PASSED [ 51%]
+backend\tests\test_models_new.py::TestUsuarioVacanteUpdated::test_optional_fields_default_none PASSED [ 51%]
+backend\tests\test_models_new.py::TestUsuarioVacanteUpdated::test_all_estado_values_accepted PASSED [ 52%]
+backend\tests\test_models_new.py::TestUsuarioVacanteUpdated::test_aplicada_with_appliedAt PASSED [ 52%]
+backend\tests\test_models_new.py::TestUsuarioVacanteUpdated::test_cv_ats_fields PASSED [ 52%]
+backend\tests\test_models_new.py::TestUsuarioVacanteUpdated::test_score_range_validation PASSED [ 52%]
+backend\tests\test_models_new.py::TestUsuarioVacanteUpdated::test_extra_fields_ignored PASSED [ 52%]
+backend\tests\test_models_new.py::TestUsuarioVacanteUpdated::test_missing_companyId_fails PASSED [ 52%]
+backend\tests\test_models_new.py::TestEntradaModel::test_basic_creation PASSED [ 52%]
+backend\tests\test_models_new.py::TestEntradaModel::test_nota_entrevista_tipo PASSED [ 53%]
+backend\tests\test_models_new.py::TestEntradaModel::test_extra_fields_ignored PASSED [ 53%]
+backend\tests\test_models_new.py::TestEntradaModel::test_missing_required_field_fails PASSED [ 53%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_simple_html PASSED [ 53%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_preserves_block_structure PASSED [ 53%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_removes_script_tags PASSED [ 53%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_removes_style_tags PASSED [ 53%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_empty_string PASSED [ 54%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_none_input PASSED [ 54%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_non_string_input PASSED [ 54%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_complex_html_structure PASSED [ 54%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_whitespace_handling PASSED [ 54%]
+backend\tests\test_normalization.py::TestHtmlToCleanText::test_nested_tags PASSED [ 54%]
+backend\tests\test_normalization.py::TestNormalizeWhitespace::test_basic_stripping PASSED [ 54%]
+backend\tests\test_normalization.py::TestNormalizeWhitespace::test_collapse_multiple_spaces PASSED [ 54%]
+backend\tests\test_normalization.py::TestNormalizeWhitespace::test_tab_not_collapsed PASSED [ 55%]
+backend\tests\test_normalization.py::TestNormalizeWhitespace::test_empty_string PASSED [ 55%]
+backend\tests\test_normalization.py::TestNormalizeWhitespace::test_only_whitespace PASSED [ 55%]
+backend\tests\test_normalization.py::TestNormalizeWhitespace::test_none_input PASSED [ 55%]
+backend\tests\test_normalization.py::TestNormalizeWhitespace::test_non_string_input PASSED [ 55%]
+backend\tests\test_normalization.py::TestNormalizeWhitespace::test_multiple_consecutive_spaces PASSED [ 55%]
+backend\tests\test_normalization.py::TestNormalizeWhitespace::test_leading_and_trailing_combined PASSED [ 55%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_extract_simple_title PASSED [ 56%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_title_with_whitespace PASSED [ 56%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_no_title_tag PASSED [ 56%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_empty_title_tag PASSED [ 56%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_title_only_whitespace PASSED [ 56%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_empty_string PASSED [ 56%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_none_input PASSED [ 56%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_non_string_input PASSED [ 56%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_title_in_full_html_document PASSED [ 57%]
+backend\tests\test_normalization.py::TestExtractPageTitle::test_multiple_title_tags PASSED [ 57%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_simple_json_ld PASSED [ 57%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_json_ld_with_whitespace PASSED [ 57%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_no_json_ld PASSED [ 57%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_malformed_json_ld PASSED [ 57%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_json_ld_not_dict PASSED [ 57%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_empty_string PASSED [ 58%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_none_input PASSED [ 58%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_non_string_input PASSED [ 58%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_json_ld_in_full_document PASSED [ 58%]
+backend\tests\test_normalization.py::TestExtractJsonLd::test_multiple_json_ld_blocks PASSED [ 58%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_extract_absolute_careers_url PASSED [ 58%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_extract_relative_careers_url PASSED [ 58%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_extract_jobs_url PASSED [ 59%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_case_insensitive_match PASSED [ 59%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_no_careers_url PASSED [ 59%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_empty_href PASSED [ 59%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_empty_html PASSED [ 59%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_none_html_input PASSED [ 59%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_non_string_html_input PASSED [ 59%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_none_base_url PASSED [ 59%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_empty_base_url PASSED [ 60%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_non_string_base_url PASSED [ 60%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_relative_url_resolution PASSED [ 60%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_multiple_links_returns_first_match PASSED [ 60%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_career_in_url_path PASSED [ 60%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_job_in_query_param PASSED [ 60%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_complex_html_document PASSED [ 60%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_fragment_in_url PASSED [ 61%]
+backend\tests\test_normalization.py::TestExtractCareersUrlFromHtml::test_query_string_in_url PASSED [ 61%]
+backend\tests\test_normalization.py::TestNormalizationIntegration::test_typical_careers_page_processing PASSED [ 61%]
+backend\tests\test_normalization.py::TestNormalizationIntegration::test_html_with_json_ld_careers PASSED [ 61%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_subject_contains_count_and_date PASSED [ 61%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_subject_count_multiple_vacancies PASSED [ 61%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_body_is_plain_text_no_html PASSED [ 61%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_description_truncated_at_250_chars PASSED [ 62%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_description_not_truncated_when_short PASSED [ 62%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_cv_ats_texto_truncated_at_500_chars PASSED [ 62%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_cv_ats_texto_omitted_when_absent PASSED [ 62%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_cv_ats_texto_omitted_when_empty_string PASSED [ 62%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_cv_ats_texto_included_when_present PASSED [ 62%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_max_5_vacancies_per_call PASSED [ 62%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_body_includes_user_greeting PASSED [ 62%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_body_includes_vacancy_fields PASSED [ 63%]
+backend\tests\test_notificador_email_builder.py::TestBuildNotificationEmail::test_score_pending_when_none PASSED [ 63%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_estado_nueva_included PASSED [ 63%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_estado_filtered_out_excluded PASSED [ 63%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_estado_vista_excluded PASSED [ 63%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_estado_aplicada_excluded PASSED [ 63%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_first_seen_at_equal_to_started_at_included PASSED [ 63%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_first_seen_at_before_started_at_excluded PASSED [ 64%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_company_not_in_empresas_completadas_excluded PASSED [ 64%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_multiple_vacancies_mixed_qualification PASSED [ 64%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_empty_list_returns_empty PASSED [ 64%]
+backend\tests\test_notificador_qualification.py::TestDetermineQualifiedVacancies::test_missing_first_seen_at_excluded PASSED [ 64%]
+backend\tests\test_notificador_qualification.py::TestShouldSendEmail::test_empty_qualified_list_returns_false PASSED [ 64%]
+backend\tests\test_notificador_qualification.py::TestShouldSendEmail::test_non_empty_qualified_list_returns_true PASSED [ 64%]
+backend\tests\test_notificador_qualification.py::TestShouldSendEmail::test_multiple_items_returns_true PASSED [ 64%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_no_last_scanned_always_eligible PASSED [ 65%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_no_last_scanned_missing_key_eligible PASSED [ 65%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_board_api_under_1h_not_eligible PASSED [ 65%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_board_api_over_1h_eligible PASSED [ 65%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_json_ld_under_1h_not_eligible PASSED [ 65%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_json_ld_over_1h_eligible PASSED [ 65%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_html_llm_under_12h_not_eligible PASSED [ 65%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_html_llm_over_12h_eligible PASSED [ 66%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_no_ultimo_origen_uses_12h_window PASSED [ 66%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_no_ultimo_origen_over_12h_eligible PASSED [ 66%]
+backend\tests\test_orquestador.py::TestEsElegibleParaRescan::test_exact_boundary_board_api PASSED [ 66%]
+backend\tests\test_orquestador.py::TestPostScansEndpoint::test_zero_subscriptions_returns_done PASSED [ 66%]
+backend\tests\test_orquestador.py::TestPostScansEndpoint::test_all_omitted_by_ventana_frescura_returns_done PASSED [ 66%]
+backend\tests\test_orquestador.py::TestPostScansEndpoint::test_eligible_company_publishes_to_sqs PASSED [ 66%]
+backend\tests\test_orquestador.py::TestPostScansEndpoint::test_all_sqs_publish_fail_status_failed PASSED [ 67%]
+backend\tests\test_orquestador.py::TestPostScansEndpoint::test_partial_sqs_publish_fail_status_parcial PASSED [ 67%]
+backend\tests\test_orquestador.py::TestPostScansEndpoint::test_deduplicates_company_ids PASSED [ 67%]
+backend\tests\test_orquestador.py::TestPostScansEndpoint::test_inactive_subscriptions_excluded PASSED [ 67%]
+backend\tests\test_orquestador.py::TestPostScansEndpoint::test_successful_scan_status_running PASSED [ 67%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_basic_lowercasing PASSED [ 67%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_diacritic_removal PASSED [ 67%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_accent_on_common_words PASSED [ 67%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_stopword_removal PASSED [ 68%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_all_stopwords_filtered PASSED [ 68%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_split_on_hyphens PASSED [ 68%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_split_on_slashes PASSED [ 68%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_split_on_parentheses PASSED [ 68%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_short_tokens_filtered PASSED [ 68%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_empty_string PASSED [ 68%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_none_input PASSED [ 69%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_only_stopwords PASSED [ 69%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_numbers_preserved PASSED [ 69%]
+backend\tests\test_prefiltro_cargos.py::TestGetSignificantTokens::test_multiple_spaces_and_tabs PASSED [ 69%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_empty_cargos_activos_bypasses PASSED [ 69%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_single_token_overlap_passes PASSED [ 69%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_no_overlap_fails PASSED [ 69%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_overlap_with_accents PASSED [ 70%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_multiple_cargos_any_match PASSED [ 70%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_threshold_2_requires_two_tokens PASSED [ 70%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_threshold_higher_than_possible PASSED [ 70%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_stopwords_dont_count_as_overlap PASSED [ 70%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_titulo_with_no_significant_tokens PASSED [ 70%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_case_insensitive_matching PASSED [ 70%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_none_in_cargos_list_skipped PASSED [ 70%]
+backend\tests\test_prefiltro_cargos.py::TestPasaPrefiltroCargos::test_threshold_env_integration PASSED [ 71%]
+backend\tests\test_prefiltro_cargos.py::TestSpanishStopwords::test_common_prepositions_filtered PASSED [ 71%]
+backend\tests\test_prefiltro_cargos.py::TestSpanishStopwords::test_articles_filtered PASSED [ 71%]
+backend\tests\test_prefiltro_cargos.py::TestSpanishStopwords::test_accented_stopwords_normalized_and_filtered PASSED [ 71%]
+backend\tests\test_prefiltro_cargos.py::TestSpanishStopwords::test_conjunctions_filtered PASSED [ 71%]
+backend\tests\test_prefiltro_cargos.py::TestSpanishStopwords::test_mixed_stopwords_and_significant PASSED [ 71%]
+backend\tests\test_prefiltro_cargos.py::TestSpanishStopwords::test_stopwords_do_not_contribute_to_prefiltro_overlap PASSED [ 71%]
+backend\tests\test_prefiltro_cargos.py::TestGetThreshold::test_default_when_unset PASSED [ 72%]
+backend\tests\test_prefiltro_cargos.py::TestGetThreshold::test_default_when_empty PASSED [ 72%]
+backend\tests\test_prefiltro_cargos.py::TestGetThreshold::test_valid_positive_integer PASSED [ 72%]
+backend\tests\test_prefiltro_cargos.py::TestGetThreshold::test_invalid_non_numeric PASSED [ 72%]
+backend\tests\test_prefiltro_cargos.py::TestGetThreshold::test_zero_returns_default PASSED [ 72%]
+backend\tests\test_prefiltro_cargos.py::TestGetThreshold::test_negative_returns_default PASSED [ 72%]
+backend\tests\test_profile.py::test_parse_cv_success PASSED              [ 72%]
+backend\tests\test_profile.py::test_parse_cv_empty_text_rejected PASSED  [ 72%]
+backend\tests\test_profile.py::test_parse_cv_too_large_rejected PASSED   [ 73%]
+backend\tests\test_profile.py::test_parse_cv_bedrock_timeout_handled PASSED [ 73%]
+backend\tests\test_profile.py::test_parse_cv_bedrock_validation_error_handled PASSED [ 73%]
+backend\tests\test_profile.py::test_parse_cv_requires_auth PASSED        [ 73%]
+backend\tests\test_profile.py::test_parse_cv_max_exactly_50kb PASSED     [ 73%]
+backend\tests\test_profile.py::test_parse_cv_prompt_includes_schema PASSED [ 73%]
+backend\tests\test_profile.py::test_parse_cv_prompt_returns_valid_format PASSED [ 73%]
+backend\tests\test_profile.py::test_get_profile_success PASSED           [ 74%]
+backend\tests\test_profile.py::test_get_profile_resumen_generating_true_when_pending PASSED [ 74%]
+backend\tests\test_profile.py::test_get_profile_resumen_generating_false_when_no_status PASSED [ 74%]
+backend\tests\test_profile.py::test_get_profile_not_found PASSED         [ 74%]
+backend\tests\test_profile.py::test_get_profile_defaults_empty_lists PASSED [ 74%]
+backend\tests\test_profile.py::test_save_profile_success PASSED          [ 74%]
+backend\tests\test_profile.py::test_save_profile_triggers_async_resumen_generation PASSED [ 74%]
+backend\tests\test_profile.py::test_save_profile_first_time PASSED       [ 75%]
+backend\tests\test_profile.py::test_save_profile_does_not_modify_resumen_fields PASSED [ 75%]
+backend\tests\test_profile.py::test_save_profile_invalid_body_returns_400 PASSED [ 75%]
+backend\tests\test_profile.py::test_save_profile_invalid_perfil_returns_422 PASSED [ 75%]
+backend\tests\test_profile.py::test_save_profile_returns_iso8601_timestamp PASSED [ 75%]
+backend\tests\test_profile.py::test_trigger_async_resumen_generation_happy_path PASSED [ 75%]
+backend\tests\test_profile.py::test_trigger_async_resumen_generation_invoke_fails_writes_failed PASSED [ 75%]
+backend\tests\test_profile.py::test_trigger_async_resumen_generation_pending_write_fails_invoke_never_called PASSED [ 75%]
+backend\tests\test_profile.py::test_trigger_async_resumen_generation_both_writes_fail_returns_unknown PASSED [ 76%]
+backend\tests\test_profile.py::test_decide_roles_suggest_action_property PASSED [ 76%]
+backend\tests\test_profile.py::test_decide_roles_suggest_action_content_independence PASSED [ 76%]
+backend\tests\test_profile.py::test_suggest_roles_success PASSED         [ 76%]
+backend\tests\test_profile.py::test_suggest_roles_resume_not_ready_null_resumen PASSED [ 76%]
+backend\tests\test_profile.py::test_suggest_roles_case_a_null_resumen_blocks_without_trigger[None] PASSED [ 76%]
+backend\tests\test_profile.py::test_suggest_roles_case_a_null_resumen_blocks_without_trigger[pending] PASSED [ 76%]
+backend\tests\test_profile.py::test_suggest_roles_case_a_null_resumen_blocks_without_trigger[complete] PASSED [ 77%]
+backend\tests\test_profile.py::test_suggest_roles_case_b_existing_resumen_pending_allows PASSED [ 77%]
+backend\tests\test_profile.py::test_suggest_roles_case_c_existing_resumen_failed_allows_no_retry PASSED [ 77%]
+backend\tests\test_profile.py::test_suggest_roles_case_d_existing_resumen_complete_or_none_allows[complete] PASSED [ 77%]
+backend\tests\test_profile.py::test_suggest_roles_case_d_existing_resumen_complete_or_none_allows[None] PASSED [ 77%]
+backend\tests\test_profile.py::test_suggest_roles_case_e_null_resumen_failed_blocks_and_triggers_retry_once PASSED [ 77%]
+backend\tests\test_profile.py::test_suggest_roles_resume_not_ready_no_profile PASSED [ 77%]
+backend\tests\test_profile.py::test_suggest_roles_bedrock_timeout_returns_502 PASSED [ 78%]
+backend\tests\test_profile.py::test_suggest_roles_validation_error_returns_400 PASSED [ 78%]
+backend\tests\test_profile.py::test_suggest_roles_does_not_persist_suggestions PASSED [ 78%]
+backend\tests\test_profile.py::test_save_roles_success PASSED            [ 78%]
+backend\tests\test_profile.py::test_save_roles_empty_list_accepted PASSED [ 78%]
+backend\tests\test_profile.py::test_save_roles_too_many_items_rejected PASSED [ 78%]
+backend\tests\test_profile.py::test_save_roles_item_too_long_rejected PASSED [ 78%]
+backend\tests\test_profile.py::test_save_roles_increments_profile_version PASSED [ 78%]
+backend\tests\test_profile.py::test_save_roles_does_not_trigger_rescoring PASSED [ 79%]
+backend\tests\test_profile.py::test_save_roles_persists_correct_fields PASSED [ 79%]
+backend\tests\test_profile.py::test_roles_suggestion_prompt_includes_resumen PASSED [ 79%]
+backend\tests\test_rescoring.py::TestIsScoreStale::test_returns_false_when_versions_match PASSED [ 79%]
+backend\tests\test_rescoring.py::TestIsScoreStale::test_returns_true_when_versions_differ PASSED [ 79%]
+backend\tests\test_rescoring.py::TestIsScoreStale::test_returns_true_when_score_version_ahead PASSED [ 79%]
+backend\tests\test_rescoring.py::TestIsScoreStale::test_returns_false_when_usuario_vacante_is_none PASSED [ 79%]
+backend\tests\test_rescoring.py::TestIsScoreStale::test_returns_true_when_score_profile_version_is_none PASSED [ 80%]
+backend\tests\test_rescoring.py::TestIsScoreStale::test_returns_false_when_both_versions_zero PASSED [ 80%]
+backend\tests\test_rescoring.py::TestEnqueueRescore::test_returns_true_on_successful_send PASSED [ 80%]
+backend\tests\test_rescoring.py::TestEnqueueRescore::test_returns_false_on_sqs_error PASSED [ 80%]
+backend\tests\test_rescoring.py::TestEnqueueRescore::test_returns_false_when_queue_url_not_set PASSED [ 80%]
+backend\tests\test_rescoring.py::TestEnqueueRescore::test_never_raises_on_error PASSED [ 80%]
+backend\tests\test_rescoring.py::TestEnqueueRescore::test_publishes_exactly_one_message PASSED [ 80%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_error_present_returns_failed PASSED [ 81%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_error_present_with_vacancies_still_returns_failed PASSED [ 81%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_error_empty_string_returns_failed PASSED [ 81%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_error_with_high_last_vacancy_count_returns_failed PASSED [ 81%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_valid_response_with_vacancies_returns_ok PASSED [ 81%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_valid_response_with_multiple_vacancies_returns_ok PASSED [ 81%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_ok_regardless_of_last_vacancy_count PASSED [ 81%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_zero_vacancies_with_previous_count_returns_empty_sospechoso PASSED [ 81%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_empty_sospechoso_with_last_vacancy_count_one PASSED [ 82%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_none_vacancies_list_with_previous_count_returns_empty_sospechoso PASSED [ 82%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_zero_vacancies_with_zero_last_count_returns_empty_legitimo PASSED [ 82%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_none_vacancies_list_with_zero_last_count_returns_empty_legitimo PASSED [ 82%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_manual_platform_scenario_returns_empty_legitimo PASSED [ 82%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_empty_list_none_origen_none_error_zero_count_returns_empty_legitimo PASSED [ 82%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[FAILED-error_timeout-empty-lvc0] PASSED [ 82%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[FAILED-error_timeout-empty-lvc5] PASSED [ 83%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[FAILED-error_timeout-with_vacancies-lvc0] PASSED [ 83%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[FAILED-error_timeout-with_vacancies-lvc5] PASSED [ 83%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[FAILED-error_http500-empty-lvc0] PASSED [ 83%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[FAILED-error_http500-empty-lvc1] PASSED [ 83%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[FAILED-error_empty_string-empty-lvc0] PASSED [ 83%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[FAILED-error_invalid_json-none-lvc10] PASSED [ 83%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[FAILED-error_connection-empty-lvc100] PASSED [ 83%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[OK-no_error-one_vacancy-lvc0] PASSED [ 84%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[OK-no_error-one_vacancy-lvc5] PASSED [ 84%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[OK-no_error-one_vacancy-lvc100] PASSED [ 84%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[OK-no_error-two_vacancies-lvc0] PASSED [ 84%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[OK-no_error-two_vacancies-lvc10] PASSED [ 84%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[EMPTY_SOSPECHOSO-no_error-empty-lvc1] PASSED [ 84%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[EMPTY_SOSPECHOSO-no_error-empty-lvc5] PASSED [ 84%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[EMPTY_SOSPECHOSO-no_error-empty-lvc100] PASSED [ 85%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[EMPTY_SOSPECHOSO-no_error-none-lvc1] PASSED [ 85%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[EMPTY_SOSPECHOSO-no_error-none-lvc50] PASSED [ 85%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[EMPTY_LEGITIMO-no_error-empty-lvc0] PASSED [ 85%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_exhaustive_decision_table[EMPTY_LEGITIMO-no_error-none-lvc0] PASSED [ 85%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_classification_is_always_exactly_one_value PASSED [ 85%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_no_two_classifications_for_same_input PASSED [ 85%]
+backend\tests\test_scan_classification.py::TestClassifyScanResult::test_classifications_are_mutually_exclusive_across_conditions PASSED [ 86%]
+backend\tests\test_scan_worker.py::TestScanWorkerOKFlow::test_ok_flow_upserts_vacantes_and_updates_empresa PASSED [ 86%]
+backend\tests\test_scan_worker.py::TestScanWorkerOKFlow::test_ok_flow_enqueues_scoring_for_new_vacancies PASSED [ 86%]
+backend\tests\test_scan_worker.py::TestScanWorkerOKFlow::test_ok_flow_identifies_new_vacancies_correctly PASSED [ 86%]
+backend\tests\test_scan_worker.py::TestScanWorkerFailedFlow::test_failed_increments_consecutive_failures PASSED [ 86%]
+backend\tests\test_scan_worker.py::TestScanWorkerFailedFlow::test_empty_sospechoso_does_not_touch_vacantes PASSED [ 86%]
+backend\tests\test_scan_worker.py::TestScanWorkerFailedFlow::test_empty_sospechoso_adds_to_fallidas PASSED [ 86%]
+backend\tests\test_scan_worker.py::TestScanWorkerEmptyLegitimoFlow::test_empty_legitimo_resets_failures_and_updates_origen PASSED [ 86%]
+backend\tests\test_scan_worker.py::TestScanWorkerSQSFailure::test_scoring_enqueue_failure_raises_for_sqs_retry PASSED [ 87%]
+backend\tests\test_scan_worker.py::TestScanWorkerIdempotency::test_string_set_add_is_idempotent PASSED [ 87%]
+backend\tests\test_scan_worker.py::TestScanMessageParsing::test_valid_scan_message PASSED [ 87%]
+backend\tests\test_scan_worker.py::TestScanMessageParsing::test_scan_message_ignores_extra_fields PASSED [ 87%]
+backend\tests\test_scan_worker.py::TestScanMessageParsing::test_scoring_message_model PASSED [ 87%]
+backend\tests\test_scoring_worker.py::TestScoringResultValidation::test_valid_scoring_result PASSED [ 87%]
+backend\tests\test_scoring_worker.py::TestScoringResultValidation::test_score_below_zero_fails PASSED [ 87%]
+backend\tests\test_scoring_worker.py::TestScoringResultValidation::test_score_above_100_fails PASSED [ 88%]
+backend\tests\test_scoring_worker.py::TestScoringResultValidation::test_missing_veredicto_fails PASSED [ 88%]
+backend\tests\test_scoring_worker.py::TestScoringResultValidation::test_missing_resumen_fails PASSED [ 88%]
+backend\tests\test_scoring_worker.py::TestScoringResultValidation::test_score_boundary_zero PASSED [ 88%]
+backend\tests\test_scoring_worker.py::TestScoringResultValidation::test_score_boundary_100 PASSED [ 88%]
+backend\tests\test_scoring_worker.py::TestScoringResultValidation::test_extra_fields_ignored PASSED [ 88%]
+backend\tests\test_scoring_worker.py::TestScoringMessageValidation::test_valid_message PASSED [ 88%]
+backend\tests\test_scoring_worker.py::TestScoringMessageValidation::test_missing_userId_fails PASSED [ 89%]
+backend\tests\test_scoring_worker.py::TestScoringMessageValidation::test_missing_vacancyId_fails PASSED [ 89%]
+backend\tests\test_scoring_worker.py::TestUsuarioVacanteModel::test_nueva_state_with_score PASSED [ 89%]
+backend\tests\test_scoring_worker.py::TestUsuarioVacanteModel::test_filtered_out_state PASSED [ 89%]
+backend\tests\test_scoring_worker.py::TestUsuarioVacanteModel::test_score_out_of_range_fails PASSED [ 89%]
+backend\tests\test_scoring_worker.py::TestScoringWorkerIdempotence::test_skip_when_score_version_matches_profile PASSED [ 89%]
+backend\tests\test_scoring_worker.py::TestScoringWorkerIdempotence::test_proceed_when_no_existing_record PASSED [ 89%]
+backend\tests\test_scoring_worker.py::TestScoringWorkerIdempotence::test_rescore_when_profile_version_changed PASSED [ 89%]
+backend\tests\test_scoring_worker.py::TestScoringWorkerPrefiltro::test_filtered_out_when_no_token_overlap PASSED [ 90%]
+backend\tests\test_scoring_worker.py::TestScoringWorkerPrefiltro::test_bypass_prefiltro_when_cargos_empty PASSED [ 90%]
+backend\tests\test_scoring_worker.py::TestScoringWorkerPrefiltro::test_passes_prefiltro_when_token_overlap_exists PASSED [ 90%]
+backend\tests\test_scoring_worker.py::TestScoringWorkerBedrockValidation::test_validation_error_raises_for_sqs_retry PASSED [ 90%]
+backend\tests\test_scoring_worker.py::TestScoringWorkerBedrockValidation::test_successful_scoring_persists_all_fields PASSED [ 90%]
+backend\tests\test_vacancy_service.py::TestActivasFilter::test_keeps_nueva_and_vista PASSED [ 90%]
+backend\tests\test_vacancy_service.py::TestActivasFilter::test_excludes_aplicada_and_filtered_out PASSED [ 90%]
+backend\tests\test_vacancy_service.py::TestAplicadasFilter::test_keeps_only_aplicada PASSED [ 91%]
+backend\tests\test_vacancy_service.py::TestAplicadasFilter::test_excludes_nueva_vista_filtered_out PASSED [ 91%]
+backend\tests\test_vacancy_service.py::TestScoreSort::test_score_descending_order PASSED [ 91%]
+backend\tests\test_vacancy_service.py::TestScoreSort::test_null_scores_last PASSED [ 91%]
+backend\tests\test_vacancy_service.py::TestLastSeenAtTieBreak::test_same_score_sorted_by_last_seen_at_descending PASSED [ 91%]
+backend\tests\test_vacancy_service.py::TestAppliedAtSort::test_aplicadas_sorted_by_applied_at_descending PASSED [ 91%]
+backend\tests\test_vacancy_service.py::TestStalenessFlag::test_stale_when_version_mismatch PASSED [ 91%]
+backend\tests\test_vacancy_service.py::TestStalenessFlag::test_stale_when_null_version_and_nueva PASSED [ 91%]
+backend\tests\test_vacancy_service.py::TestStalenessFlag::test_not_stale_when_null_version_and_vista PASSED [ 92%]
+backend\tests\test_vacancy_service.py::TestStalenessFlag::test_not_stale_when_version_matches PASSED [ 92%]
+backend\tests\test_vacancy_service.py::TestCvAtsTextoExcluded::test_cv_ats_texto_excluded_from_activas PASSED [ 92%]
+backend\tests\test_vacancy_service.py::TestCvAtsTextoExcluded::test_cv_ats_texto_excluded_from_aplicadas PASSED [ 92%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_lowercase_scheme PASSED [ 92%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_lowercase_host PASSED [ 92%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_remove_fragment PASSED [ 92%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_remove_trailing_slash PASSED [ 93%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_preserve_path_structure PASSED [ 93%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_mixed_transformations PASSED [ 93%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_missing_scheme PASSED [ 93%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_missing_hostname PASSED [ 93%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_empty_string PASSED [ 93%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_preserves_query_string PASSED [ 93%]
+backend\tests\test_validators.py::TestNormalizeUrl::test_normalize_url_idempotent PASSED [ 94%]
+backend\tests\test_validators.py::TestComputeCompanyId::test_compute_company_id_returns_64_hex_chars PASSED [ 94%]
+backend\tests\test_validators.py::TestComputeCompanyId::test_compute_company_id_deterministic PASSED [ 94%]
+backend\tests\test_validators.py::TestComputeCompanyId::test_compute_company_id_different_urls_different_hashes PASSED [ 94%]
+backend\tests\test_validators.py::TestComputeCompanyId::test_compute_company_id_normalized_equivalence PASSED [ 94%]
+backend\tests\test_validators.py::TestComputeCompanyId::test_compute_company_id_malformed_url PASSED [ 94%]
+backend\tests\test_validators.py::TestComputeCompanyId::test_compute_company_id_missing_scheme PASSED [ 94%]
+backend\tests\test_validators.py::TestDetectPlatformHostnameOnly::test_detect_platform_greenhouse PASSED [ 94%]
+backend\tests\test_validators.py::TestDetectPlatformHostnameOnly::test_detect_platform_lever PASSED [ 95%]
+backend\tests\test_validators.py::TestDetectPlatformHostnameOnly::test_detect_platform_html PASSED [ 95%]
+backend\tests\test_validators.py::TestDetectPlatformHostnameOnly::test_detect_platform_greenhouse_priority PASSED [ 95%]
+backend\tests\test_validators.py::TestDetectPlatformHostnameOnly::test_detect_platform_missing_scheme PASSED [ 95%]
+backend\tests\test_validators.py::TestDetectPlatformHostnameOnly::test_detect_platform_missing_hostname PASSED [ 95%]
+backend\tests\test_validators.py::TestDetectPlatformHostnameOnly::test_detect_platform_case_insensitive PASSED [ 95%]
+backend\tests\test_validators.py::TestDetectPlatformHostnameOnly::test_detect_platform_empty_string PASSED [ 95%]
+backend\tests\test_validators.py::TestValidateCvText::test_validate_cv_text_valid PASSED [ 96%]
+backend\tests\test_validators.py::TestValidateCvText::test_validate_cv_text_empty_string PASSED [ 96%]
+backend\tests\test_validators.py::TestValidateCvText::test_validate_cv_text_whitespace_only PASSED [ 96%]
+backend\tests\test_validators.py::TestValidateCvText::test_validate_cv_text_exceeds_50kb PASSED [ 96%]
+backend\tests\test_validators.py::TestValidateCvText::test_validate_cv_text_exactly_50kb PASSED [ 96%]
+backend\tests\test_validators.py::TestValidateCvText::test_validate_cv_text_just_under_50kb PASSED [ 96%]
+backend\tests\test_validators.py::TestValidateCvText::test_validate_cv_text_unicode_characters PASSED [ 96%]
+backend\tests\test_validators.py::TestValidateCvText::test_validate_cv_text_short_valid PASSED [ 97%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_valid_single PASSED [ 97%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_valid_multiple PASSED [ 97%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_valid_max_10 PASSED [ 97%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_empty_list PASSED [ 97%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_exceeds_10 PASSED [ 97%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_role_too_long PASSED [ 97%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_role_exactly_50_chars PASSED [ 97%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_empty_role_string PASSED [ 98%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_whitespace_role PASSED [ 98%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_non_string_item PASSED [ 98%]
+backend\tests\test_validators.py::TestValidateRolesList::test_validate_roles_list_not_a_list PASSED [ 98%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_valid_https PASSED [ 98%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_valid_http PASSED [ 98%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_empty_string PASSED [ 98%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_invalid_scheme PASSED [ 99%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_missing_scheme PASSED [ 99%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_missing_hostname PASSED [ 99%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_with_path PASSED [ 99%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_with_query_params PASSED [ 99%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_with_fragment PASSED [ 99%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_case_insensitive_scheme PASSED [ 99%]
+backend\tests\test_validators.py::TestValidateEmpresaUrl::test_validate_empresa_url_whitespace_only PASSED [100%]
+
+================================== FAILURES ===================================
+_____________ TestGreenhouseExtraction.test_successful_extraction _____________
+backend\tests\test_board_api_client.py:60: in test_successful_extraction
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:226: in board_api_client
+    logger.info(
+backend\shared\logging_config.py:219: in info
+    self._log(logging.INFO, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_________ TestGreenhouseExtraction.test_excludes_entries_without_url __________
+backend\tests\test_board_api_client.py:95: in test_excludes_entries_without_url
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:226: in board_api_client
+    logger.info(
+backend\shared\logging_config.py:219: in info
+    self._log(logging.INFO, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+___________ TestGreenhouseExtraction.test_modalidad_always_sin_dato ___________
+backend\tests\test_board_api_client.py:119: in test_modalidad_always_sin_dato
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:226: in board_api_client
+    logger.info(
+backend\shared\logging_config.py:219: in info
+    self._log(logging.INFO, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+________________ TestGreenhouseExtraction.test_empty_jobs_list ________________
+backend\tests\test_board_api_client.py:132: in test_empty_jobs_list
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:226: in board_api_client
+    logger.info(
+backend\shared\logging_config.py:219: in info
+    self._log(logging.INFO, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_____________ TestGreenhouseExtraction.test_uses_correct_endpoint _____________
+backend\tests\test_board_api_client.py:147: in test_uses_correct_endpoint
+    board_api_client(empresa)
+backend\shared\board_api_client.py:226: in board_api_client
+    logger.info(
+backend\shared\logging_config.py:219: in info
+    self._log(logging.INFO, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_______________ TestLeverExtraction.test_successful_extraction ________________
+backend\tests\test_board_api_client.py:178: in test_successful_extraction
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:226: in board_api_client
+    logger.info(
+backend\shared\logging_config.py:219: in info
+    self._log(logging.INFO, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+____________ TestLeverExtraction.test_excludes_entries_without_url ____________
+backend\tests\test_board_api_client.py:209: in test_excludes_entries_without_url
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:226: in board_api_client
+    logger.info(
+backend\shared\logging_config.py:219: in info
+    self._log(logging.INFO, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_______________ TestLeverExtraction.test_uses_correct_endpoint ________________
+backend\tests\test_board_api_client.py:224: in test_uses_correct_endpoint
+    board_api_client(empresa)
+backend\shared\board_api_client.py:226: in board_api_client
+    logger.info(
+backend\shared\logging_config.py:219: in info
+    self._log(logging.INFO, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_____________________ TestHttpErrorHandling.test_http_404 _____________________
+backend\tests\test_board_api_client.py:243: in test_http_404
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:178: in board_api_client
+    logger.warning(
+backend\shared\logging_config.py:229: in warning
+    self._log(logging.WARNING, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_____________________ TestHttpErrorHandling.test_http_500 _____________________
+backend\tests\test_board_api_client.py:257: in test_http_500
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:178: in board_api_client
+    logger.warning(
+backend\shared\logging_config.py:229: in warning
+    self._log(logging.WARNING, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_____________________ TestHttpErrorHandling.test_timeout ______________________
+backend\shared\board_api_client.py:143: in board_api_client
+    response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1139: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1143: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1198: in _execute_mock_call
+    raise effect
+E   requests.exceptions.Timeout: Connection timed out
+
+During handling of the above exception, another exception occurred:
+backend\tests\test_board_api_client.py:268: in test_timeout
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:146: in board_api_client
+    logger.warning(
+backend\shared\logging_config.py:229: in warning
+    self._log(logging.WARNING, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_________________ TestHttpErrorHandling.test_connection_error _________________
+backend\shared\board_api_client.py:143: in board_api_client
+    response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1139: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1143: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1198: in _execute_mock_call
+    raise effect
+E   requests.exceptions.ConnectionError: DNS resolution failed
+
+During handling of the above exception, another exception occurred:
+backend\tests\test_board_api_client.py:280: in test_connection_error
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:156: in board_api_client
+    logger.warning(
+backend\shared\logging_config.py:229: in warning
+    self._log(logging.WARNING, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_________________ TestInvalidJson.test_invalid_json_response __________________
+backend\shared\board_api_client.py:193: in board_api_client
+    data = response.json()
+           ^^^^^^^^^^^^^^^
+C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1139: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1143: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1198: in _execute_mock_call
+    raise effect
+E   ValueError: No JSON object could be decoded
+
+During handling of the above exception, another exception occurred:
+backend\tests\test_board_api_client.py:298: in test_invalid_json_response
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:195: in board_api_client
+    logger.warning(
+backend\shared\logging_config.py:229: in warning
+    self._log(logging.WARNING, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+_______________ TestInvalidJson.test_unexpected_json_structure ________________
+backend\tests\test_board_api_client.py:313: in test_unexpected_json_structure
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:226: in board_api_client
+    logger.info(
+backend\shared\logging_config.py:219: in info
+    self._log(logging.INFO, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+__________________ TestMissingBoardToken.test_no_board_token __________________
+backend\tests\test_board_api_client.py:332: in test_no_board_token
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:119: in board_api_client
+    logger.warning(
+backend\shared\logging_config.py:229: in warning
+    self._log(logging.WARNING, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+________________ TestMissingBoardToken.test_empty_board_token _________________
+backend\tests\test_board_api_client.py:347: in test_empty_board_token
+    result = board_api_client(empresa)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\shared\board_api_client.py:119: in board_api_client
+    logger.warning(
+backend\shared\logging_config.py:229: in warning
+    self._log(logging.WARNING, msg, args, extra={"context": context}, **kwargs)
+E   TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+============================== warnings summary ===============================
+tests/test_board_api_client.py: 17 warnings
+tests/test_cascada_descubrimiento.py: 35 warnings
+tests/test_html_llm_extractor.py: 12 warnings
+tests/test_misscount_logic.py: 32 warnings
+tests/test_models_new.py: 28 warnings
+tests/test_rescoring.py: 5 warnings
+tests/test_scoring_worker.py: 6 warnings
+  C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\site-packages\pydantic\main.py:164: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    __pydantic_self__.__pydantic_validator__.validate_python(data, self_instance=__pydantic_self__)
+
+tests/test_companies.py::test_list_companies_returns_200
+  C:\Users\an-ge\AppData\Local\Programs\Python\Python312\Lib\site-packages\mangum\adapter.py:65: DeprecationWarning: There is no current event loop
+    asyncio.get_event_loop()
+
+tests/test_misscount_logic.py: 38 warnings
+tests/test_scan_worker.py: 3 warnings
+  C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend\shared\misscount_logic.py:50: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/test_misscount_logic.py::TestNewVacancyCreation::test_new_vacancy_has_timestamps
+  C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend\tests\test_misscount_logic.py:381: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    before = datetime.utcnow()
+
+tests/test_misscount_logic.py::TestNewVacancyCreation::test_new_vacancy_has_timestamps
+  C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend\tests\test_misscount_logic.py:383: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    after = datetime.utcnow()
+
+tests/test_scan_worker.py::TestScanWorkerOKFlow::test_ok_flow_upserts_vacantes_and_updates_empresa
+tests/test_scan_worker.py::TestScanWorkerOKFlow::test_ok_flow_enqueues_scoring_for_new_vacancies
+  C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend\workers\scan_worker.py:147: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow().isoformat()
+
+tests/test_scan_worker.py::TestScanWorkerOKFlow::test_ok_flow_upserts_vacantes_and_updates_empresa
+tests/test_scan_worker.py::TestScanWorkerOKFlow::test_ok_flow_enqueues_scoring_for_new_vacancies
+tests/test_scan_worker.py::TestScanWorkerFailedFlow::test_failed_increments_consecutive_failures
+tests/test_scan_worker.py::TestScanWorkerFailedFlow::test_empty_sospechoso_does_not_touch_vacantes
+tests/test_scan_worker.py::TestScanWorkerFailedFlow::test_empty_sospechoso_adds_to_fallidas
+tests/test_scan_worker.py::TestScanWorkerEmptyLegitimoFlow::test_empty_legitimo_resets_failures_and_updates_origen
+tests/test_scan_worker.py::TestScanWorkerIdempotency::test_string_set_add_is_idempotent
+tests/test_scan_worker.py::TestScanWorkerIdempotency::test_string_set_add_is_idempotent
+  C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend\workers\scan_worker.py:268: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow().isoformat()
+
+tests/test_scan_worker.py::TestScanWorkerOKFlow::test_ok_flow_identifies_new_vacancies_correctly
+  C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend\tests\test_scan_worker.py:239: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    crawledAt=datetime.utcnow(),
+
+tests/test_scan_worker.py::TestScanWorkerFailedFlow::test_failed_increments_consecutive_failures
+tests/test_scan_worker.py::TestScanWorkerFailedFlow::test_empty_sospechoso_does_not_touch_vacantes
+tests/test_scan_worker.py::TestScanWorkerFailedFlow::test_empty_sospechoso_adds_to_fallidas
+  C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend\workers\scan_worker.py:197: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow().isoformat()
+
+tests/test_scan_worker.py::TestScanWorkerFailedFlow::test_failed_increments_consecutive_failures
+tests/test_scan_worker.py::TestScanWorkerFailedFlow::test_empty_sospechoso_does_not_touch_vacantes
+tests/test_scan_worker.py::TestScanWorkerFailedFlow::test_empty_sospechoso_adds_to_fallidas
+  C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend\workers\scan_worker.py:287: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow().isoformat()
+
+tests/test_scan_worker.py::TestScanWorkerEmptyLegitimoFlow::test_empty_legitimo_resets_failures_and_updates_origen
+  C:\Users\an-ge\OneDrive\Documentos\AWS\proyectos\aplicaciones\job-app\backend\workers\scan_worker.py:172: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow().isoformat()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_successful_extraction - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_excludes_entries_without_url - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_modalidad_always_sin_dato - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_empty_jobs_list - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestGreenhouseExtraction::test_uses_correct_endpoint - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestLeverExtraction::test_successful_extraction - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestLeverExtraction::test_excludes_entries_without_url - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestLeverExtraction::test_uses_correct_endpoint - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestHttpErrorHandling::test_http_404 - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestHttpErrorHandling::test_http_500 - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestHttpErrorHandling::test_timeout - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestHttpErrorHandling::test_connection_error - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestInvalidJson::test_invalid_json_response - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestInvalidJson::test_unexpected_json_structure - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestMissingBoardToken::test_no_board_token - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+FAILED backend\tests\test_board_api_client.py::TestMissingBoardToken::test_empty_board_token - TypeError: backend.shared.logging_config.LoggerWithContext._log() got multiple values for keyword argument 'extra'
+================ 16 failed, 721 passed, 197 warnings in 8.66s =================
+

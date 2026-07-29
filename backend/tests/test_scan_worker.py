@@ -137,7 +137,7 @@ class TestScanWorkerOKFlow:
         sample_vacancies,
     ):
         """When cascada returns vacancies, worker upserts them and updates empresa."""
-        from backend.workers.scan_worker import handler_scan_worker
+        from backend.workers.scan_worker import handler
 
         # Mock cascada returns OK result
         mock_cascada.return_value = (sample_vacancies, "board_api", None)
@@ -157,7 +157,7 @@ class TestScanWorkerOKFlow:
         mock_sqs_client = MagicMock()
         mock_sqs.return_value = mock_sqs_client
 
-        result = handler_scan_worker(sqs_event, lambda_context)
+        result = handler(sqs_event, lambda_context)
 
         assert result["statusCode"] == 200
         # Cascada was called
@@ -176,7 +176,7 @@ class TestScanWorkerOKFlow:
         sample_vacancies,
     ):
         """When OK with new vacancies and active subscriptions, enqueue scoring messages."""
-        from backend.workers.scan_worker import handler_scan_worker
+        from backend.workers.scan_worker import handler
 
         mock_cascada.return_value = (sample_vacancies, "board_api", None)
 
@@ -206,7 +206,7 @@ class TestScanWorkerOKFlow:
         mock_sqs_client.send_message_batch.return_value = {"Successful": [{"Id": "0"}], "Failed": []}
         mock_sqs.return_value = mock_sqs_client
 
-        result = handler_scan_worker(sqs_event, lambda_context)
+        result = handler(sqs_event, lambda_context)
 
         assert result["statusCode"] == 200
         # SQS scoring messages should be sent
@@ -270,7 +270,7 @@ class TestScanWorkerFailedFlow:
         sample_empresa,
     ):
         """FAILED classification increments consecutiveFailures and adds to fallidas."""
-        from backend.workers.scan_worker import handler_scan_worker
+        from backend.workers.scan_worker import handler
 
         # Cascada returns error
         mock_cascada.return_value = ([], None, "all_methods_failed")
@@ -283,7 +283,7 @@ class TestScanWorkerFailedFlow:
         mock_resource.Table.return_value = mock_table
         mock_dynamodb.return_value = mock_resource
 
-        result = handler_scan_worker(sqs_event, lambda_context)
+        result = handler(sqs_event, lambda_context)
 
         assert result["statusCode"] == 200
         # update_item should be called for empresa + completadas + fallidas
@@ -299,7 +299,7 @@ class TestScanWorkerFailedFlow:
         sample_empresa,
     ):
         """EMPTY_SOSPECHOSO: NO vacante modifications (critical invariant from pitfalls.md)."""
-        from backend.workers.scan_worker import handler_scan_worker
+        from backend.workers.scan_worker import handler
 
         # Cascada returns 0 vacancies, no error (empresa has lastVacancyCount > 0)
         mock_cascada.return_value = ([], "json_ld", None)
@@ -312,7 +312,7 @@ class TestScanWorkerFailedFlow:
         mock_resource.Table.return_value = mock_table
         mock_dynamodb.return_value = mock_resource
 
-        result = handler_scan_worker(sqs_event, lambda_context)
+        result = handler(sqs_event, lambda_context)
 
         assert result["statusCode"] == 200
         # put_item should NOT be called (no vacante upserts)
@@ -328,7 +328,7 @@ class TestScanWorkerFailedFlow:
         sample_empresa,
     ):
         """EMPTY_SOSPECHOSO adds companyId to both completadas AND fallidas."""
-        from backend.workers.scan_worker import handler_scan_worker
+        from backend.workers.scan_worker import handler
 
         mock_cascada.return_value = ([], "json_ld", None)
 
@@ -340,7 +340,7 @@ class TestScanWorkerFailedFlow:
         mock_resource.Table.return_value = mock_table
         mock_dynamodb.return_value = mock_resource
 
-        handler_scan_worker(sqs_event, lambda_context)
+        handler(sqs_event, lambda_context)
 
         # Check that update_item was called with ADD for both sets
         update_calls = mock_table.update_item.call_args_list
@@ -368,7 +368,7 @@ class TestScanWorkerEmptyLegitimoFlow:
         sample_empresa_empty,
     ):
         """EMPTY_LEGITIMO: consecutiveFailures=0, updates ultimoOrigenExitoso."""
-        from backend.workers.scan_worker import handler_scan_worker
+        from backend.workers.scan_worker import handler
 
         event = {
             "Records": [
@@ -393,7 +393,7 @@ class TestScanWorkerEmptyLegitimoFlow:
         mock_resource.Table.return_value = mock_table
         mock_dynamodb.return_value = mock_resource
 
-        result = handler_scan_worker(event, lambda_context)
+        result = handler(event, lambda_context)
 
         assert result["statusCode"] == 200
         # update_item called for empresa + completadas (no fallidas for EMPTY_LEGITIMO)
@@ -427,7 +427,7 @@ class TestScanWorkerSQSFailure:
 
         Requirement 12.5: Abort without ADD to empresasCompletadas.
         """
-        from backend.workers.scan_worker import handler_scan_worker
+        from backend.workers.scan_worker import handler
 
         mock_cascada.return_value = (sample_vacancies, "board_api", None)
 
@@ -454,7 +454,7 @@ class TestScanWorkerSQSFailure:
         mock_sqs.return_value = mock_sqs_client
 
         with pytest.raises(RuntimeError, match="Failed to enqueue"):
-            handler_scan_worker(sqs_event, lambda_context)
+            handler(sqs_event, lambda_context)
 
 
 # ============================================================================

@@ -222,7 +222,7 @@ class TestScoringWorkerIdempotence:
         mock_get_perfil,
     ):
         """When scoreProfileVersion == profileVersion, skip scoring entirely."""
-        from backend.workers.scoring_worker import handler_scoring_worker
+        from backend.workers.scoring_worker import handler
 
         mock_get_perfil.return_value = {
             "userId": "user-1",
@@ -239,7 +239,7 @@ class TestScoringWorkerIdempotence:
         }
 
         event = _make_sqs_event("user-1", "vac-1")
-        handler_scoring_worker(event, None)
+        handler(event, None)
 
         # Should NOT fetch vacante, NOT call Bedrock, NOT put new record
         mock_get_vacante.assert_not_called()
@@ -260,7 +260,7 @@ class TestScoringWorkerIdempotence:
         mock_get_perfil,
     ):
         """When no UsuarioVacante exists, proceed with scoring (Requirement 13.7)."""
-        from backend.workers.scoring_worker import handler_scoring_worker
+        from backend.workers.scoring_worker import handler
 
         mock_get_perfil.return_value = {
             "userId": "user-1",
@@ -289,7 +289,7 @@ class TestScoringWorkerIdempotence:
         mock_bedrock.return_value = mock_client
 
         event = _make_sqs_event("user-1", "vac-1")
-        handler_scoring_worker(event, None)
+        handler(event, None)
 
         # Should have persisted the result
         mock_put_uv.assert_called_once()
@@ -312,7 +312,7 @@ class TestScoringWorkerIdempotence:
         mock_get_perfil,
     ):
         """When scoreProfileVersion != profileVersion, rescore (Requirement 13.8 staleness)."""
-        from backend.workers.scoring_worker import handler_scoring_worker
+        from backend.workers.scoring_worker import handler
 
         mock_get_perfil.return_value = {
             "userId": "user-1",
@@ -346,7 +346,7 @@ class TestScoringWorkerIdempotence:
         mock_bedrock.return_value = mock_client
 
         event = _make_sqs_event("user-1", "vac-1")
-        handler_scoring_worker(event, None)
+        handler(event, None)
 
         # Should rescore with new profile version
         mock_put_uv.assert_called_once()
@@ -372,7 +372,7 @@ class TestScoringWorkerPrefiltro:
         mock_get_perfil,
     ):
         """When titulo has no overlap with cargosActivos, set estado='filtered_out'."""
-        from backend.workers.scoring_worker import handler_scoring_worker
+        from backend.workers.scoring_worker import handler
 
         mock_get_perfil.return_value = {
             "userId": "user-1",
@@ -390,7 +390,7 @@ class TestScoringWorkerPrefiltro:
         }
 
         event = _make_sqs_event("user-1", "vac-1")
-        handler_scoring_worker(event, None)
+        handler(event, None)
 
         # Bedrock should NOT be called
         mock_bedrock.assert_not_called()
@@ -415,7 +415,7 @@ class TestScoringWorkerPrefiltro:
         mock_get_perfil,
     ):
         """When cargosActivos is empty, bypass prefiltro and invoke Bedrock (Req 16.5)."""
-        from backend.workers.scoring_worker import handler_scoring_worker
+        from backend.workers.scoring_worker import handler
 
         mock_get_perfil.return_value = {
             "userId": "user-1",
@@ -443,7 +443,7 @@ class TestScoringWorkerPrefiltro:
         mock_bedrock.return_value = mock_client
 
         event = _make_sqs_event("user-1", "vac-1")
-        handler_scoring_worker(event, None)
+        handler(event, None)
 
         # Bedrock SHOULD be called even though titulo doesn't matter
         mock_client.invoke_with_retry.assert_called_once()
@@ -465,7 +465,7 @@ class TestScoringWorkerPrefiltro:
         mock_get_perfil,
     ):
         """When titulo shares significant token with cargo, proceed to scoring."""
-        from backend.workers.scoring_worker import handler_scoring_worker
+        from backend.workers.scoring_worker import handler
 
         mock_get_perfil.return_value = {
             "userId": "user-1",
@@ -493,7 +493,7 @@ class TestScoringWorkerPrefiltro:
         mock_bedrock.return_value = mock_client
 
         event = _make_sqs_event("user-1", "vac-1")
-        handler_scoring_worker(event, None)
+        handler(event, None)
 
         # Should call Bedrock and persist scored
         mock_client.invoke_with_retry.assert_called_once()
@@ -520,7 +520,7 @@ class TestScoringWorkerBedrockValidation:
         mock_get_perfil,
     ):
         """When Bedrock validation fails after retry, raise for SQS redelivery."""
-        from backend.workers.scoring_worker import handler_scoring_worker
+        from backend.workers.scoring_worker import handler
 
         mock_get_perfil.return_value = {
             "userId": "user-1",
@@ -555,7 +555,7 @@ class TestScoringWorkerBedrockValidation:
         event = _make_sqs_event("user-1", "vac-1")
 
         with pytest.raises(ValidationError):
-            handler_scoring_worker(event, None)
+            handler(event, None)
 
         # Should NOT persist anything on validation failure (Req 17.3)
         mock_put_uv.assert_not_called()
@@ -574,7 +574,7 @@ class TestScoringWorkerBedrockValidation:
         mock_get_perfil,
     ):
         """Successful scoring persists score, scoreDetalle, scoreProfileVersion, estado."""
-        from backend.workers.scoring_worker import handler_scoring_worker
+        from backend.workers.scoring_worker import handler
 
         mock_get_perfil.return_value = {
             "userId": "user-1",
@@ -603,7 +603,7 @@ class TestScoringWorkerBedrockValidation:
         mock_bedrock.return_value = mock_client
 
         event = _make_sqs_event("user-1", "vac-1")
-        handler_scoring_worker(event, None)
+        handler(event, None)
 
         mock_put_uv.assert_called_once()
         item = mock_put_uv.call_args[0][0]
