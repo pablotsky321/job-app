@@ -102,6 +102,7 @@ Append-only: soporta rondas sucesivas sin rediseño.
 | `cvOriginalTexto` | S | lo que el usuario pegó |
 | `perfilEstructurado` | M | ver abajo |
 | `resumenParaMatching` | S | resumen ≤500 palabras, generado una vez |
+| `resumenGenerating` | BOOL | `true` mientras la generación asíncrona está en curso; el frontend hace polling de `GET /me/profile` esperando `false` |
 | `cargosSugeridos` | L | |
 | `cargosActivos` | L | |
 | `profileVersion` | N | se incrementa en cada guardado de perfil o cargos |
@@ -112,6 +113,21 @@ Append-only: soporta rondas sucesivas sin rediseño.
 
 `resumenParaMatching` evita meter el perfil completo en cada prompt de scoring; se regenera solo
 cuando cambia `profileVersion`.
+
+### Generación asíncrona de `resumenParaMatching`
+
+`PUT /me/profile` guarda el perfil, incrementa `profileVersion`, pone `resumenGenerating=true` y
+responde de inmediato. Antes de responder, invoca **de forma asíncrona** (`InvocationType=Event`)
+la propia Lambda `"api"` para que genere `resumenParaMatching` vía Bedrock (modelo pequeño) y, al
+terminar, ponga `resumenGenerating=false`.
+
+Sin cola ni Lambda nueva — reutiliza la Lambda `"api"` existente con un segundo modo de invocación,
+evitando infraestructura desproporcionada para un flujo que corre en segundos (ver
+`decisiones-invertidas.md`: cola SQS dedicada descartada por este mismo motivo).
+
+`POST /me/profile/roles/suggest` debe devolver **HTTP 424** si `resumenGenerating == true` en el
+momento de la petición (contrato ya asumido por `frontend-spa`, que hace polling de 3s / tope 30s
+sobre `GET /me/profile` ante ese 424).
 
 ### `Suscripciones` (usuario ↔ empresa)
 
@@ -268,12 +284,13 @@ Todo detrás del Cognito Authorizer. `userId` sale siempre del JWT, nunca del bo
 | `POST` | `/me/profile/parse` | pega CV → perfil estructurado (no guarda) |
 | `GET` | `/me/profile` | |
 | `PUT` | `/me/profile` | guarda perfil, incrementa `profileVersion` |
-| `POST` | `/me/roles/suggest` | sugiere cargos desde el perfil |
-| `PUT` | `/me/roles` | fija `cargosActivos`, incrementa `profileVersion` |
+| `POST` | `/me/profile/roles/suggest` | sugiere cargos desde el perfil |
+| `PUT` | `/me/profile/roles` | fija `cargosActivos`, incrementa `profileVersion` |
 | `GET` | `/companies` | catálogo compartido |
 | `POST` | `/companies` | agrega empresa por URL de carreras; detecta plataforma |
 | `GET` | `/me/companies` | suscripciones con estado y `lastScanStatus` |
-| `PUT` | `/me/companies/{companyId}` | activar / desactivar |
+| `POST` | `/me/companies/{companyId}` | **crea** la Suscripción (idempotente: no-op si ya activa, la activa si existía inactiva) |
+| `PUT` | `/me/companies/{companyId}` | activar/desactivar una Suscripción **ya existente**; 404 si nunca se creó (usar `POST` para el alta) |
 | `POST` | `/scans` | → `{ jobId }` |
 | `GET` | `/scans/{jobId}` | progreso |
 | `GET` | `/me/vacancies?estado=activas\|aplicadas` | listado |
