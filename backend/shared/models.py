@@ -249,6 +249,23 @@ class Perfiles(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class ResumenParaMatchingOutput(BaseModel):
+    """Salida de Bedrock para la generación de resumenParaMatching.
+
+    Validada antes de persistir en Perfiles.resumenParaMatching. El límite de
+    ≤500 palabras es una instrucción de prompt (no un max_length de Pydantic,
+    que mide caracteres, no palabras).
+
+    Requirements: 2.3
+    """
+
+    resumen: str = Field(
+        ..., min_length=1, description="Resumen del perfil, objetivo ≤500 palabras"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
 # ============================================================================
 # USUARIO-VACANTE TABLE SHAPE
 # ============================================================================

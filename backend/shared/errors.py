@@ -191,23 +191,42 @@ class CompanyAlreadyExists(AppException):
 
 class CompanyNotFound(AppException):
     """
-    HTTP 400: Company ID does not exist in the Empresas table.
+    HTTP 400 (default, uso existente en toggle_subscription) o HTTP 404
+    (uso en create_subscription, Requirement 1.2) según el parámetro http_status.
     
     Args:
         company_id: The companyId that was not found
         details: Optional additional context
+        http_status: HTTP status code (default 400 preserves existing behavior)
     """
     
-    def __init__(self, company_id: str, details: Optional[str] = None):
+    def __init__(self, company_id: str, details: Optional[str] = None, http_status: int = 400):
         if not details:
             details = f"Company with ID {company_id} not found"
         super().__init__(
             error_code="company_not_found",
             message="Company not found",
-            http_status=400,
+            http_status=http_status,
             details=details
         )
         self.company_id = company_id
+
+
+class SubscriptionWriteFailed(AppException):
+    """
+    HTTP 500: DynamoDB write failed while creating/reactivating a Suscripción.
+    
+    Args:
+        details: Optional additional context
+    """
+    
+    def __init__(self, details: Optional[str] = None):
+        super().__init__(
+            error_code="subscription_write_failed",
+            message="Failed to write subscription record",
+            http_status=500,
+            details=details
+        )
 
 
 class CVTooLarge(AppException):

@@ -433,13 +433,105 @@ def _handle_programmed_scan(event: dict, context) -> dict:
     return {"statusCode": 200, "body": {"jobId": scan_job_id, "status": final_status}}
 
 
+def _handle_async_resumen_generation(event: dict, context) -> dict:
+    """
+    Genera resumenParaMatching a partir del Perfiles actual del usuario.
+
+    Invocada de forma asíncrona (InvocationType='Event') por
+    _trigger_async_resumen_generation en backend/api/routes/profile.py, tras
+    PUT /me/profile o POST /me/profile/roles/suggest (rama BLOCK_AND_RETRY).
+
+    Lee el registro de Perfiles EN ESE MOMENTO (no una foto tomada al invocar):
+    el payload solo trae userId, nunca una copia de perfilEstructurado, por lo
+    que cualquier guardado de perfil posterior a la invocación pero anterior a
+    esta ejecución ya queda reflejado (Requirement 2.3).
+
+    Si no hay perfilEstructurado disponible, se trata como fallo (mismo camino
+    que un fallo de Bedrock o de validación Pydantic).
+
+    Éxito: persiste resumenParaMatching + resumenGenerationStatus='complete'.
+    Fallo (perfil ausente, Bedrock, o validación Pydantic tras el retry
+    estándar): persiste SOLO resumenGenerationStatus='failed', sin modificar
+    ningún resumenParaMatching previo (Requirement 2.5).
+
+    Siempre retorna {"statusCode": 200, ...} a nivel de handler Lambda: es una
+    invocación 'Event', no hay caller HTTP esperando una respuesta con
+    semántica de error. El resultado real de la operación se refleja
+    únicamente en resumenGenerationStatus.
+
+    Nunca loguea CV ni contenido de perfil — solo user_id y la transición de
+    resumenGenerationStatus.
+
+    Requirements: 2.3, 2.4, 2.5, 2.9
+    """
+    from backend.shared.db import get_dynamodb_table
+    from backend.shared.bedrock import get_bedrock_client
+    from backend.shared.models import ResumenParaMatchingOutput
+    from backend.api.routes.profile import _prepare_resumen_prompt
+
+    user_id = event.get("userId")
+    logger.info("async_resumen_generation_start", context={"user_id": user_id})
+
+    perfiles_table = get_dynamodb_table("DYNAMODB_TABLE_PERFILES")
+
+    try:
+        item = perfiles_table.get_item(Key={"userId": user_id}).get("Item")
+        perfil_estructurado = item.get("perfilEstructurado") if item else None
+
+        if not perfil_estructurado:
+            raise ValueError("no perfilEstructurado available to summarize")
+
+        prompt = _prepare_resumen_prompt(perfil_estructurado)
+        bedrock_client = get_bedrock_client()
+        resumen_output = bedrock_client.invoke_with_retry(
+            prompt=prompt,
+            response_model=ResumenParaMatchingOutput,
+            model_id=bedrock_client.model_small,
+            max_retries=1,
+        )
+
+        perfiles_table.update_item(
+            Key={"userId": user_id},
+            UpdateExpression="SET resumenParaMatching = :resumen, resumenGenerationStatus = :status",
+            ExpressionAttributeValues={
+                ":resumen": resumen_output.resumen,
+                ":status": "complete",
+            },
+        )
+        logger.info(
+            "async_resumen_generation_complete",
+            context={"user_id": user_id, "status_transition": "pending_to_complete"},
+        )
+        return {"statusCode": 200, "body": {"status": "complete"}}
+
+    except Exception as e:
+        logger.error(
+            "async_resumen_generation_failed",
+            context={"user_id": user_id, "error_type": type(e).__name__},
+        )
+        # Requirement 2.5: nunca modificar el resumenParaMatching ya almacenado
+        perfiles_table.update_item(
+            Key={"userId": user_id},
+            UpdateExpression="SET resumenGenerationStatus = :status",
+            ExpressionAttributeValues={":status": "failed"},
+        )
+        logger.info(
+            "async_resumen_generation_status_updated",
+            context={"user_id": user_id, "status_transition": "pending_to_failed"},
+        )
+        return {"statusCode": 200, "body": {"status": "failed"}}
+
+
 def handler(event, context):
     """
     Lambda handler that routes EventBridge Scheduler events to programmed mode,
-    and all other events (API Gateway) to FastAPI/Mangum.
+    async resumen-generation self-invocations to their own handler, and all
+    other events (API Gateway) to FastAPI/Mangum.
 
-    Requirements: 8.1, 8.2, 8.3, 8.4
+    Requirements: 8.1, 8.2, 8.3, 8.4 (ya existente), 2.2, 2.3, 3.7 (nuevo)
     """
     if event.get("source") == "eventbridge-scheduler":
         return _handle_programmed_scan(event, context)
+    if event.get("mode") == "async_resumen_generation":
+        return _handle_async_resumen_generation(event, context)
     return _mangum_handler(event, context)

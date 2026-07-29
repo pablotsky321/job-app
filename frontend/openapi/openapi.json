@@ -76,7 +76,7 @@
           "profile"
         ],
         "summary": "Get Profile",
-        "description": "Retrieve the user's saved profile.\n\nEndpoint: GET /me/profile\nAuth: Required (JWT)\n\nResponse (HTTP 200):\n    - perfilEstructurado: Structured profile\n    - resumenParaMatching: Summary text for matching (or null)\n    - cargosSugeridos: Suggested roles (or empty list)\n    - cargosActivos: User-selected active roles (or empty list)\n    - profileVersion: Version number\n    - updatedAt: Timestamp of last update\n    - resumenGenerating: Boolean flag (read-only from DB)\n\nError Responses:\n    - HTTP 404: Profile not found\n\nLogic:\n1. Query Perfiles table by userId (pk)\n2. If not found: Return HTTP 404 with profile_not_found\n3. Return all stored fields (including resumenGenerationStatus → resumenGenerating)\n4. Log retrieval status\n\nRequirements:\n- 2.1, 2.2: Query Perfiles by userId\n- 2.3: Return perfilEstructurado\n- 2.4: Return resumenParaMatching (may be null)\n- 2.5: Return cargosActivos, cargosSugeridos, profileVersion, updatedAt\n- 3.5: Return resumenGenerating (read-only boolean, NOT persisted by this endpoint)\n- 3.7: Return 404 with profile_not_found if missing",
+        "description": "Retrieve the user's saved profile.\n\nEndpoint: GET /me/profile\nAuth: Required (JWT)\n\nResponse (HTTP 200):\n    - perfilEstructurado: Structured profile\n    - resumenParaMatching: Summary text for matching (or null)\n    - cargosSugeridos: Suggested roles (or empty list)\n    - cargosActivos: User-selected active roles (or empty list)\n    - profileVersion: Version number\n    - updatedAt: Timestamp of last update\n    - resumenGenerating: Boolean flag (read-only from DB)\n\nError Responses:\n    - HTTP 404: Profile not found\n\nLogic:\n1. Query Perfiles table by userId (pk)\n2. If not found: Return HTTP 404 with profile_not_found\n3. Return all stored fields (including resumenGenerationStatus → resumenGenerating)\n4. Log retrieval status\n\nRequirements:\n- 2.1, 2.2: Query Perfiles by userId\n- 2.3: Return perfilEstructurado\n- 2.4: Return resumenParaMatching (may be null)\n- 2.5: Return cargosActivos, cargosSugeridos, profileVersion, updatedAt\n- 3.5: Return resumenGenerating (true if resumenGenerationStatus == 'pending', else false)\n- 3.7: Return 404 with profile_not_found if missing",
         "operationId": "get_profile_me_profile_get",
         "responses": {
           "200": {
@@ -97,7 +97,7 @@
           "profile"
         ],
         "summary": "Save Profile",
-        "description": "Save a structured profile for the user.\n\nEndpoint: PUT /me/profile\nAuth: Required (JWT)\n\nRequest Body:\n    - perfilEstructurado: Structured profile (PerfilEstructurado model)\n\nResponse (HTTP 200):\n    - profileVersion: Updated version number\n    - updatedAt: Timestamp of update\n    - cargosActivos: Returned as-is (not modified by this endpoint)\n\nError Responses:\n    - HTTP 400: Validation error\n\nLogic:\n1. Validate request body (already done by Pydantic)\n2. Get current profile to determine next version\n3. Persist ONLY perfilEstructurado, profileVersion (incremented), updatedAt\n4. Return HTTP 200 with version info immediately (no async background tasks)\n5. Never modify resumenParaMatching, resumenGenerationStatus, cargosSugeridos\n6. Log save operation\n\nRequirements:\n- 2.1: Validate body against SaveProfileRequest\n- 2.3: Persist perfilEstructurado\n- 2.4: Increment profileVersion\n- 2.5: Update updatedAt timestamp\n- 3.1: Return HTTP 200 with version/timestamp\n- 3.2: Perform write atomically, return immediately\n- 3.3: Log profile save operation\n- 10.1: Perform DynamoDB write\n- 10.2: Increment version atomically\n- 10.3: Never enqueue background tasks in this endpoint\n- 10.4: Never modify resumenParaMatching or resumenGenerationStatus\n- 10.5: Return only version and updatedAt (worker owns other fields)",
+        "description": "Save a structured profile for the user.\n\nEndpoint: PUT /me/profile\nAuth: Required (JWT)\n\nRequest Body:\n    - perfilEstructurado: Structured profile (PerfilEstructurado model)\n\nResponse (HTTP 200):\n    - profileVersion: Updated version number\n    - updatedAt: Timestamp of update\n\nError Responses:\n    - HTTP 400: Validation error\n\nLogic:\n1. Validate request body (already done by Pydantic)\n2. Get current profile to determine next version\n3. Persist ONLY perfilEstructurado, profileVersion (incremented), updatedAt\n4. Disparar la generación asíncrona de resumenParaMatching vía\n   _trigger_async_resumen_generation (invocación Event, no bloqueante)\n5. Return HTTP 200 with version info immediately — la respuesta HTTP sigue\n   siendo solo {\"profileVersion\", \"updatedAt\"}; el disparo asíncrono nunca\n   la modifica ni puede fallarla (ver _trigger_async_resumen_generation)\n6. Never modify resumenParaMatching, resumenGenerationStatus, cargosSugeridos\n   directamente en este endpoint (el worker asíncrono es quien los escribe)\n7. Log save operation\n\nRequirements:\n- 2.1: Validate body against SaveProfileRequest; disparar el trigger\n  asíncrono de resumenParaMatching tras persistir el perfil\n- 2.2: El disparo es no bloqueante (invocación Event) y no altera la\n  respuesta HTTP de este endpoint\n- 2.3: Persist perfilEstructurado\n- 2.4: Increment profileVersion\n- 2.5: Update updatedAt timestamp\n- 3.1: Return HTTP 200 with version/timestamp\n- 3.2: Perform write atomically, return immediately\n- 3.3: Log profile save operation\n- 10.1: Perform DynamoDB write\n- 10.2: Increment version atomically\n- 10.3: Never enqueue background tasks in this endpoint\n- 10.4: Never modify resumenParaMatching or resumenGenerationStatus\n- 10.5: Return only version and updatedAt (worker owns other fields)",
         "operationId": "save_profile_me_profile_put",
         "requestBody": {
           "content": {
@@ -137,10 +137,10 @@
     "/me/profile/roles/suggest": {
       "post": {
         "tags": [
-          "profile"
+          "roles"
         ],
         "summary": "Suggest Roles",
-        "description": "Suggest job roles based on the user's resume.\n\nEndpoint: POST /me/roles/suggest\nAuth: Required (JWT)\n\nResponse (HTTP 200):\n    - suggestions: List of suggested job roles\n    - suggestedAt: Timestamp of suggestion\n\nError Responses:\n    - HTTP 424: Resume not ready (resumenParaMatching is null or generation in progress)\n    - HTTP 400: Validation error after retry\n    - HTTP 502: Bedrock failure/timeout\n\nLogic:\n1. Query Perfiles by userId\n2. Check resumenParaMatching: if null or resumenGenerationStatus == \"generating\", return 424\n3. Invoke Bedrock SMALL model with role suggestion prompt\n4. Validate response against RolesSuggestions schema\n5. If validation fails: Retry once with error injected\n6. If retry fails: Return HTTP 400 or 502\n7. Return suggestions (not persisted)\n8. Log operation\n\nRequirements:\n- 4.1: Check resumenParaMatching and generation status\n- 4.2: Return HTTP 424 if resume not ready\n- 4.3: Invoke Bedrock SMALL model\n- 4.4: Validate against RolesSuggestions\n- 4.5: Retry once on validation failure\n- 4.6: Return HTTP 200 with suggestions on success\n- 4.7: Log suggestions attempt",
+        "description": "Suggest job roles based on the user's resume.\n\nEndpoint: POST /me/profile/roles/suggest\nAuth: Required (JWT)\n\nResponse (HTTP 200):\n    - suggestions: List of suggested job roles\n    - suggestedAt: Timestamp of suggestion\n\nError Responses:\n    - HTTP 424: Resume not ready (resumenParaMatching is null)\n    - HTTP 400: Validation error after retry\n    - HTTP 502: Bedrock failure/timeout\n\nLógica de bloqueo corregida (Requirement 3):\n- resumenParaMatching existe → SIEMPRE permite (200), sin importar si\n  resumenGenerationStatus es 'pending', 'failed', 'complete' o None. Una\n  regeneración en curso o fallida en segundo plano NUNCA bloquea al usuario\n  mientras exista un resumen previo utilizable (Criterios 3.2, 3.3, 3.6).\n- resumenParaMatching es None Y resumenGenerationStatus == 'failed' → bloquea\n  (424) Y dispara automáticamente un retry de generación asíncrona vía\n  _trigger_async_resumen_generation, dejando resumenGenerationStatus en\n  'pending' (o 'failed'/'unknown' si el propio despacho del retry vuelve a\n  fallar) antes de responder (Criterio 3.7).\n- resumenParaMatching es None Y resumenGenerationStatus no es 'failed'\n  (incluye None) → bloquea (424) sin disparar ningún retry (Criterio 3.1).\n- Esta ruta NUNCA reintenta la llamada por su cuenta ni implementa un loop:\n  dispara como máximo una invocación asíncrona por request, y responde\n  (Criterio 3.8).\n\nLa decisión de bloqueo/permiso se delega a la función pura\ndecide_roles_suggest_action(resumenParaMatching, resumenGenerationStatus),\nque retorna RolesSuggestDecision.ALLOW | .BLOCK | .BLOCK_AND_RETRY.\n\nLogic:\n1. Query Perfiles by userId\n2. decision = decide_roles_suggest_action(resumen, generation_status)\n   - BLOCK_AND_RETRY: dispara _trigger_async_resumen_generation(user_id) y\n     luego levanta ResumeNotReady() (HTTP 424)\n   - BLOCK: levanta ResumeNotReady() (HTTP 424) directamente, sin trigger\n   - ALLOW: continúa con el flujo existente (pasos 3-8 abajo)\n3. Invoke Bedrock SMALL model with role suggestion prompt\n4. Validate response against RolesSuggestions schema\n5. If validation fails: Retry once with error injected\n6. If retry fails: Return HTTP 400\n7. Return suggestions (not persisted)\n8. Log operation\n\nRequirements:\n- 3.1, 3.2, 3.3, 3.5, 3.6, 3.7, 3.8, 3.9: Corrected block/allow decision,\n  automatic retry trigger on BLOCK_AND_RETRY, no client/server retry loop,\n  docstring accurately reflects the corrected logic\n- 4.1: Check resumenParaMatching and generation status\n- 4.2: Return HTTP 424 if resume not ready\n- 4.3: Invoke Bedrock SMALL model\n- 4.4: Validate against RolesSuggestions\n- 4.5: Retry once on validation failure\n- 4.6: Return HTTP 200 with suggestions on success\n- 4.7: Log suggestions attempt",
         "operationId": "suggest_roles_me_profile_roles_suggest_post",
         "responses": {
           "200": {
@@ -160,10 +160,10 @@
     "/me/profile/roles": {
       "put": {
         "tags": [
-          "profile"
+          "roles"
         ],
         "summary": "Save Roles",
-        "description": "Save user's active job roles/titles.\n\nEndpoint: PUT /me/roles\nAuth: Required (JWT)\n\nRequest Body:\n    - cargosActivos: List of 1-10 job roles, each ≤50 chars (empty list allowed)\n\nResponse (HTTP 200):\n    - profileVersion: Updated version number\n    - cargosActivos: Saved roles\n    - updatedAt: Timestamp of update\n\nError Responses:\n    - HTTP 400: Validation error (invalid role list)\n\nLogic:\n1. Validate cargosActivos via validate_roles_list (1-10 items, ≤50 chars each)\n2. If invalid: Return HTTP 400\n3. Get current profile to determine next version\n4. Update ONLY cargosActivos, profileVersion (incremented), updatedAt\n5. Return HTTP 200 with version/roles/timestamp\n6. Log operation\n\nRequirements:\n- 5.1: Accept PUT with cargosActivos\n- 5.2: Validate roles list (1-10 items, ≤50 chars each)\n- 5.3: Return HTTP 400 on validation error\n- 5.4: Persist roles atomically\n- 5.5: Increment profileVersion\n- 5.6: Return HTTP 200 with version/roles/timestamp",
+        "description": "Save user's active job roles/titles.\n\nEndpoint: PUT /me/profile/roles\nAuth: Required (JWT)\n\nRequest Body:\n    - cargosActivos: List of 1-10 job roles, each ≤50 chars (empty list allowed)\n\nResponse (HTTP 200):\n    - profileVersion: Updated version number\n    - cargosActivos: Saved roles\n    - updatedAt: Timestamp of update\n\nError Responses:\n    - HTTP 400: Validation error (invalid role list)\n\nLogic:\n1. Validate cargosActivos via validate_roles_list (1-10 items, ≤50 chars each)\n2. If invalid: Return HTTP 400\n3. Get current profile to determine next version\n4. Update ONLY cargosActivos, profileVersion (incremented), updatedAt\n5. Return HTTP 200 with version/roles/timestamp\n6. Log operation\n\nRequirements:\n- 5.1: Accept PUT with cargosActivos\n- 5.2: Validate roles list (1-10 items, ≤50 chars each)\n- 5.3: Return HTTP 400 on validation error\n- 5.4: Persist roles atomically\n- 5.5: Increment profileVersion\n- 5.6: Return HTTP 200 with version/roles/timestamp",
         "operationId": "save_roles_me_profile_roles_put",
         "requestBody": {
           "content": {
@@ -374,6 +374,527 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "subscriptions"
+        ],
+        "summary": "Create Subscription",
+        "description": "Alta idempotente de Suscripción (create-or-reactivate).\n\nEndpoint: POST /me/companies/{companyId}\nAuth: Required (JWT)\n\nPath Parameters:\n    - companyId (str): Company ID (SHA-256 hash)\n\nResponse:\n    - HTTP 201 si se crea por primera vez (SubscriptionAction.CREATE)\n    - HTTP 200 si no-op (ya activa) o reactivate (estaba inactiva)\n    - Body: SubscriptionUpsertResponse (companyId, activa, addedAt)\n\nError Responses:\n    - HTTP 404: companyId no existe en el catálogo Empresas (company_not_found)\n    - HTTP 500: fallo de escritura en DynamoDB (subscription_write_failed)\n\nLogic:\n1. Validar que companyId existe en Empresas (404 si no, distinto del 400\n   usado por PUT /me/companies/{companyId} para el mismo error_code)\n2. Leer estado actual de Suscripciones vía get_item, decidir la acción\n   (decide_subscription_action)\n3. Rama CREATE: put_item condicional (attribute_not_exists(userId)). Si\n   otro request ganó la carrera (ConditionalCheckFailedException),\n   re-leer el registro y re-decidir la acción (cae a NO_OP/REACTIVATE)\n4. Ramas NO_OP/REACTIVATE: delegadas a _apply_no_op_or_reactivate\n5. Cualquier ClientError no relacionado con la condición de escritura ->\n   HTTP 500 subscription_write_failed\n6. Loguear user_id, company_id, action.value; nunca contenido de perfil/CV\n\nRequirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9",
+        "operationId": "create_subscription_me_companies__company_id__post",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionUpsertResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scans": {
+      "post": {
+        "tags": [
+          "scans"
+        ],
+        "summary": "Post Scans",
+        "description": "Trigger an async scan of all companies the authenticated user is subscribed to.\n\nFlow:\n1. Extract userId from JWT (via dependency)\n2. Resolve active Suscripciones, deduplicate companyIds\n3. If zero companies → create ScanJob with status=DONE, return jobId\n4. Apply Ventana_Frescura to each Empresa\n5. If all omitted → create ScanJob with status=DONE, return jobId\n6. Create ScanJob with status=RUNNING\n7. Publish one ScanMessage per eligible company to SQS_Scan\n8. Handle publish failures: ALL fail → FAILED; SOME fail → PARCIAL\n9. Update ScanJob with final status\n10. Return jobId (HTTP 200)\n\nRequirements: 8, 9, 10, 11",
+        "operationId": "post_scans_scans_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostScansResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scans/{job_id}": {
+      "get": {
+        "tags": [
+          "scans"
+        ],
+        "summary": "Get Scan Job Status",
+        "description": "Poll scan job progress.\n\nEndpoint: GET /scans/{jobId}\nAuth: Required (JWT)\n\nPath Parameters:\n    - jobId (str): Scan job identifier\n\nResponse (HTTP 200):\n    - status: RUNNING | DONE | PARCIAL | FAILED\n    - empresasTotal: total companies in scan\n    - completados: count of completed companies\n    - omitidos: count of skipped companies\n    - fallidos: count of failed companies\n    - startedAt: ISO timestamp when scan started\n    - canStop: true if status in [DONE, PARCIAL, FAILED], false if RUNNING\n    - pendingCompanies: list of pending companyIds (only when status is PARCIAL)\n\nError Responses:\n    - HTTP 404: Job not found or not authorized\n\nLogic:\n1. Fetch ScanJob by jobId\n2. 404 if not found\n3. 404 if userId set and differs from requesting user (Req 15.3)\n4. If userId not set → any authenticated user can view (Req 15.4)\n5. Zombie detection: RUNNING + elapsed > 600s → PARCIAL (Req 14.1)\n6. Auto-DONE: RUNNING + empresasCompletadas >= empresasTotal → DONE\n7. Build response with counts and canStop flag (Req 15.5-15.8)\n8. If PARCIAL: include pending companyIds (Req 15.6)\n\nRequirements: 14.1, 14.2, 14.3, 15.1-15.8",
+        "operationId": "get_scan_job_status_scans__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanJobStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/vacancies/{companyId}/{vacancyId}": {
+      "get": {
+        "tags": [
+          "vacancies"
+        ],
+        "summary": "Get Vacancy Detail",
+        "description": "Get detailed information about a specific vacancy.\n\nEndpoint: GET /me/vacancies/{companyId}/{vacancyId}\nAuth: Required (JWT)\n\nPath Parameters:\n    - companyId (str): Company identifier\n    - vacancyId (str): Vacancy identifier\n\nResponse (HTTP 200):\n    - Combined data from Vacante, Empresa (nombre, plataforma), and UsuarioVacante\n\nError Responses:\n    - HTTP 401: Missing JWT claim\n    - HTTP 404: Vacante, UsuarioVacante, or Empresa not found\n\nRequirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 9.1, 9.2, 9.3, 9.4, 11.1, 11.2, 11.3",
+        "operationId": "get_vacancy_detail_me_vacancies__companyId___vacancyId__get",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Companyid"
+            }
+          },
+          {
+            "name": "vacancyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vacancyid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VacancyDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/vacancies": {
+      "get": {
+        "tags": [
+          "vacancies"
+        ],
+        "summary": "List User Vacancies",
+        "description": "List user's vacancies filtered by estado.\n\nEndpoint: GET /me/vacancies\nAuth: Required (JWT)\n\nQuery Parameters:\n    - estado (str, optional): \"activas\" (default) or \"aplicadas\" (case-sensitive)\n\nResponse (HTTP 200):\n    - vacancies: List of vacancy records with staleness flags\n\nError Responses:\n    - HTTP 400: Invalid estado value\n    - HTTP 401: Missing JWT claim\n\nRequirements: 1.1-1.11, 9.1-9.4, 11.1-11.3",
+        "operationId": "list_user_vacancies_me_vacancies_get",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter: activas or aplicadas",
+              "title": "Estado"
+            },
+            "description": "Filter: activas or aplicadas"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VacancyListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/vacancies/manual": {
+      "post": {
+        "tags": [
+          "vacancies"
+        ],
+        "summary": "Create Manual Vacancy",
+        "description": "Register a manual vacancy from pasted job posting text.\n\nEndpoint: POST /me/vacancies/manual\nAuth: Required (JWT)\n\nRequest Body:\n    - textoPegado (str): Pasted job posting text (1-20000 chars)\n    - enlace (str): Job posting URL (absolute http/https)\n    - nombreEmpresa (str): Company name (1-200 chars after trim)\n\nProcessing:\n    1. Validate input (URL format, company name length after trim)\n    2. Resolve or create Empresa (never creates Suscripcion)\n    3. Compute vacancyId from normalized URL hash\n    4. If Vacante doesn't exist: invoke Bedrock to extract fields\n    5. Create UsuarioVacante if not exists, publish ScoringMessage\n\nResponse (HTTP 200):\n    - vacancyId, companyId, titulo, created flag\n\nError Responses:\n    - HTTP 400: Invalid input or Bedrock extraction failure\n    - HTTP 401: Missing JWT claim\n    - HTTP 502: Bedrock invocation failed (timeout/exception)\n\nRequirements: 3.1-3.12, 9.1-9.4, 10.1-10.4, 11.1-11.4",
+        "operationId": "create_manual_vacancy_me_vacancies_manual_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualVacancyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualVacancyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/vacancies/{companyId}/{vacancyId}/apply": {
+      "post": {
+        "tags": [
+          "vacancies"
+        ],
+        "summary": "Apply To Vacancy",
+        "description": "Mark a vacancy as applied for the authenticated user.\n\nEndpoint: POST /me/vacancies/{companyId}/{vacancyId}/apply\nAuth: Required (JWT)\n\nPath Parameters:\n    - companyId (str): Company identifier\n    - vacancyId (str): Vacancy identifier\n\nProcessing:\n    - If UsuarioVacante.estado is already 'aplicada', returns HTTP 200\n      without modifying appliedAt (idempotent).\n    - If estado is not 'aplicada', sets estado='aplicada' and\n      appliedAt=now(), then updates in DynamoDB.\n    - Behavior is identical regardless of Vacante.estado (abierta or cerrada).\n\nResponse (HTTP 200):\n    - vacancyId, companyId, estado, appliedAt\n\nError Responses:\n    - HTTP 401: Missing JWT claim\n    - HTTP 404: UsuarioVacante not found for (userId, companyId, vacancyId)\n\nRequirements: 4.1, 4.2, 4.3, 9.1, 9.2, 9.3, 9.4, 11.1, 11.2, 11.3",
+        "operationId": "apply_to_vacancy_me_vacancies__companyId___vacancyId__apply_post",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Companyid"
+            }
+          },
+          {
+            "name": "vacancyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vacancyid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/vacancies/{companyId}/{vacancyId}/cv": {
+      "post": {
+        "tags": [
+          "vacancies"
+        ],
+        "summary": "Generate Cv Ats",
+        "description": "Generate an ATS-optimized CV text for a specific vacancy.\n\nEndpoint: POST /me/vacancies/{companyId}/{vacancyId}/cv\nAuth: Required (JWT)\n\nPath Parameters:\n    - companyId (str): Company identifier\n    - vacancyId (str): Vacancy identifier\n\nProcessing:\n    1. Verify UsuarioVacante exists (HTTP 404 if not)\n    2. Check Vacante.cerrada (HTTP 409 if closed)\n    3. Detect language from Vacante.titulo + descripcion\n    4. Invoke Bedrock with profile + vacancy data\n    5. Persist cvAtsTexto and cvGeneratedAt\n    6. Return text/plain response\n\nResponse (HTTP 200):\n    - Plain text CV-ATS content (Content-Type: text/plain)\n\nError Responses:\n    - HTTP 401: Missing JWT claim\n    - HTTP 404: UsuarioVacante not found\n    - HTTP 400: Bedrock validation failed after retry\n    - HTTP 409: Vacancy is closed\n    - HTTP 502: Bedrock invocation failed\n\nRequirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 9.1, 9.2, 9.3, 9.4,\n              10.1, 10.2, 10.3, 10.4, 11.1, 11.2, 11.3, 11.4",
+        "operationId": "generate_cv_ats_me_vacancies__companyId___vacancyId__cv_post",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Companyid"
+            }
+          },
+          {
+            "name": "vacancyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vacancyid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/vacancies/{companyId}/{vacancyId}/entries": {
+      "get": {
+        "tags": [
+          "entries"
+        ],
+        "summary": "List Entries",
+        "description": "List all entries (questions/notes) for a specific vacancy.\n\nReturns entries ordered by createdAt ascending.\nReturns HTTP 200 with empty list when there are none.\nReturns HTTP 404 if UsuarioVacante or Vacante don't exist.\n\nRequirements: 6.1, 6.2, 6.3",
+        "operationId": "list_entries_me_vacancies__companyId___vacancyId__entries_get",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Companyid"
+            }
+          },
+          {
+            "name": "vacancyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vacancyid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "entries"
+        ],
+        "summary": "Create Entry",
+        "description": "Create a new entry (question or interview note) for a vacancy.\n\nValidates tipo is one of 'preguntas' or 'nota_entrevista'.\nReturns HTTP 404 if UsuarioVacante or Vacante don't exist.\nThe service NEVER exposes update or delete operations on Entrada.\n\nRequirements: 6.4, 6.5, 6.6",
+        "operationId": "create_entry_me_vacancies__companyId___vacancyId__entries_post",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Companyid"
+            }
+          },
+          {
+            "name": "vacancyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vacancyid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/vacancies/{companyId}/{vacancyId}/entries/{entryId}/answer": {
+      "post": {
+        "tags": [
+          "entries"
+        ],
+        "summary": "Generate Answer",
+        "description": "Generate a suggested answer for an interview question entry.\n\n- Reads the referenced Entrada → HTTP 404 if not found or doesn't belong to this user/vacancy\n- HTTP 400 if Entrada.tipo != 'preguntas'\n- HTTP 409 if Vacante.cerrada == True\n- Detects language, invokes Bedrock, validates output\n- On success: creates a NEW append-only Entrada with tipo=nota_entrevista\n- NEVER modifies the referenced Entrada\n\nRequirements: 6.7, 6.8, 6.9, 6.10, 6.11",
+        "operationId": "generate_answer_me_vacancies__companyId___vacancyId__entries__entryId__answer_post",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Companyid"
+            }
+          },
+          {
+            "name": "vacancyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vacancyid"
+            }
+          },
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entryid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -393,6 +914,41 @@
         ],
         "title": "AddCompanyRequest",
         "description": "Request body for POST /companies.\n\nContains the careers URL for a company to be added to the shared catalog."
+      },
+      "ApplyResponse": {
+        "properties": {
+          "vacancyId": {
+            "type": "string",
+            "title": "Vacancyid"
+          },
+          "companyId": {
+            "type": "string",
+            "title": "Companyid"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "appliedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appliedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vacancyId",
+          "companyId",
+          "estado"
+        ],
+        "title": "ApplyResponse",
+        "description": "Response for POST /me/vacancies/{companyId}/{vacancyId}/apply."
       },
       "Certificacion": {
         "properties": {
@@ -538,6 +1094,29 @@
         "title": "CompanyListItem",
         "description": "Company item in list response."
       },
+      "CreateEntryRequest": {
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "Entry type: 'preguntas' or 'nota_entrevista'"
+          },
+          "contenido": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Contenido",
+            "description": "Entry content (1-5000 chars)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tipo",
+          "contenido"
+        ],
+        "title": "CreateEntryRequest",
+        "description": "Request body for POST /me/vacancies/{companyId}/{vacancyId}/entries."
+      },
       "Educacion": {
         "properties": {
           "titulo": {
@@ -576,6 +1155,25 @@
         ],
         "title": "Educacion",
         "description": "Education entry from CV."
+      },
+      "EmpresaSummary": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "plataforma": {
+            "type": "string",
+            "title": "Plataforma"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "plataforma"
+        ],
+        "title": "EmpresaSummary",
+        "description": "Company summary included in vacancy listing."
       },
       "ExperienciaLaboral": {
         "properties": {
@@ -644,6 +1242,66 @@
         ],
         "title": "HealthResponse",
         "description": "Health check response."
+      },
+      "ManualVacancyRequest": {
+        "properties": {
+          "textoPegado": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Textopegado",
+            "description": "Pasted job posting text (1-20000 chars)"
+          },
+          "enlace": {
+            "type": "string",
+            "title": "Enlace",
+            "description": "Job posting URL (absolute http/https)"
+          },
+          "nombreEmpresa": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Nombreempresa",
+            "description": "Company name (1-200 chars after trim)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "textoPegado",
+          "enlace",
+          "nombreEmpresa"
+        ],
+        "title": "ManualVacancyRequest",
+        "description": "Request body for POST /me/vacancies/manual.\n\nContains pasted job posting text, URL, and company name for manual vacancy registration."
+      },
+      "ManualVacancyResponse": {
+        "properties": {
+          "vacancyId": {
+            "type": "string",
+            "title": "Vacancyid"
+          },
+          "companyId": {
+            "type": "string",
+            "title": "Companyid"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vacancyId",
+          "companyId",
+          "titulo",
+          "created"
+        ],
+        "title": "ManualVacancyResponse",
+        "description": "Response for POST /me/vacancies/manual."
       },
       "ParseCVRequest": {
         "properties": {
@@ -718,6 +1376,20 @@
         "title": "PerfilEstructurado",
         "description": "User's structured CV profile, parsed from raw CV text.\n\nThis is the primary data structure for storing user's professional information."
       },
+      "PostScansResponse": {
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "title": "Jobid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "jobId"
+        ],
+        "title": "PostScansResponse",
+        "description": "Response for POST /scans."
+      },
       "Proyecto": {
         "properties": {
           "nombre": {
@@ -777,6 +1449,64 @@
         "title": "SaveProfileRequest",
         "description": "Request body for PUT /me/profile.\n\nContains the structured profile to be saved."
       },
+      "ScanJobStatusResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "empresasTotal": {
+            "type": "integer",
+            "title": "Empresastotal"
+          },
+          "completados": {
+            "type": "integer",
+            "title": "Completados"
+          },
+          "omitidos": {
+            "type": "integer",
+            "title": "Omitidos"
+          },
+          "fallidos": {
+            "type": "integer",
+            "title": "Fallidos"
+          },
+          "startedAt": {
+            "type": "string",
+            "title": "Startedat"
+          },
+          "canStop": {
+            "type": "boolean",
+            "title": "Canstop"
+          },
+          "pendingCompanies": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pendingcompanies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "empresasTotal",
+          "completados",
+          "omitidos",
+          "fallidos",
+          "startedAt",
+          "canStop"
+        ],
+        "title": "ScanJobStatusResponse",
+        "description": "Response for GET /scans/{jobId}."
+      },
       "SetRolesRequest": {
         "properties": {
           "cargosActivos": {
@@ -784,10 +1514,8 @@
               "type": "string"
             },
             "type": "array",
-            "maxItems": 10,
-            "minItems": 0,
             "title": "Cargosactivos",
-            "description": "List of active job roles (1-10 items, each ≤50 chars)"
+            "description": "List of active job roles (0-10 items, each ≤50 chars)"
           }
         },
         "type": "object",
@@ -899,6 +1627,30 @@
         "title": "SubscriptionUpdateResponse",
         "description": "Response for PUT /me/companies/{companyId}."
       },
+      "SubscriptionUpsertResponse": {
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "title": "Companyid"
+          },
+          "activa": {
+            "type": "boolean",
+            "title": "Activa"
+          },
+          "addedAt": {
+            "type": "string",
+            "title": "Addedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "companyId",
+          "activa",
+          "addedAt"
+        ],
+        "title": "SubscriptionUpsertResponse",
+        "description": "Response for POST /me/companies/{companyId}.\n\nRequirements: 1.3, 1.4, 1.5"
+      },
       "ToggleSubscriptionRequest": {
         "properties": {
           "activa": {
@@ -913,6 +1665,325 @@
         ],
         "title": "ToggleSubscriptionRequest",
         "description": "Request body for PUT /me/companies/{companyId}.\n\nContains the subscription activation state."
+      },
+      "VacancyDetailResponse": {
+        "properties": {
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "modalidad": {
+            "type": "string",
+            "title": "Modalidad"
+          },
+          "ubicacion": {
+            "type": "string",
+            "title": "Ubicacion"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "lastSeenAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastseenat"
+          },
+          "cerrada": {
+            "type": "boolean",
+            "title": "Cerrada",
+            "default": false
+          },
+          "empresa": {
+            "$ref": "#/components/schemas/EmpresaSummary"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "scoreDetalle": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoredetalle"
+          },
+          "scoreProfileVersion": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoreprofileversion"
+          },
+          "cvAtsTexto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cvatstexto"
+          },
+          "cvGeneratedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cvgeneratedat"
+          },
+          "appliedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appliedat"
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "titulo",
+          "descripcion",
+          "modalidad",
+          "ubicacion",
+          "url",
+          "empresa",
+          "estado"
+        ],
+        "title": "VacancyDetailResponse",
+        "description": "Response for GET /me/vacancies/{companyId}/{vacancyId}."
+      },
+      "VacancyListItem": {
+        "properties": {
+          "userId": {
+            "type": "string",
+            "title": "Userid"
+          },
+          "companyId": {
+            "type": "string",
+            "title": "Companyid"
+          },
+          "vacancyId": {
+            "type": "string",
+            "title": "Vacancyid"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "scoreProfileVersion": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoreprofileversion"
+          },
+          "appliedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appliedat"
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdat"
+          },
+          "staleFlag": {
+            "type": "boolean",
+            "title": "Staleflag"
+          },
+          "vacante": {
+            "$ref": "#/components/schemas/VacanteInfo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "userId",
+          "companyId",
+          "vacancyId",
+          "estado",
+          "staleFlag",
+          "vacante"
+        ],
+        "title": "VacancyListItem",
+        "description": "Single item in vacancy listing response."
+      },
+      "VacancyListResponse": {
+        "properties": {
+          "vacancies": {
+            "items": {
+              "$ref": "#/components/schemas/VacancyListItem"
+            },
+            "type": "array",
+            "title": "Vacancies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vacancies"
+        ],
+        "title": "VacancyListResponse",
+        "description": "Response for GET /me/vacancies."
+      },
+      "VacanteInfo": {
+        "properties": {
+          "titulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Titulo"
+          },
+          "modalidad": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modalidad"
+          },
+          "ubicacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ubicacion"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "lastSeenAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastseenat"
+          },
+          "empresa_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Nombre"
+          },
+          "empresa_plataforma": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Plataforma"
+          }
+        },
+        "type": "object",
+        "title": "VacanteInfo",
+        "description": "Vacancy info included in listing."
       },
       "ValidationError": {
         "properties": {

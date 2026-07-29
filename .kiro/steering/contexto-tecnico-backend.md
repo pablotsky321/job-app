@@ -102,7 +102,7 @@ Append-only: soporta rondas sucesivas sin rediseño.
 | `cvOriginalTexto` | S | lo que el usuario pegó |
 | `perfilEstructurado` | M | ver abajo |
 | `resumenParaMatching` | S | resumen ≤500 palabras, generado una vez |
-| `resumenGenerating` | BOOL | `true` mientras la generación asíncrona está en curso; el frontend hace polling de `GET /me/profile` esperando `false` |
+| `resumenGenerationStatus` | S | `'pending'` \| `'complete'` \| `'failed'` \| `null` — único campo persistido de estado de la generación asíncrona (ver detalle abajo) |
 | `cargosSugeridos` | L | |
 | `cargosActivos` | L | |
 | `profileVersion` | N | se incrementa en cada guardado de perfil o cargos |
@@ -116,18 +116,26 @@ cuando cambia `profileVersion`.
 
 ### Generación asíncrona de `resumenParaMatching`
 
-`PUT /me/profile` guarda el perfil, incrementa `profileVersion`, pone `resumenGenerating=true` y
-responde de inmediato. Antes de responder, invoca **de forma asíncrona** (`InvocationType=Event`)
-la propia Lambda `"api"` para que genere `resumenParaMatching` vía Bedrock (modelo pequeño) y, al
-terminar, ponga `resumenGenerating=false`.
+`PUT /me/profile` guarda el perfil, incrementa `profileVersion`, pone
+`resumenGenerationStatus='pending'` y responde de inmediato. Antes de responder, invoca **de forma
+asíncrona** (`InvocationType=Event`) la propia Lambda `"api"` para que genere `resumenParaMatching`
+vía Bedrock (modelo pequeño) y, al terminar, deje `resumenGenerationStatus` en `'complete'` (éxito)
+o `'failed'` (fallo, sin tocar el `resumenParaMatching` previo).
 
 Sin cola ni Lambda nueva — reutiliza la Lambda `"api"` existente con un segundo modo de invocación,
 evitando infraestructura desproporcionada para un flujo que corre en segundos (ver
 `decisiones-invertidas.md`: cola SQS dedicada descartada por este mismo motivo).
 
-`POST /me/profile/roles/suggest` debe devolver **HTTP 424** si `resumenGenerating == true` en el
-momento de la petición (contrato ya asumido por `frontend-spa`, que hace polling de 3s / tope 30s
-sobre `GET /me/profile` ante ese 424).
+`POST /me/profile/roles/suggest` bloquea (**HTTP 424**) únicamente cuando `resumenParaMatching is None`
+— si además `resumenGenerationStatus == 'failed'`, el bloqueo dispara automáticamente un retry de la
+generación asíncrona. Un `resumenGenerationStatus == 'pending'` (regeneración en curso) **nunca**
+bloquea mientras exista un `resumenParaMatching` previo utilizable.
+
+**Nota sobre `resumenGenerating` (booleano):** el campo booleano `resumenGenerating` **no se persiste**
+en DynamoDB. Sigue existiendo únicamente como campo **derivado** en la respuesta HTTP de
+`GET /me/profile` (`resumenGenerating = resumenGenerationStatus == 'pending'`), para no romper al
+frontend que hace polling sobre ese campo. La única fuente de verdad persistida es
+`resumenGenerationStatus`.
 
 ### `Suscripciones` (usuario ↔ empresa)
 

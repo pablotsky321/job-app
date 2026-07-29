@@ -1,0 +1,525 @@
+{
+  "pbtResults": {
+    "2.3 Escribir property-based tests para Property 1 y Property 2 en `backend/tests/test_companies.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1785286815646
+    },
+    "6.2 Escribir property-based tests para Property 3 y Property 4 en `backend/tests/test_profile.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1785305566147
+    }
+  },
+  "executionHistory": {
+    "1.1 Agregar `hypothesis` a `backend/pyproject.toml`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286387120
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286399053
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286592435
+      }
+    ],
+    "2.1 Agregar excepción `SubscriptionWriteFailed` y parametrizar `CompanyNotFound` en `backend/shared/errors.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286387308
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286400382
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286593714
+      }
+    ],
+    "2.2 Implementar función pura `decide_subscription_action` y enum `SubscriptionAction` en `backend/api/routes/companies.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286387417
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286401342
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286595157
+      }
+    ],
+    "2.3 Escribir property-based tests para Property 1 y Property 2 en `backend/tests/test_companies.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286387500
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286601138
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286839842
+      }
+    ],
+    "2.4 Implementar modelo `SubscriptionUpsertResponse` en `backend/api/routes/companies.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286387590
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286402356
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286596042
+      }
+    ],
+    "2.5 Implementar endpoint `POST /me/companies/{companyId}` (`create_subscription`) en `backend/api/routes/companies.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286387707
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286601935
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286839223
+      }
+    ],
+    "2.6 Escribir tests de ejemplo para `POST /me/companies/{companyId}` en `backend/tests/test_companies.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286387890
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286844574
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286976175
+      }
+    ],
+    "3. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388027
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785287025552
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785287297864
+      }
+    ],
+    "4.1 Agregar modelo `ResumenParaMatchingOutput` en `backend/shared/models.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388121
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785287298972
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304496088
+      }
+    ],
+    "4.2 Agregar discriminador `mode == \"async_resumen_generation\"` en `backend/main.py::handler()`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388240
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785287300587
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304497127
+      }
+    ],
+    "4.3 Implementar helper compartido `_trigger_async_resumen_generation` en `backend/api/routes/profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388315
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785287306779
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304648781
+      }
+    ],
+    "4.4 Implementar helper de prompt `_prepare_resumen_prompt` en `backend/api/routes/profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388474
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785287307686
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304753781
+      }
+    ],
+    "4.5 Implementar `_handle_async_resumen_generation` en `backend/main.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388576
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304754700
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304982551
+      }
+    ],
+    "4.6 Integrar `_trigger_async_resumen_generation(user_id)` al final de `save_profile` en `backend/api/routes/profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388658
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304757112
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304983454
+      }
+    ],
+    "4.7 Actualizar `.kiro/steering/contexto-tecnico-backend.md`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388734
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785287301532
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304498066
+      }
+    ],
+    "4.8 Escribir tests de ejemplo para `_trigger_async_resumen_generation` en `backend/tests/test_profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388803
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304990527
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305162755
+      }
+    ],
+    "4.9 Escribir tests de ejemplo para `_handle_async_resumen_generation` en `backend/tests/test_main.py` (archivo nuevo)": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388877
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785304989774
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305162637
+      }
+    ],
+    "4.10 Escribir test de ejemplo de `save_profile` disparando el trigger en `backend/tests/test_profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286388949
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305163803
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305270899
+      }
+    ],
+    "5. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389015
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305276798
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305437680
+      }
+    ],
+    "6.1 Implementar función pura `decide_roles_suggest_action` y enum `RolesSuggestDecision` en `backend/api/routes/profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389091
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305438744
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305497517
+      }
+    ],
+    "6.2 Escribir property-based tests para Property 3 y Property 4 en `backend/tests/test_profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389171
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305503998
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305683629
+      }
+    ],
+    "6.3 Integrar `decide_roles_suggest_action` en `suggest_roles` en `backend/api/routes/profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389315
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305504775
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305684510
+      }
+    ],
+    "6.4 Escribir tests de ejemplo actualizados de `suggest_roles` en `backend/tests/test_profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389534
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305689233
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305951843
+      }
+    ],
+    "7. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389679
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305957026
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785306030155
+      }
+    ],
+    "8.1 Cambiar el prefijo de `roles_router` y actualizar docstrings en `backend/api/routes/profile.py`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389752
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785306031269
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785306130698
+      }
+    ],
+    "8.2 Actualizar `backend/tests/test_profile.py` con las rutas corregidas": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389828
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785306136090
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785306374551
+      }
+    ],
+    "8.3 Regenerar `frontend/openapi/openapi.json` y `frontend/src/api/generated/schema.d.ts`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389897
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785306379125
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785333923453
+      }
+    ],
+    "9. Checkpoint final - Ensure all tests pass": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286389996
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785333928683
+      },
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785334025699
+      }
+    ],
+    "1. Dependencia de test para property-based testing": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286592669
+      }
+    ],
+    "2. Alta idempotente de Suscripción — `POST /me/companies/{companyId}`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785286976264
+      }
+    ],
+    "4. Disparo asíncrono de generación de `resumenParaMatching`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305271187
+      }
+    ],
+    "6. Corrección del contrato de bloqueo de `POST /me/profile/roles/suggest`": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785305951952
+      }
+    ],
+    "8. Corrección de prefijo de rutas de roles": [
+      {
+        "executionId": "30289ac9-f1d3-41b9-b013-73c35d59e734",
+        "chatSessionId": "sess_0cc9f574-641c-45c4-ab40-bd52518ad85f",
+        "timestamp": 1785333923564
+      }
+    ]
+  }
+}

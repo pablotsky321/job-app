@@ -22,6 +22,8 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from starlette.testclient import TestClient
+from botocore.exceptions import ClientError
+from hypothesis import given, settings, strategies as st
 
 
 @pytest.fixture
@@ -74,6 +76,70 @@ def sample_companies():
             "consecutiveFailures": 2,
         },
     ]
+
+
+# ============================================================================
+# Property-based tests: decide_subscription_action (Requirement 1.3-1.6)
+# ============================================================================
+
+
+@settings(max_examples=100, deadline=None)
+@given(existing_activa=st.one_of(st.none(), st.booleans()))
+def test_decide_subscription_action_property(existing_activa):
+    """
+    Feature: backend-fix-integracion-frontend, Property 1: Decisión de alta de
+    suscripción es exhaustiva y correcta por rama.
+
+    deadline=None: la primera ejecución de este test importa
+    backend.api.routes.companies (y sus dependencias, incluida la carga de
+    tablas DynamoDB simuladas en logging), lo que puede superar el deadline
+    por defecto de Hypothesis en la primera llamada sin reflejar una regresión
+    real de performance de la función pura bajo prueba.
+
+    Validates: Requirements 1.3, 1.4, 1.5, 1.6
+    """
+    from backend.api.routes.companies import decide_subscription_action, SubscriptionAction
+
+    action = decide_subscription_action(existing_activa)
+
+    if existing_activa is None:
+        assert action == SubscriptionAction.CREATE
+    elif existing_activa is True:
+        assert action == SubscriptionAction.NO_OP
+    else:
+        assert action == SubscriptionAction.REACTIVATE
+
+    # Exhaustive: the result must always be one of the three known actions.
+    assert action in (
+        SubscriptionAction.CREATE,
+        SubscriptionAction.NO_OP,
+        SubscriptionAction.REACTIVATE,
+    )
+
+
+@settings(max_examples=100, deadline=None)
+@given(existing_activa=st.one_of(st.none(), st.booleans()))
+def test_decide_subscription_action_idempotent_convergence(existing_activa):
+    """
+    Feature: backend-fix-integracion-frontend, Property 2: El alta de
+    suscripción es idempotente (convergencia a no-op).
+
+    For any initial existing_activa, applying the resulting action always
+    leaves activa=True stored. Re-deciding on that new state (True) must
+    always converge to NO_OP.
+
+    Validates: Requirements 1.3, 1.4, 1.5, 1.6
+    """
+    from backend.api.routes.companies import decide_subscription_action, SubscriptionAction
+
+    # Decide on the initial state (not asserted here, covered by Property 1).
+    decide_subscription_action(existing_activa)
+
+    # Regardless of the initial state, applying CREATE/NO_OP/REACTIVATE always
+    # leaves activa=True persisted. Re-deciding on that converged state must
+    # always be a no-op.
+    converged_action = decide_subscription_action(True)
+    assert converged_action == SubscriptionAction.NO_OP
 
 
 # ============================================================================
@@ -813,3 +879,255 @@ def test_toggle_subscription_missing_body(client, mock_user_id):
         assert response.status_code == 422
     finally:
         client.app.dependency_overrides.clear()
+
+
+# ============================================================================
+# POST /me/companies/{companyId} Tests (Alta idempotente de Suscripción)
+# ============================================================================
+
+
+def test_create_subscription_new_returns_201(client, mock_user_id):
+    """
+    HTTP 201 cuando no existe registro previo de Suscripción (Req 1.1, 1.3, 1.7).
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        with patch("backend.api.routes.companies._get_dynamodb_client") as mock_dynamo:
+            mock_table = MagicMock()
+
+            # 1st get_item -> company exists in Empresas
+            # 2nd get_item -> no existing subscription
+            mock_table.get_item.side_effect = [
+                {"Item": {"companyId": "abc123", "nombre": "Acme Corp"}},
+                {},
+            ]
+            mock_dynamo.return_value.Table.return_value = mock_table
+
+            response = client.post("/me/companies/abc123")
+
+            assert response.status_code == 201
+            data = response.json()
+            assert data["companyId"] == "abc123"
+            assert data["activa"] is True
+            assert "addedAt" in data
+
+            # Only one write: the conditional put_item creating the record.
+            mock_table.put_item.assert_called_once()
+            put_kwargs = mock_table.put_item.call_args[1]
+            assert put_kwargs["Item"]["userId"] == mock_user_id
+            assert put_kwargs["Item"]["companyId"] == "abc123"
+            assert put_kwargs["Item"]["activa"] is True
+            assert put_kwargs["ConditionExpression"] == "attribute_not_exists(userId)"
+            mock_table.update_item.assert_not_called()
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_create_subscription_no_op_returns_200(client, mock_user_id):
+    """
+    HTTP 200 no-op cuando ya existe registro con activa=True (Req 1.4).
+    No debe escribir nada en DynamoDB, y debe retornar el addedAt almacenado.
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        with patch("backend.api.routes.companies._get_dynamodb_client") as mock_dynamo:
+            mock_table = MagicMock()
+
+            mock_table.get_item.side_effect = [
+                {"Item": {"companyId": "abc123", "nombre": "Acme Corp"}},
+                {
+                    "Item": {
+                        "userId": mock_user_id,
+                        "companyId": "abc123",
+                        "activa": True,
+                        "addedAt": "2024-01-01T00:00:00Z",
+                    }
+                },
+            ]
+            mock_dynamo.return_value.Table.return_value = mock_table
+
+            response = client.post("/me/companies/abc123")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["companyId"] == "abc123"
+            assert data["activa"] is True
+            assert data["addedAt"] == "2024-01-01T00:00:00Z"
+
+            # No-op: no write of any kind.
+            mock_table.put_item.assert_not_called()
+            mock_table.update_item.assert_not_called()
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_create_subscription_reactivate_returns_200(client, mock_user_id):
+    """
+    HTTP 200 reactivate cuando existe registro con activa=False (Req 1.5).
+    Debe hacer update_item con SET activa=:true, addedAt=:now.
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        with patch("backend.api.routes.companies._get_dynamodb_client") as mock_dynamo:
+            mock_table = MagicMock()
+
+            mock_table.get_item.side_effect = [
+                {"Item": {"companyId": "abc123", "nombre": "Acme Corp"}},
+                {
+                    "Item": {
+                        "userId": mock_user_id,
+                        "companyId": "abc123",
+                        "activa": False,
+                        "addedAt": "2023-06-01T00:00:00Z",
+                    }
+                },
+            ]
+            mock_table.update_item.return_value = {}
+            mock_dynamo.return_value.Table.return_value = mock_table
+
+            response = client.post("/me/companies/abc123")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["companyId"] == "abc123"
+            assert data["activa"] is True
+            # addedAt was refreshed, so it should NOT be the old stored value.
+            assert data["addedAt"] != "2023-06-01T00:00:00Z"
+
+            mock_table.put_item.assert_not_called()
+            mock_table.update_item.assert_called_once()
+            update_kwargs = mock_table.update_item.call_args[1]
+            assert update_kwargs["ExpressionAttributeValues"][":activa"] is True
+            assert ":addedAt" in update_kwargs["ExpressionAttributeValues"]
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_create_subscription_company_not_found_404(client, mock_user_id):
+    """
+    HTTP 404 company_not_found cuando companyId no existe en Empresas (Req 1.2).
+    Distinto del 400 usado por PUT /me/companies/{companyId} para el mismo error_code.
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        with patch("backend.api.routes.companies._get_dynamodb_client") as mock_dynamo:
+            mock_table = MagicMock()
+            mock_table.get_item.return_value = {}  # Company not found
+            mock_dynamo.return_value.Table.return_value = mock_table
+
+            response = client.post("/me/companies/nonexistent")
+
+            assert response.status_code == 404
+            data = response.json()
+            assert data["error"] == "company_not_found"
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_create_subscription_write_failed_returns_500(client, mock_user_id):
+    """
+    HTTP 500 subscription_write_failed cuando put_item falla por un ClientError
+    no relacionado con la condición de escritura (Req 1.9).
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        with patch("backend.api.routes.companies._get_dynamodb_client") as mock_dynamo:
+            mock_table = MagicMock()
+
+            mock_table.get_item.side_effect = [
+                {"Item": {"companyId": "abc123", "nombre": "Acme Corp"}},
+                {},  # No existing subscription -> action CREATE
+            ]
+            mock_table.put_item.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Code": "ProvisionedThroughputExceededException",
+                        "Message": "Rate exceeded",
+                    }
+                },
+                "PutItem",
+            )
+            mock_dynamo.return_value.Table.return_value = mock_table
+
+            response = client.post("/me/companies/abc123")
+
+            assert response.status_code == 500
+            data = response.json()
+            assert data["error"] == "subscription_write_failed"
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_create_subscription_conditional_check_failed_falls_to_no_op(client, mock_user_id):
+    """
+    Rama ConditionalCheckFailedException en el put_item inicial: otro request
+    ganó la carrera. Debe re-leer el registro, re-decidir la acción (cae a
+    NO_OP aquí porque el ganador dejó activa=True) y NO crear un segundo
+    registro (Req 1.8).
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        with patch("backend.api.routes.companies._get_dynamodb_client") as mock_dynamo:
+            mock_table = MagicMock()
+
+            mock_table.get_item.side_effect = [
+                {"Item": {"companyId": "abc123", "nombre": "Acme Corp"}},
+                {},  # No existing subscription at decision time -> action CREATE
+                {  # Re-read after losing the race: winner already created it
+                    "Item": {
+                        "userId": mock_user_id,
+                        "companyId": "abc123",
+                        "activa": True,
+                        "addedAt": "2024-05-05T00:00:00Z",
+                    }
+                },
+            ]
+            mock_table.put_item.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Code": "ConditionalCheckFailedException",
+                        "Message": "The conditional request failed",
+                    }
+                },
+                "PutItem",
+            )
+            mock_dynamo.return_value.Table.return_value = mock_table
+
+            response = client.post("/me/companies/abc123")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["companyId"] == "abc123"
+            assert data["activa"] is True
+            assert data["addedAt"] == "2024-05-05T00:00:00Z"
+
+            # Only one put_item attempt (the failed one); no second create,
+            # and no update_item since the re-decided action was NO_OP.
+            assert mock_table.put_item.call_count == 1
+            mock_table.update_item.assert_not_called()
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_create_subscription_requires_auth(client):
+    """Test POST /me/companies/{companyId} requires authentication."""
+    response = client.post("/me/companies/abc123")
+    assert response.status_code == 401

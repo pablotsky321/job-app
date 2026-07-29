@@ -15,10 +15,12 @@ Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 7.1-7.8, 8.1-8.8, 9.1-9.8
 
 from typing import List, Optional
 from datetime import datetime, timezone
+from enum import Enum
 from urllib.parse import urlparse
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from pydantic import BaseModel
 import boto3
+from botocore.exceptions import ClientError
 
 from backend.shared.logging_config import get_contextual_logger
 from backend.shared.validators import (
@@ -41,6 +43,7 @@ from backend.shared.errors import (
     CompanyAlreadyExists,
     CompanyNotFound,
     SubscriptionNotFound,
+    SubscriptionWriteFailed,
 )
 from backend.api.routes.auth import get_current_user_id
 from backend.api.models.requests import AddCompanyRequest, ToggleSubscriptionRequest
@@ -113,6 +116,54 @@ class SubscriptionUpdateResponse(BaseModel):
     companyId: str
     activa: bool
     updatedAt: str
+
+
+class SubscriptionUpsertResponse(BaseModel):
+    """Response for POST /me/companies/{companyId}.
+
+    Requirements: 1.3, 1.4, 1.5
+    """
+
+    companyId: str
+    activa: bool
+    addedAt: str
+
+
+# ============================================================================
+# Alta idempotente de Suscripción - decisión pura (Requirement 1.6)
+# ============================================================================
+
+
+class SubscriptionAction(str, Enum):
+    """Resultado de la decisión de alta idempotente. Requirement 1.6."""
+
+    CREATE = "created"
+    NO_OP = "no_op"
+    REACTIVATE = "reactivated"
+
+
+def decide_subscription_action(existing_activa: Optional[bool]) -> SubscriptionAction:
+    """
+    Decide qué acción tomar sobre una Suscripción dado su estado actual.
+
+    Pura: no llama a DynamoDB, no tiene efectos secundarios. Requirement 1.6.
+
+    Args:
+        existing_activa:
+            - None  → no existe registro de Suscripción para (userId, companyId)
+            - True  → existe registro con activa=True
+            - False → existe registro con activa=False
+
+    Returns:
+        SubscriptionAction.CREATE      si existing_activa is None       (Req 1.3)
+        SubscriptionAction.NO_OP       si existing_activa is True       (Req 1.4)
+        SubscriptionAction.REACTIVATE  si existing_activa is False      (Req 1.5)
+    """
+    if existing_activa is None:
+        return SubscriptionAction.CREATE
+    if existing_activa is True:
+        return SubscriptionAction.NO_OP
+    return SubscriptionAction.REACTIVATE
 
 
 # ============================================================================
@@ -617,3 +668,183 @@ async def toggle_subscription(
             },
         )
         raise
+
+
+# ============================================================================
+# POST /me/companies/{companyId} - Alta idempotente de Suscripción
+# ============================================================================
+
+
+def _apply_no_op_or_reactivate(
+    action: SubscriptionAction,
+    existing: dict,
+    table,
+    user_id: str,
+    company_id: str,
+    now: str,
+) -> str:
+    """
+    Helper interno (no puro, hace I/O) para las ramas NO_OP y REACTIVATE del
+    alta idempotente de Suscripción.
+
+    - NO_OP: no escribe nada, retorna el `addedAt` ya almacenado sin cambios
+      (Requirement 1.4).
+    - REACTIVATE: hace `update_item` con `SET activa = :true, addedAt = :now`,
+      mismo patrón que la rama de reactivación de `toggle_subscription`
+      (Requirement 1.5), retorna `now`.
+
+    Args:
+        action: SubscriptionAction.NO_OP o SubscriptionAction.REACTIVATE
+        existing: Item actual de Suscripciones (dict con al menos "addedAt")
+        table: boto3 DynamoDB Table resource de Suscripciones
+        user_id: userId (clave de partición)
+        company_id: companyId (clave de ordenamiento)
+        now: timestamp ISO 8601 actual, usado solo en la rama REACTIVATE
+
+    Returns:
+        El addedAt final (sin cambios para NO_OP, actualizado para REACTIVATE)
+    """
+    if action == SubscriptionAction.NO_OP:
+        return existing.get("addedAt")
+
+    # REACTIVATE
+    table.update_item(
+        Key={"userId": user_id, "companyId": company_id},
+        UpdateExpression="SET activa = :activa, addedAt = :addedAt",
+        ExpressionAttributeValues={
+            ":activa": True,
+            ":addedAt": now,
+        },
+    )
+    return now
+
+
+@subscriptions_router.post(
+    "/{company_id}",
+    response_model=SubscriptionUpsertResponse,
+)
+async def create_subscription(
+    company_id: str,
+    response: Response,
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Alta idempotente de Suscripción (create-or-reactivate).
+
+    Endpoint: POST /me/companies/{companyId}
+    Auth: Required (JWT)
+
+    Path Parameters:
+        - companyId (str): Company ID (SHA-256 hash)
+
+    Response:
+        - HTTP 201 si se crea por primera vez (SubscriptionAction.CREATE)
+        - HTTP 200 si no-op (ya activa) o reactivate (estaba inactiva)
+        - Body: SubscriptionUpsertResponse (companyId, activa, addedAt)
+
+    Error Responses:
+        - HTTP 404: companyId no existe en el catálogo Empresas (company_not_found)
+        - HTTP 500: fallo de escritura en DynamoDB (subscription_write_failed)
+
+    Logic:
+    1. Validar que companyId existe en Empresas (404 si no, distinto del 400
+       usado por PUT /me/companies/{companyId} para el mismo error_code)
+    2. Leer estado actual de Suscripciones vía get_item, decidir la acción
+       (decide_subscription_action)
+    3. Rama CREATE: put_item condicional (attribute_not_exists(userId)). Si
+       otro request ganó la carrera (ConditionalCheckFailedException),
+       re-leer el registro y re-decidir la acción (cae a NO_OP/REACTIVATE)
+    4. Ramas NO_OP/REACTIVATE: delegadas a _apply_no_op_or_reactivate
+    5. Cualquier ClientError no relacionado con la condición de escritura ->
+       HTTP 500 subscription_write_failed
+    6. Loguear user_id, company_id, action.value; nunca contenido de perfil/CV
+
+    Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9
+    """
+    logger.info(
+        "create_subscription_start",
+        context={
+            "user_id": user_id,
+            "company_id": company_id,
+        },
+    )
+
+    dynamodb = _get_dynamodb_client()
+    suscripciones_table = dynamodb.Table(TABLES["suscripciones"])
+    empresas_table = dynamodb.Table(TABLES["empresas"])
+
+    # Step 1: companyId debe existir en Empresas -> 404, NO 400 (Req 1.2)
+    company_response = empresas_table.get_item(Key={"companyId": company_id})
+    if "Item" not in company_response:
+        logger.warning(
+            "create_subscription_company_not_found",
+            context={
+                "user_id": user_id,
+                "company_id": company_id,
+            },
+        )
+        raise CompanyNotFound(company_id=company_id, http_status=404)
+
+    # Step 2: leer estado actual y decidir acción
+    subscription_response = suscripciones_table.get_item(
+        Key={"userId": user_id, "companyId": company_id}
+    )
+    existing = subscription_response.get("Item")
+    existing_activa = existing.get("activa") if existing else None
+    action = decide_subscription_action(existing_activa)
+
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+    try:
+        if action == SubscriptionAction.CREATE:
+            try:
+                suscripciones_table.put_item(
+                    Item={
+                        "userId": user_id,
+                        "companyId": company_id,
+                        "activa": True,
+                        "addedAt": now,
+                    },
+                    ConditionExpression="attribute_not_exists(userId)",
+                )
+                response.status_code = 201
+                added_at = now
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code")
+                if error_code == "ConditionalCheckFailedException":
+                    # Perdimos la carrera: re-leer y re-decidir (Req 1.8)
+                    reread = suscripciones_table.get_item(
+                        Key={"userId": user_id, "companyId": company_id}
+                    )
+                    existing = reread["Item"]
+                    action = decide_subscription_action(existing.get("activa"))
+                    added_at = _apply_no_op_or_reactivate(
+                        action, existing, suscripciones_table, user_id, company_id, now
+                    )
+                    response.status_code = 200
+                else:
+                    raise SubscriptionWriteFailed()
+        else:
+            added_at = _apply_no_op_or_reactivate(
+                action, existing, suscripciones_table, user_id, company_id, now
+            )
+            response.status_code = 200
+    except SubscriptionWriteFailed:
+        raise
+    except ClientError:
+        raise SubscriptionWriteFailed()
+
+    logger.info(
+        "create_subscription_result",
+        context={
+            "user_id": user_id,
+            "company_id": company_id,
+            "action": action.value,
+        },
+    )
+
+    return SubscriptionUpsertResponse(
+        companyId=company_id,
+        activa=True,
+        addedAt=added_at,
+    )

@@ -122,7 +122,7 @@ export interface paths {
          *     - 2.3: Return perfilEstructurado
          *     - 2.4: Return resumenParaMatching (may be null)
          *     - 2.5: Return cargosActivos, cargosSugeridos, profileVersion, updatedAt
-         *     - 3.5: Return resumenGenerating (read-only boolean, NOT persisted by this endpoint)
+         *     - 3.5: Return resumenGenerating (true if resumenGenerationStatus == 'pending', else false)
          *     - 3.7: Return 404 with profile_not_found if missing
          */
         get: operations["get_profile_me_profile_get"];
@@ -139,7 +139,6 @@ export interface paths {
          *     Response (HTTP 200):
          *         - profileVersion: Updated version number
          *         - updatedAt: Timestamp of update
-         *         - cargosActivos: Returned as-is (not modified by this endpoint)
          *
          *     Error Responses:
          *         - HTTP 400: Validation error
@@ -148,12 +147,20 @@ export interface paths {
          *     1. Validate request body (already done by Pydantic)
          *     2. Get current profile to determine next version
          *     3. Persist ONLY perfilEstructurado, profileVersion (incremented), updatedAt
-         *     4. Return HTTP 200 with version info immediately (no async background tasks)
-         *     5. Never modify resumenParaMatching, resumenGenerationStatus, cargosSugeridos
-         *     6. Log save operation
+         *     4. Disparar la generación asíncrona de resumenParaMatching vía
+         *        _trigger_async_resumen_generation (invocación Event, no bloqueante)
+         *     5. Return HTTP 200 with version info immediately — la respuesta HTTP sigue
+         *        siendo solo {"profileVersion", "updatedAt"}; el disparo asíncrono nunca
+         *        la modifica ni puede fallarla (ver _trigger_async_resumen_generation)
+         *     6. Never modify resumenParaMatching, resumenGenerationStatus, cargosSugeridos
+         *        directamente en este endpoint (el worker asíncrono es quien los escribe)
+         *     7. Log save operation
          *
          *     Requirements:
-         *     - 2.1: Validate body against SaveProfileRequest
+         *     - 2.1: Validate body against SaveProfileRequest; disparar el trigger
+         *       asíncrono de resumenParaMatching tras persistir el perfil
+         *     - 2.2: El disparo es no bloqueante (invocación Event) y no altera la
+         *       respuesta HTTP de este endpoint
          *     - 2.3: Persist perfilEstructurado
          *     - 2.4: Increment profileVersion
          *     - 2.5: Update updatedAt timestamp
@@ -187,7 +194,7 @@ export interface paths {
          * Suggest Roles
          * @description Suggest job roles based on the user's resume.
          *
-         *     Endpoint: POST /me/roles/suggest
+         *     Endpoint: POST /me/profile/roles/suggest
          *     Auth: Required (JWT)
          *
          *     Response (HTTP 200):
@@ -195,21 +202,48 @@ export interface paths {
          *         - suggestedAt: Timestamp of suggestion
          *
          *     Error Responses:
-         *         - HTTP 424: Resume not ready (resumenParaMatching is null or generation in progress)
+         *         - HTTP 424: Resume not ready (resumenParaMatching is null)
          *         - HTTP 400: Validation error after retry
          *         - HTTP 502: Bedrock failure/timeout
          *
+         *     Lógica de bloqueo corregida (Requirement 3):
+         *     - resumenParaMatching existe → SIEMPRE permite (200), sin importar si
+         *       resumenGenerationStatus es 'pending', 'failed', 'complete' o None. Una
+         *       regeneración en curso o fallida en segundo plano NUNCA bloquea al usuario
+         *       mientras exista un resumen previo utilizable (Criterios 3.2, 3.3, 3.6).
+         *     - resumenParaMatching es None Y resumenGenerationStatus == 'failed' → bloquea
+         *       (424) Y dispara automáticamente un retry de generación asíncrona vía
+         *       _trigger_async_resumen_generation, dejando resumenGenerationStatus en
+         *       'pending' (o 'failed'/'unknown' si el propio despacho del retry vuelve a
+         *       fallar) antes de responder (Criterio 3.7).
+         *     - resumenParaMatching es None Y resumenGenerationStatus no es 'failed'
+         *       (incluye None) → bloquea (424) sin disparar ningún retry (Criterio 3.1).
+         *     - Esta ruta NUNCA reintenta la llamada por su cuenta ni implementa un loop:
+         *       dispara como máximo una invocación asíncrona por request, y responde
+         *       (Criterio 3.8).
+         *
+         *     La decisión de bloqueo/permiso se delega a la función pura
+         *     decide_roles_suggest_action(resumenParaMatching, resumenGenerationStatus),
+         *     que retorna RolesSuggestDecision.ALLOW | .BLOCK | .BLOCK_AND_RETRY.
+         *
          *     Logic:
          *     1. Query Perfiles by userId
-         *     2. Check resumenParaMatching: if null or resumenGenerationStatus == "generating", return 424
+         *     2. decision = decide_roles_suggest_action(resumen, generation_status)
+         *        - BLOCK_AND_RETRY: dispara _trigger_async_resumen_generation(user_id) y
+         *          luego levanta ResumeNotReady() (HTTP 424)
+         *        - BLOCK: levanta ResumeNotReady() (HTTP 424) directamente, sin trigger
+         *        - ALLOW: continúa con el flujo existente (pasos 3-8 abajo)
          *     3. Invoke Bedrock SMALL model with role suggestion prompt
          *     4. Validate response against RolesSuggestions schema
          *     5. If validation fails: Retry once with error injected
-         *     6. If retry fails: Return HTTP 400 or 502
+         *     6. If retry fails: Return HTTP 400
          *     7. Return suggestions (not persisted)
          *     8. Log operation
          *
          *     Requirements:
+         *     - 3.1, 3.2, 3.3, 3.5, 3.6, 3.7, 3.8, 3.9: Corrected block/allow decision,
+         *       automatic retry trigger on BLOCK_AND_RETRY, no client/server retry loop,
+         *       docstring accurately reflects the corrected logic
          *     - 4.1: Check resumenParaMatching and generation status
          *     - 4.2: Return HTTP 424 if resume not ready
          *     - 4.3: Invoke Bedrock SMALL model
@@ -237,7 +271,7 @@ export interface paths {
          * Save Roles
          * @description Save user's active job roles/titles.
          *
-         *     Endpoint: PUT /me/roles
+         *     Endpoint: PUT /me/profile/roles
          *     Auth: Required (JWT)
          *
          *     Request Body:
@@ -457,7 +491,398 @@ export interface paths {
          *     - 9.8: Log operation
          */
         put: operations["toggle_subscription_me_companies__company_id__put"];
+        /**
+         * Create Subscription
+         * @description Alta idempotente de Suscripción (create-or-reactivate).
+         *
+         *     Endpoint: POST /me/companies/{companyId}
+         *     Auth: Required (JWT)
+         *
+         *     Path Parameters:
+         *         - companyId (str): Company ID (SHA-256 hash)
+         *
+         *     Response:
+         *         - HTTP 201 si se crea por primera vez (SubscriptionAction.CREATE)
+         *         - HTTP 200 si no-op (ya activa) o reactivate (estaba inactiva)
+         *         - Body: SubscriptionUpsertResponse (companyId, activa, addedAt)
+         *
+         *     Error Responses:
+         *         - HTTP 404: companyId no existe en el catálogo Empresas (company_not_found)
+         *         - HTTP 500: fallo de escritura en DynamoDB (subscription_write_failed)
+         *
+         *     Logic:
+         *     1. Validar que companyId existe en Empresas (404 si no, distinto del 400
+         *        usado por PUT /me/companies/{companyId} para el mismo error_code)
+         *     2. Leer estado actual de Suscripciones vía get_item, decidir la acción
+         *        (decide_subscription_action)
+         *     3. Rama CREATE: put_item condicional (attribute_not_exists(userId)). Si
+         *        otro request ganó la carrera (ConditionalCheckFailedException),
+         *        re-leer el registro y re-decidir la acción (cae a NO_OP/REACTIVATE)
+         *     4. Ramas NO_OP/REACTIVATE: delegadas a _apply_no_op_or_reactivate
+         *     5. Cualquier ClientError no relacionado con la condición de escritura ->
+         *        HTTP 500 subscription_write_failed
+         *     6. Loguear user_id, company_id, action.value; nunca contenido de perfil/CV
+         *
+         *     Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9
+         */
+        post: operations["create_subscription_me_companies__company_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Scans
+         * @description Trigger an async scan of all companies the authenticated user is subscribed to.
+         *
+         *     Flow:
+         *     1. Extract userId from JWT (via dependency)
+         *     2. Resolve active Suscripciones, deduplicate companyIds
+         *     3. If zero companies → create ScanJob with status=DONE, return jobId
+         *     4. Apply Ventana_Frescura to each Empresa
+         *     5. If all omitted → create ScanJob with status=DONE, return jobId
+         *     6. Create ScanJob with status=RUNNING
+         *     7. Publish one ScanMessage per eligible company to SQS_Scan
+         *     8. Handle publish failures: ALL fail → FAILED; SOME fail → PARCIAL
+         *     9. Update ScanJob with final status
+         *     10. Return jobId (HTTP 200)
+         *
+         *     Requirements: 8, 9, 10, 11
+         */
+        post: operations["post_scans_scans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scans/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Scan Job Status
+         * @description Poll scan job progress.
+         *
+         *     Endpoint: GET /scans/{jobId}
+         *     Auth: Required (JWT)
+         *
+         *     Path Parameters:
+         *         - jobId (str): Scan job identifier
+         *
+         *     Response (HTTP 200):
+         *         - status: RUNNING | DONE | PARCIAL | FAILED
+         *         - empresasTotal: total companies in scan
+         *         - completados: count of completed companies
+         *         - omitidos: count of skipped companies
+         *         - fallidos: count of failed companies
+         *         - startedAt: ISO timestamp when scan started
+         *         - canStop: true if status in [DONE, PARCIAL, FAILED], false if RUNNING
+         *         - pendingCompanies: list of pending companyIds (only when status is PARCIAL)
+         *
+         *     Error Responses:
+         *         - HTTP 404: Job not found or not authorized
+         *
+         *     Logic:
+         *     1. Fetch ScanJob by jobId
+         *     2. 404 if not found
+         *     3. 404 if userId set and differs from requesting user (Req 15.3)
+         *     4. If userId not set → any authenticated user can view (Req 15.4)
+         *     5. Zombie detection: RUNNING + elapsed > 600s → PARCIAL (Req 14.1)
+         *     6. Auto-DONE: RUNNING + empresasCompletadas >= empresasTotal → DONE
+         *     7. Build response with counts and canStop flag (Req 15.5-15.8)
+         *     8. If PARCIAL: include pending companyIds (Req 15.6)
+         *
+         *     Requirements: 14.1, 14.2, 14.3, 15.1-15.8
+         */
+        get: operations["get_scan_job_status_scans__job_id__get"];
+        put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/vacancies/{companyId}/{vacancyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Vacancy Detail
+         * @description Get detailed information about a specific vacancy.
+         *
+         *     Endpoint: GET /me/vacancies/{companyId}/{vacancyId}
+         *     Auth: Required (JWT)
+         *
+         *     Path Parameters:
+         *         - companyId (str): Company identifier
+         *         - vacancyId (str): Vacancy identifier
+         *
+         *     Response (HTTP 200):
+         *         - Combined data from Vacante, Empresa (nombre, plataforma), and UsuarioVacante
+         *
+         *     Error Responses:
+         *         - HTTP 401: Missing JWT claim
+         *         - HTTP 404: Vacante, UsuarioVacante, or Empresa not found
+         *
+         *     Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 9.1, 9.2, 9.3, 9.4, 11.1, 11.2, 11.3
+         */
+        get: operations["get_vacancy_detail_me_vacancies__companyId___vacancyId__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/vacancies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List User Vacancies
+         * @description List user's vacancies filtered by estado.
+         *
+         *     Endpoint: GET /me/vacancies
+         *     Auth: Required (JWT)
+         *
+         *     Query Parameters:
+         *         - estado (str, optional): "activas" (default) or "aplicadas" (case-sensitive)
+         *
+         *     Response (HTTP 200):
+         *         - vacancies: List of vacancy records with staleness flags
+         *
+         *     Error Responses:
+         *         - HTTP 400: Invalid estado value
+         *         - HTTP 401: Missing JWT claim
+         *
+         *     Requirements: 1.1-1.11, 9.1-9.4, 11.1-11.3
+         */
+        get: operations["list_user_vacancies_me_vacancies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/vacancies/manual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Manual Vacancy
+         * @description Register a manual vacancy from pasted job posting text.
+         *
+         *     Endpoint: POST /me/vacancies/manual
+         *     Auth: Required (JWT)
+         *
+         *     Request Body:
+         *         - textoPegado (str): Pasted job posting text (1-20000 chars)
+         *         - enlace (str): Job posting URL (absolute http/https)
+         *         - nombreEmpresa (str): Company name (1-200 chars after trim)
+         *
+         *     Processing:
+         *         1. Validate input (URL format, company name length after trim)
+         *         2. Resolve or create Empresa (never creates Suscripcion)
+         *         3. Compute vacancyId from normalized URL hash
+         *         4. If Vacante doesn't exist: invoke Bedrock to extract fields
+         *         5. Create UsuarioVacante if not exists, publish ScoringMessage
+         *
+         *     Response (HTTP 200):
+         *         - vacancyId, companyId, titulo, created flag
+         *
+         *     Error Responses:
+         *         - HTTP 400: Invalid input or Bedrock extraction failure
+         *         - HTTP 401: Missing JWT claim
+         *         - HTTP 502: Bedrock invocation failed (timeout/exception)
+         *
+         *     Requirements: 3.1-3.12, 9.1-9.4, 10.1-10.4, 11.1-11.4
+         */
+        post: operations["create_manual_vacancy_me_vacancies_manual_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/vacancies/{companyId}/{vacancyId}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply To Vacancy
+         * @description Mark a vacancy as applied for the authenticated user.
+         *
+         *     Endpoint: POST /me/vacancies/{companyId}/{vacancyId}/apply
+         *     Auth: Required (JWT)
+         *
+         *     Path Parameters:
+         *         - companyId (str): Company identifier
+         *         - vacancyId (str): Vacancy identifier
+         *
+         *     Processing:
+         *         - If UsuarioVacante.estado is already 'aplicada', returns HTTP 200
+         *           without modifying appliedAt (idempotent).
+         *         - If estado is not 'aplicada', sets estado='aplicada' and
+         *           appliedAt=now(), then updates in DynamoDB.
+         *         - Behavior is identical regardless of Vacante.estado (abierta or cerrada).
+         *
+         *     Response (HTTP 200):
+         *         - vacancyId, companyId, estado, appliedAt
+         *
+         *     Error Responses:
+         *         - HTTP 401: Missing JWT claim
+         *         - HTTP 404: UsuarioVacante not found for (userId, companyId, vacancyId)
+         *
+         *     Requirements: 4.1, 4.2, 4.3, 9.1, 9.2, 9.3, 9.4, 11.1, 11.2, 11.3
+         */
+        post: operations["apply_to_vacancy_me_vacancies__companyId___vacancyId__apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/vacancies/{companyId}/{vacancyId}/cv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Cv Ats
+         * @description Generate an ATS-optimized CV text for a specific vacancy.
+         *
+         *     Endpoint: POST /me/vacancies/{companyId}/{vacancyId}/cv
+         *     Auth: Required (JWT)
+         *
+         *     Path Parameters:
+         *         - companyId (str): Company identifier
+         *         - vacancyId (str): Vacancy identifier
+         *
+         *     Processing:
+         *         1. Verify UsuarioVacante exists (HTTP 404 if not)
+         *         2. Check Vacante.cerrada (HTTP 409 if closed)
+         *         3. Detect language from Vacante.titulo + descripcion
+         *         4. Invoke Bedrock with profile + vacancy data
+         *         5. Persist cvAtsTexto and cvGeneratedAt
+         *         6. Return text/plain response
+         *
+         *     Response (HTTP 200):
+         *         - Plain text CV-ATS content (Content-Type: text/plain)
+         *
+         *     Error Responses:
+         *         - HTTP 401: Missing JWT claim
+         *         - HTTP 404: UsuarioVacante not found
+         *         - HTTP 400: Bedrock validation failed after retry
+         *         - HTTP 409: Vacancy is closed
+         *         - HTTP 502: Bedrock invocation failed
+         *
+         *     Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 9.1, 9.2, 9.3, 9.4,
+         *                   10.1, 10.2, 10.3, 10.4, 11.1, 11.2, 11.3, 11.4
+         */
+        post: operations["generate_cv_ats_me_vacancies__companyId___vacancyId__cv_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/vacancies/{companyId}/{vacancyId}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Entries
+         * @description List all entries (questions/notes) for a specific vacancy.
+         *
+         *     Returns entries ordered by createdAt ascending.
+         *     Returns HTTP 200 with empty list when there are none.
+         *     Returns HTTP 404 if UsuarioVacante or Vacante don't exist.
+         *
+         *     Requirements: 6.1, 6.2, 6.3
+         */
+        get: operations["list_entries_me_vacancies__companyId___vacancyId__entries_get"];
+        put?: never;
+        /**
+         * Create Entry
+         * @description Create a new entry (question or interview note) for a vacancy.
+         *
+         *     Validates tipo is one of 'preguntas' or 'nota_entrevista'.
+         *     Returns HTTP 404 if UsuarioVacante or Vacante don't exist.
+         *     The service NEVER exposes update or delete operations on Entrada.
+         *
+         *     Requirements: 6.4, 6.5, 6.6
+         */
+        post: operations["create_entry_me_vacancies__companyId___vacancyId__entries_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/vacancies/{companyId}/{vacancyId}/entries/{entryId}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Answer
+         * @description Generate a suggested answer for an interview question entry.
+         *
+         *     - Reads the referenced Entrada → HTTP 404 if not found or doesn't belong to this user/vacancy
+         *     - HTTP 400 if Entrada.tipo != 'preguntas'
+         *     - HTTP 409 if Vacante.cerrada == True
+         *     - Detects language, invokes Bedrock, validates output
+         *     - On success: creates a NEW append-only Entrada with tipo=nota_entrevista
+         *     - NEVER modifies the referenced Entrada
+         *
+         *     Requirements: 6.7, 6.8, 6.9, 6.10, 6.11
+         */
+        post: operations["generate_answer_me_vacancies__companyId___vacancyId__entries__entryId__answer_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -480,6 +905,20 @@ export interface components {
              * @description Company careers page URL (http/https)
              */
             careersUrl: string;
+        };
+        /**
+         * ApplyResponse
+         * @description Response for POST /me/vacancies/{companyId}/{vacancyId}/apply.
+         */
+        ApplyResponse: {
+            /** Vacancyid */
+            vacancyId: string;
+            /** Companyid */
+            companyId: string;
+            /** Estado */
+            estado: string;
+            /** Appliedat */
+            appliedAt?: string | null;
         };
         /**
          * Certificacion
@@ -551,6 +990,22 @@ export interface components {
             consecutiveFailures: number;
         };
         /**
+         * CreateEntryRequest
+         * @description Request body for POST /me/vacancies/{companyId}/{vacancyId}/entries.
+         */
+        CreateEntryRequest: {
+            /**
+             * Tipo
+             * @description Entry type: 'preguntas' or 'nota_entrevista'
+             */
+            tipo: string;
+            /**
+             * Contenido
+             * @description Entry content (1-5000 chars)
+             */
+            contenido: string;
+        };
+        /**
          * Educacion
          * @description Education entry from CV.
          */
@@ -575,6 +1030,16 @@ export interface components {
              * @description Specialization or focus area
              */
             especializacion?: string | null;
+        };
+        /**
+         * EmpresaSummary
+         * @description Company summary included in vacancy listing.
+         */
+        EmpresaSummary: {
+            /** Nombre */
+            nombre: string;
+            /** Plataforma */
+            plataforma: string;
         };
         /**
          * ExperienciaLaboral
@@ -619,6 +1084,43 @@ export interface components {
         HealthResponse: {
             /** Status */
             status: string;
+        };
+        /**
+         * ManualVacancyRequest
+         * @description Request body for POST /me/vacancies/manual.
+         *
+         *     Contains pasted job posting text, URL, and company name for manual vacancy registration.
+         */
+        ManualVacancyRequest: {
+            /**
+             * Textopegado
+             * @description Pasted job posting text (1-20000 chars)
+             */
+            textoPegado: string;
+            /**
+             * Enlace
+             * @description Job posting URL (absolute http/https)
+             */
+            enlace: string;
+            /**
+             * Nombreempresa
+             * @description Company name (1-200 chars after trim)
+             */
+            nombreEmpresa: string;
+        };
+        /**
+         * ManualVacancyResponse
+         * @description Response for POST /me/vacancies/manual.
+         */
+        ManualVacancyResponse: {
+            /** Vacancyid */
+            vacancyId: string;
+            /** Companyid */
+            companyId: string;
+            /** Titulo */
+            titulo: string;
+            /** Created */
+            created: boolean;
         };
         /**
          * ParseCVRequest
@@ -676,6 +1178,14 @@ export interface components {
             lenguajes?: string[];
         };
         /**
+         * PostScansResponse
+         * @description Response for POST /scans.
+         */
+        PostScansResponse: {
+            /** Jobid */
+            jobId: string;
+        };
+        /**
          * Proyecto
          * @description Project entry from CV.
          */
@@ -712,6 +1222,28 @@ export interface components {
             perfilEstructurado: components["schemas"]["PerfilEstructurado"];
         };
         /**
+         * ScanJobStatusResponse
+         * @description Response for GET /scans/{jobId}.
+         */
+        ScanJobStatusResponse: {
+            /** Status */
+            status: string;
+            /** Empresastotal */
+            empresasTotal: number;
+            /** Completados */
+            completados: number;
+            /** Omitidos */
+            omitidos: number;
+            /** Fallidos */
+            fallidos: number;
+            /** Startedat */
+            startedAt: string;
+            /** Canstop */
+            canStop: boolean;
+            /** Pendingcompanies */
+            pendingCompanies?: string[] | null;
+        };
+        /**
          * SetRolesRequest
          * @description Request body for PUT /me/roles.
          *
@@ -720,7 +1252,7 @@ export interface components {
         SetRolesRequest: {
             /**
              * Cargosactivos
-             * @description List of active job roles (1-10 items, each ≤50 chars)
+             * @description List of active job roles (0-10 items, each ≤50 chars)
              */
             cargosActivos: string[];
         };
@@ -767,6 +1299,20 @@ export interface components {
             updatedAt: string;
         };
         /**
+         * SubscriptionUpsertResponse
+         * @description Response for POST /me/companies/{companyId}.
+         *
+         *     Requirements: 1.3, 1.4, 1.5
+         */
+        SubscriptionUpsertResponse: {
+            /** Companyid */
+            companyId: string;
+            /** Activa */
+            activa: boolean;
+            /** Addedat */
+            addedAt: string;
+        };
+        /**
          * ToggleSubscriptionRequest
          * @description Request body for PUT /me/companies/{companyId}.
          *
@@ -778,6 +1324,99 @@ export interface components {
              * @description Whether the subscription is active (true) or inactive (false)
              */
             activa: boolean;
+        };
+        /**
+         * VacancyDetailResponse
+         * @description Response for GET /me/vacancies/{companyId}/{vacancyId}.
+         */
+        VacancyDetailResponse: {
+            /** Titulo */
+            titulo: string;
+            /** Descripcion */
+            descripcion: string;
+            /** Modalidad */
+            modalidad: string;
+            /** Ubicacion */
+            ubicacion: string;
+            /** Url */
+            url: string;
+            /** Lastseenat */
+            lastSeenAt?: string | null;
+            /**
+             * Cerrada
+             * @default false
+             */
+            cerrada: boolean;
+            empresa: components["schemas"]["EmpresaSummary"];
+            /** Estado */
+            estado: string;
+            /** Score */
+            score?: number | null;
+            /** Scoredetalle */
+            scoreDetalle?: Record<string, never> | null;
+            /** Scoreprofileversion */
+            scoreProfileVersion?: number | null;
+            /** Cvatstexto */
+            cvAtsTexto?: string | null;
+            /** Cvgeneratedat */
+            cvGeneratedAt?: string | null;
+            /** Appliedat */
+            appliedAt?: string | null;
+            /** Createdat */
+            createdAt?: string | null;
+        };
+        /**
+         * VacancyListItem
+         * @description Single item in vacancy listing response.
+         */
+        VacancyListItem: {
+            /** Userid */
+            userId: string;
+            /** Companyid */
+            companyId: string;
+            /** Vacancyid */
+            vacancyId: string;
+            /** Estado */
+            estado: string;
+            /** Score */
+            score?: number | null;
+            /** Scoreprofileversion */
+            scoreProfileVersion?: number | null;
+            /** Appliedat */
+            appliedAt?: string | null;
+            /** Createdat */
+            createdAt?: string | null;
+            /** Staleflag */
+            staleFlag: boolean;
+            vacante: components["schemas"]["VacanteInfo"];
+        };
+        /**
+         * VacancyListResponse
+         * @description Response for GET /me/vacancies.
+         */
+        VacancyListResponse: {
+            /** Vacancies */
+            vacancies: components["schemas"]["VacancyListItem"][];
+        };
+        /**
+         * VacanteInfo
+         * @description Vacancy info included in listing.
+         */
+        VacanteInfo: {
+            /** Titulo */
+            titulo?: string | null;
+            /** Modalidad */
+            modalidad?: string | null;
+            /** Ubicacion */
+            ubicacion?: string | null;
+            /** Url */
+            url?: string | null;
+            /** Lastseenat */
+            lastSeenAt?: string | null;
+            /** Empresa Nombre */
+            empresa_nombre?: string | null;
+            /** Empresa Plataforma */
+            empresa_plataforma?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1065,6 +1704,350 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SubscriptionUpdateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_subscription_me_companies__company_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionUpsertResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_scans_scans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostScansResponse"];
+                };
+            };
+        };
+    };
+    get_scan_job_status_scans__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanJobStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_vacancy_detail_me_vacancies__companyId___vacancyId__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+                vacancyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VacancyDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_user_vacancies_me_vacancies_get: {
+        parameters: {
+            query?: {
+                /** @description Filter: activas or aplicadas */
+                estado?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VacancyListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_manual_vacancy_me_vacancies_manual_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualVacancyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualVacancyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_to_vacancy_me_vacancies__companyId___vacancyId__apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+                vacancyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_cv_ats_me_vacancies__companyId___vacancyId__cv_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+                vacancyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_entries_me_vacancies__companyId___vacancyId__entries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+                vacancyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_entry_me_vacancies__companyId___vacancyId__entries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+                vacancyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_answer_me_vacancies__companyId___vacancyId__entries__entryId__answer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+                vacancyId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

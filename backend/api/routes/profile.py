@@ -5,8 +5,8 @@ Provides:
 - POST /me/profile/parse: Parse CV text → PerfilEstructurado (Bedrock)
 - GET /me/profile: Retrieve saved profile
 - PUT /me/profile: Save structured profile
-- POST /me/roles/suggest: Suggest job roles from resumen (Bedrock)
-- PUT /me/roles: Save active roles
+- POST /me/profile/roles/suggest: Suggest job roles from resumen (Bedrock)
+- PUT /me/profile/roles: Save active roles
 
 All endpoints requiring authentication extract userId from JWT via Depends(get_current_user_id).
 
@@ -14,9 +14,15 @@ Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 11.1, 11.2, 11.3, 11.4, 11.5,
               12.1, 12.2, 12.3, 12.4, 12.5, 19.1, 19.2, 19.3, 19.4
 """
 
+import json
+import os
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Optional
+
+import boto3
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
-from datetime import datetime, timezone
 
 from backend.shared.logging_config import get_contextual_logger
 from backend.shared.bedrock import get_bedrock_client
@@ -48,7 +54,174 @@ logger = get_contextual_logger(__name__)
 router = APIRouter(prefix="/me/profile", tags=["profile"])
 
 # Create router for roles endpoints (separate prefix)
-roles_router = APIRouter(prefix="/me/roles", tags=["roles"])
+roles_router = APIRouter(prefix="/me/profile/roles", tags=["roles"])
+
+
+# ============================================================================
+# Shared helper: async resumenParaMatching generation trigger
+# ============================================================================
+
+
+def _trigger_async_resumen_generation(user_id: str) -> str:
+    """
+    Dispara la generación asíncrona de resumenParaMatching invocando la propia
+    Lambda "api" con InvocationType='Event'.
+
+    Garantía de no propagación de excepciones: TODO el cuerpo de esta función
+    (tanto la escritura de resumenGenerationStatus='pending' como el intento de
+    lambda.invoke) está envuelto en un único try/except externo. Ningún fallo en
+    ningún paso de este helper puede propagarse al caller (save_profile /
+    suggest_roles) ni romper su respuesta HTTP — ese caller ya completó su
+    propio trabajo principal (guardar el perfil, o evaluar el bloqueo de
+    roles/suggest) antes de invocar este helper, y ese trabajo principal nunca
+    debe fallar por un problema en este flujo secundario de generación de
+    resumen.
+
+    Orden de escritura (crítico para evitar una carrera con el propio worker
+    asíncrono, Requirement 2 Criterios 1, 2, 10):
+    1. Escribe resumenGenerationStatus='pending' PRIMERO, antes de intentar
+       cualquier invocación. Esto es necesario porque, una vez despachada la
+       invocación asíncrona, esa Lambda separada puede completar (escribiendo
+       'complete' o 'failed') en cualquier momento — incluso antes de que este
+       helper termine de ejecutarse. Si este helper escribiera su propio status
+       DESPUÉS de invocar, esa escritura tardía podría sobreescribir el
+       resultado correcto del worker con 'pending', dejando al usuario
+       atascado indefinidamente sin que ningún retry lo detecte (el status
+       nunca quedaría en 'failed').
+    2. Intenta lambda.invoke(). Si el despacho se completa sin excepción, no
+       se requiere ninguna escritura adicional: el status ya quedó en
+       'pending' en el paso 1, que es el valor correcto mientras la
+       generación está en curso.
+    3. Si CUALQUIER paso anterior (la escritura de 'pending' O el invoke) lanza
+       una excepción, el except externo la captura, la loguea, e intenta una
+       segunda escritura que sobreescribe el status a 'failed' (Requirement
+       2.10) — en este punto se asume que la generación no quedará en curso,
+       es un fallo confirmado, no un estado en progreso. Esa segunda escritura
+       está a su vez envuelta en su propio try/except interno: si también
+       falla (ej. la misma causa de throttling que afectó al paso 1), se
+       loguea ese fallo secundario y la función retorna igualmente sin
+       propagar ninguna excepción.
+
+    Compartida entre:
+    - save_profile (PUT /me/profile) — Requirement 2, Criterios 1, 2, 10
+    - suggest_roles (POST /me/profile/roles/suggest) — Requirement 3, Criterio 7
+
+    Args:
+        user_id: userId extraído del JWT (nunca de body/query).
+
+    Returns:
+        El valor final conocido de resumenGenerationStatus tras esta función:
+        'pending' si ambos pasos (escritura + invoke) tuvieron éxito; 'failed'
+        si algún paso falló y la escritura de 'failed' tuvo éxito; 'unknown' si
+        algún paso falló Y la propia escritura de 'failed' también falló. 'unknown'
+        significa que esta función no pudo CONFIRMAR qué quedó persistido en
+        DynamoDB tras el fallo — no implica necesariamente que el estado real sea
+        indeterminado en la práctica. Por ejemplo, si el Paso 1 escribió 'pending'
+        con éxito y solo la segunda escritura de 'failed' falló después, el valor
+        realmente persistido en DynamoDB sigue siendo 'pending'; este helper
+        simplemente no tiene forma de verificarlo en ese momento, de modo que
+        reporta 'unknown' en vez de asumir cuál de los valores posibles quedó
+        almacenado.
+    """
+    perfiles_table = get_dynamodb_table("DYNAMODB_TABLE_PERFILES")
+
+    try:
+        # Paso 1: 'pending' PRIMERO, antes de cualquier intento de invocar.
+        perfiles_table.update_item(
+            Key={"userId": user_id},
+            UpdateExpression="SET resumenGenerationStatus = :status",
+            ExpressionAttributeValues={":status": "pending"},
+        )
+
+        # Paso 2: intentar el despacho asíncrono.
+        lambda_client = boto3.client("lambda")
+        lambda_client.invoke(
+            FunctionName=os.environ["AWS_LAMBDA_FUNCTION_NAME"],
+            InvocationType="Event",
+            Payload=json.dumps(
+                {"mode": "async_resumen_generation", "userId": user_id}
+            ).encode("utf-8"),
+        )
+        logger.info(
+            "async_resumen_dispatch_status",
+            context={"user_id": user_id, "status": "pending"},
+        )
+        return "pending"
+
+    except Exception as e:
+        # Paso 3: algo del bloque anterior (escritura de 'pending' o invoke)
+        # falló con certeza -> intentar sobreescribir a 'failed'.
+        logger.error(
+            "async_resumen_dispatch_failed",
+            context={"user_id": user_id, "error_type": type(e).__name__},
+        )
+        try:
+            perfiles_table.update_item(
+                Key={"userId": user_id},
+                UpdateExpression="SET resumenGenerationStatus = :status",
+                ExpressionAttributeValues={":status": "failed"},
+            )
+            return "failed"
+        except Exception as inner_e:
+            # Incluso la escritura de 'failed' falló (ej. mismo throttling
+            # sostenido). No se propaga: el caller nunca debe romper su
+            # respuesta HTTP por este flujo secundario.
+            logger.error(
+                "async_resumen_failed_status_write_also_failed",
+                context={"user_id": user_id, "error_type": type(inner_e).__name__},
+            )
+            return "unknown"
+
+
+# ============================================================================
+# Shared helper: pure decision function for POST /me/profile/roles/suggest
+# ============================================================================
+
+
+class RolesSuggestDecision(str, Enum):
+    """Resultado de la decisión de bloqueo de POST /me/profile/roles/suggest.
+
+    Requirement 3.4.
+    """
+
+    ALLOW = "allow"
+    BLOCK = "block"
+    BLOCK_AND_RETRY = "block_and_retry"
+
+
+def decide_roles_suggest_action(
+    resumen_para_matching: Optional[str],
+    resumen_generation_status: Optional[str],
+) -> RolesSuggestDecision:
+    """
+    Decide si POST /me/profile/roles/suggest debe permitir, bloquear, o bloquear
+    Y disparar un retry de generación.
+
+    Pura: no llama a DynamoDB ni a Bedrock. Requirement 3.4.
+
+    Cubre exhaustivamente (Requirements 3.1, 3.2, 3.3, 3.6, 3.7):
+        resumenParaMatching is not None                        → ALLOW
+            (independientemente de resumenGenerationStatus: 'pending', 'failed',
+             'complete', o None — Criterios 3.2, 3.3, 3.6)
+        resumenParaMatching is None AND status == 'failed'     → BLOCK_AND_RETRY
+        resumenParaMatching is None AND status != 'failed'     → BLOCK
+            (incluye status is None — Criterio 3.1)
+
+    Args:
+        resumen_para_matching: Valor actual de Perfiles.resumenParaMatching
+            (None si aún no se generó ningún resumen).
+        resumen_generation_status: Valor actual de Perfiles.resumenGenerationStatus
+            ('pending' | 'complete' | 'failed' | None).
+
+    Returns:
+        RolesSuggestDecision.ALLOW, .BLOCK, o .BLOCK_AND_RETRY según las reglas
+        anteriores.
+    """
+    if resumen_para_matching is not None:
+        return RolesSuggestDecision.ALLOW
+    if resumen_generation_status == "failed":
+        return RolesSuggestDecision.BLOCK_AND_RETRY
+    return RolesSuggestDecision.BLOCK
 
 
 # ============================================================================
@@ -314,12 +487,20 @@ async def save_profile(
     1. Validate request body (already done by Pydantic)
     2. Get current profile to determine next version
     3. Persist ONLY perfilEstructurado, profileVersion (incremented), updatedAt
-    4. Return HTTP 200 with version info immediately (no async background tasks)
-    5. Never modify resumenParaMatching, resumenGenerationStatus, cargosSugeridos
-    6. Log save operation
+    4. Disparar la generación asíncrona de resumenParaMatching vía
+       _trigger_async_resumen_generation (invocación Event, no bloqueante)
+    5. Return HTTP 200 with version info immediately — la respuesta HTTP sigue
+       siendo solo {"profileVersion", "updatedAt"}; el disparo asíncrono nunca
+       la modifica ni puede fallarla (ver _trigger_async_resumen_generation)
+    6. Never modify resumenParaMatching, resumenGenerationStatus, cargosSugeridos
+       directamente en este endpoint (el worker asíncrono es quien los escribe)
+    7. Log save operation
 
     Requirements:
-    - 2.1: Validate body against SaveProfileRequest
+    - 2.1: Validate body against SaveProfileRequest; disparar el trigger
+      asíncrono de resumenParaMatching tras persistir el perfil
+    - 2.2: El disparo es no bloqueante (invocación Event) y no altera la
+      respuesta HTTP de este endpoint
     - 2.3: Persist perfilEstructurado
     - 2.4: Increment profileVersion
     - 2.5: Update updatedAt timestamp
@@ -384,6 +565,12 @@ async def save_profile(
             },
         )
         
+        # Step 5: Disparar generación asíncrona de resumenParaMatching.
+        # _trigger_async_resumen_generation nunca lanza excepciones (ver su
+        # propio docstring), por lo que se llama directamente sin try/except
+        # adicional aquí; su resultado no afecta la respuesta HTTP.
+        _trigger_async_resumen_generation(user_id)
+        
         return response_data
 
     except Exception as e:
@@ -401,7 +588,7 @@ async def save_profile(
 
 
 # ============================================================================
-# POST /me/roles/suggest - Suggest Job Roles from Resume
+# POST /me/profile/roles/suggest - Suggest Job Roles from Resume
 # ============================================================================
 
 
@@ -412,7 +599,7 @@ async def suggest_roles(
     """
     Suggest job roles based on the user's resume.
 
-    Endpoint: POST /me/roles/suggest
+    Endpoint: POST /me/profile/roles/suggest
     Auth: Required (JWT)
 
     Response (HTTP 200):
@@ -420,13 +607,37 @@ async def suggest_roles(
         - suggestedAt: Timestamp of suggestion
 
     Error Responses:
-        - HTTP 424: Resume not ready (resumenParaMatching is null or generation in progress)
+        - HTTP 424: Resume not ready (resumenParaMatching is null)
         - HTTP 400: Validation error after retry
         - HTTP 502: Bedrock failure/timeout
 
+    Lógica de bloqueo corregida (Requirement 3):
+    - resumenParaMatching existe → SIEMPRE permite (200), sin importar si
+      resumenGenerationStatus es 'pending', 'failed', 'complete' o None. Una
+      regeneración en curso o fallida en segundo plano NUNCA bloquea al usuario
+      mientras exista un resumen previo utilizable (Criterios 3.2, 3.3, 3.6).
+    - resumenParaMatching es None Y resumenGenerationStatus == 'failed' → bloquea
+      (424) Y dispara automáticamente un retry de generación asíncrona vía
+      _trigger_async_resumen_generation, dejando resumenGenerationStatus en
+      'pending' (o 'failed'/'unknown' si el propio despacho del retry vuelve a
+      fallar) antes de responder (Criterio 3.7).
+    - resumenParaMatching es None Y resumenGenerationStatus no es 'failed'
+      (incluye None) → bloquea (424) sin disparar ningún retry (Criterio 3.1).
+    - Esta ruta NUNCA reintenta la llamada por su cuenta ni implementa un loop:
+      dispara como máximo una invocación asíncrona por request, y responde
+      (Criterio 3.8).
+
+    La decisión de bloqueo/permiso se delega a la función pura
+    decide_roles_suggest_action(resumenParaMatching, resumenGenerationStatus),
+    que retorna RolesSuggestDecision.ALLOW | .BLOCK | .BLOCK_AND_RETRY.
+
     Logic:
     1. Query Perfiles by userId
-    2. Check resumenParaMatching: if null or resumenGenerationStatus == "pending", return 424
+    2. decision = decide_roles_suggest_action(resumen, generation_status)
+       - BLOCK_AND_RETRY: dispara _trigger_async_resumen_generation(user_id) y
+         luego levanta ResumeNotReady() (HTTP 424)
+       - BLOCK: levanta ResumeNotReady() (HTTP 424) directamente, sin trigger
+       - ALLOW: continúa con el flujo existente (pasos 3-8 abajo)
     3. Invoke Bedrock SMALL model with role suggestion prompt
     4. Validate response against RolesSuggestions schema
     5. If validation fails: Retry once with error injected
@@ -435,6 +646,9 @@ async def suggest_roles(
     8. Log operation
 
     Requirements:
+    - 3.1, 3.2, 3.3, 3.5, 3.6, 3.7, 3.8, 3.9: Corrected block/allow decision,
+      automatic retry trigger on BLOCK_AND_RETRY, no client/server retry loop,
+      docstring accurately reflects the corrected logic
     - 4.1: Check resumenParaMatching and generation status
     - 4.2: Return HTTP 424 if resume not ready
     - 4.3: Invoke Bedrock SMALL model
@@ -467,15 +681,31 @@ async def suggest_roles(
         resumen = item.get("resumenParaMatching")
         generation_status = item.get("resumenGenerationStatus")
         
-        # Step 2: Check if resume is ready
-        # Resume not ready if: resumenParaMatching is null OR generation is in progress (pending)
-        if resumen is None or generation_status == "pending":
+        # Step 2: Decide block/allow via the pure decision function
+        # (Requirements 3.1, 3.2, 3.3, 3.5, 3.6, 3.7)
+        decision = decide_roles_suggest_action(resumen, generation_status)
+        
+        if decision == RolesSuggestDecision.BLOCK_AND_RETRY:
             logger.info(
                 "suggest_roles_resume_not_ready",
                 context={
                     "user_id": user_id,
                     "has_resumen": resumen is not None,
                     "generation_status": generation_status,
+                    "decision": decision.value,
+                },
+            )
+            _trigger_async_resumen_generation(user_id)
+            raise ResumeNotReady()
+        
+        if decision == RolesSuggestDecision.BLOCK:
+            logger.info(
+                "suggest_roles_resume_not_ready",
+                context={
+                    "user_id": user_id,
+                    "has_resumen": resumen is not None,
+                    "generation_status": generation_status,
+                    "decision": decision.value,
                 },
             )
             raise ResumeNotReady()
@@ -541,7 +771,7 @@ async def suggest_roles(
 
 
 # ============================================================================
-# PUT /me/roles - Save Active Roles
+# PUT /me/profile/roles - Save Active Roles
 # ============================================================================
 
 
@@ -553,7 +783,7 @@ async def save_roles(
     """
     Save user's active job roles/titles.
 
-    Endpoint: PUT /me/roles
+    Endpoint: PUT /me/profile/roles
     Auth: Required (JWT)
 
     Request Body:
@@ -742,4 +972,41 @@ Profile Summary:
 {resumen_text}
 
 Return ONLY valid JSON: {{"suggestions": ["Role1", "Role2", ...]}}. No explanation."""
+    return prompt
+
+
+def _prepare_resumen_prompt(perfil_estructurado: dict) -> str:
+    """
+    Prepare the Bedrock prompt for resumenParaMatching generation.
+
+    Takes the structured profile (perfilEstructurado) and asks Bedrock to
+    produce a natural-language summary intended for role/vacancy matching.
+
+    The "<=500 words" constraint is expressed as prompt text, not as a
+    Pydantic max_length (Pydantic measures characters, not words, and the
+    rest of the codebase — CVATSOutput, SuggestedAnswerOutput — doesn't
+    enforce length limits on LLM-generated text via Pydantic either).
+
+    Args:
+        perfil_estructurado: Structured profile dict (matches PerfilEstructurado
+            schema: experiencia, educacion, proyectos, certificaciones, skills,
+            lenguajes)
+
+    Returns:
+        Formatted prompt string for Bedrock
+
+    Requirements: 2.3
+    """
+    perfil_json = json.dumps(perfil_estructurado, ensure_ascii=False)
+
+    prompt = f"""Based on the following structured professional profile, write a natural-language
+summary of this person's background, skills, and experience, intended to be used
+for matching against job vacancies.
+
+The summary MUST be 500 words or fewer.
+
+Structured Profile (JSON):
+{perfil_json}
+
+Return ONLY valid JSON: {{"resumen": "<summary text, 500 words or fewer>"}}. No explanation, no markdown formatting."""
     return prompt

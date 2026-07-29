@@ -22,6 +22,7 @@ from pydantic import ValidationError
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from starlette.testclient import TestClient
+from hypothesis import given, settings, strategies as st
 from backend.shared.models import PerfilEstructurado
 
 
@@ -513,7 +514,8 @@ def test_save_profile_success(client, mock_user_id, sample_perfil_structured):
             "resumenGenerationStatus": "complete",
         }
 
-        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table:
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+                patch("backend.api.routes.profile._trigger_async_resumen_generation") as mock_trigger:
             mock_table = Mock()
             mock_table.get_item.return_value = {"Item": existing_item}
             mock_table.update_item.return_value = {"Attributes": {}}
@@ -540,6 +542,57 @@ def test_save_profile_success(client, mock_user_id, sample_perfil_structured):
             assert ":perfil" in call_kwargs["ExpressionAttributeValues"]
             assert call_kwargs["ExpressionAttributeValues"][":ver"] == 3
 
+            # Smoke check that the async trigger fires; see
+            # test_save_profile_triggers_async_resumen_generation for the
+            # dedicated coverage of this behavior (call args + response shape).
+            mock_trigger.assert_called_once_with(mock_user_id)
+
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_save_profile_triggers_async_resumen_generation(client, mock_user_id, sample_perfil_structured):
+    """Test that a successful PUT /me/profile invokes
+    _trigger_async_resumen_generation with the correct user_id exactly once,
+    and that the HTTP response body remains exactly
+    {"profileVersion", "updatedAt"} — no fields leaked from the trigger."""
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        existing_item = {
+            "userId": mock_user_id,
+            "profileVersion": 4,
+            "resumenParaMatching": "existing summary",
+            "resumenGenerationStatus": "complete",
+        }
+
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+                patch("backend.api.routes.profile._trigger_async_resumen_generation") as mock_trigger:
+            mock_table = Mock()
+            mock_table.get_item.return_value = {"Item": existing_item}
+            mock_table.update_item.return_value = {"Attributes": {}}
+            mock_get_table.return_value = mock_table
+            mock_trigger.return_value = "pending"
+
+            response = client.put(
+                "/me/profile",
+                json={"perfilEstructurado": sample_perfil_structured},
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+
+            # Response body is unchanged: exactly {"profileVersion", "updatedAt"},
+            # nothing leaked from the trigger's return value ('pending').
+            assert set(data.keys()) == {"profileVersion", "updatedAt"}
+            assert data["profileVersion"] == 5
+            assert "updatedAt" in data
+
+            # The trigger is invoked exactly once with the correct user_id.
+            mock_trigger.assert_called_once_with(mock_user_id)
+
     finally:
         client.app.dependency_overrides.clear()
 
@@ -551,7 +604,12 @@ def test_save_profile_first_time(client, mock_user_id, sample_perfil_structured)
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
 
     try:
-        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table:
+        # _trigger_async_resumen_generation is mocked deliberately here: this
+        # test doesn't exercise the trigger's behavior, and it must not rely
+        # on the accidental absence of AWS_LAMBDA_FUNCTION_NAME in the test
+        # environment to avoid a real boto3 lambda.invoke() call.
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+                patch("backend.api.routes.profile._trigger_async_resumen_generation"):
             mock_table = Mock()
             mock_table.get_item.return_value = {}  # No existing profile
             mock_table.update_item.return_value = {"Attributes": {}}
@@ -587,7 +645,8 @@ def test_save_profile_does_not_modify_resumen_fields(client, mock_user_id, sampl
             "resumenGenerationStatus": "complete",
         }
 
-        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table:
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+                patch("backend.api.routes.profile._trigger_async_resumen_generation"):
             mock_table = Mock()
             mock_table.get_item.return_value = {"Item": existing_item}
             mock_table.update_item.return_value = {"Attributes": {}}
@@ -656,7 +715,12 @@ def test_save_profile_returns_iso8601_timestamp(client, mock_user_id, sample_per
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
 
     try:
-        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table:
+        # _trigger_async_resumen_generation is mocked deliberately here: this
+        # test doesn't exercise the trigger's behavior, and it must not rely
+        # on the accidental absence of AWS_LAMBDA_FUNCTION_NAME in the test
+        # environment to avoid a real boto3 lambda.invoke() call.
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+                patch("backend.api.routes.profile._trigger_async_resumen_generation"):
             mock_table = Mock()
             mock_table.get_item.return_value = {"Item": {"userId": mock_user_id, "profileVersion": 1}}
             mock_table.update_item.return_value = {"Attributes": {}}
@@ -678,7 +742,193 @@ def test_save_profile_returns_iso8601_timestamp(client, mock_user_id, sample_per
 
 
 # ============================================================================
-# POST /me/roles/suggest Tests
+# _trigger_async_resumen_generation Tests (Task 4.8)
+# ============================================================================
+
+
+def test_trigger_async_resumen_generation_happy_path(mock_user_id):
+    """Test happy path: update_item('pending') happens before invoke(), invoke() is
+    called exactly once with the expected payload, and the function returns 'pending'."""
+    from backend.api.routes.profile import _trigger_async_resumen_generation
+
+    call_order = []
+
+    mock_table = Mock()
+    mock_table.update_item.side_effect = lambda **kwargs: call_order.append("update_item")
+
+    mock_lambda_client = Mock()
+    mock_lambda_client.invoke.side_effect = lambda **kwargs: call_order.append("invoke")
+
+    with patch("backend.api.routes.profile.get_dynamodb_table", return_value=mock_table), \
+            patch("backend.api.routes.profile.boto3.client", return_value=mock_lambda_client), \
+            patch.dict(os.environ, {"AWS_LAMBDA_FUNCTION_NAME": "test-api-function"}):
+        result = _trigger_async_resumen_generation(mock_user_id)
+
+    assert result == "pending"
+
+    # Step 1 ('pending' write) must happen strictly before Step 2 (invoke)
+    assert call_order == ["update_item", "invoke"]
+
+    # update_item was called exactly once, writing status='pending'
+    mock_table.update_item.assert_called_once()
+    update_kwargs = mock_table.update_item.call_args[1]
+    assert update_kwargs["Key"] == {"userId": mock_user_id}
+    assert update_kwargs["ExpressionAttributeValues"][":status"] == "pending"
+
+    # invoke() was called exactly once with the expected payload
+    mock_lambda_client.invoke.assert_called_once()
+    invoke_kwargs = mock_lambda_client.invoke.call_args[1]
+    assert invoke_kwargs["FunctionName"] == "test-api-function"
+    assert invoke_kwargs["InvocationType"] == "Event"
+    payload = json.loads(invoke_kwargs["Payload"].decode("utf-8"))
+    assert payload == {"mode": "async_resumen_generation", "userId": mock_user_id}
+
+
+def test_trigger_async_resumen_generation_invoke_fails_writes_failed(mock_user_id):
+    """Test that when invoke() raises, the second write to 'failed' succeeds, the
+    function returns 'failed', and no exception propagates to the caller."""
+    from backend.api.routes.profile import _trigger_async_resumen_generation
+
+    mock_table = Mock()
+    mock_table.update_item.return_value = {}
+
+    mock_lambda_client = Mock()
+    mock_lambda_client.invoke.side_effect = Exception("lambda invoke boom")
+
+    with patch("backend.api.routes.profile.get_dynamodb_table", return_value=mock_table), \
+            patch("backend.api.routes.profile.boto3.client", return_value=mock_lambda_client), \
+            patch.dict(os.environ, {"AWS_LAMBDA_FUNCTION_NAME": "test-api-function"}):
+        # Should not raise, despite invoke() raising internally
+        result = _trigger_async_resumen_generation(mock_user_id)
+
+    assert result == "failed"
+
+    # First write ('pending') + second write ('failed')
+    assert mock_table.update_item.call_count == 2
+    first_call_kwargs = mock_table.update_item.call_args_list[0][1]
+    second_call_kwargs = mock_table.update_item.call_args_list[1][1]
+    assert first_call_kwargs["ExpressionAttributeValues"][":status"] == "pending"
+    assert second_call_kwargs["ExpressionAttributeValues"][":status"] == "failed"
+    assert second_call_kwargs["Key"] == {"userId": mock_user_id}
+
+    mock_lambda_client.invoke.assert_called_once()
+
+
+def test_trigger_async_resumen_generation_pending_write_fails_invoke_never_called(mock_user_id):
+    """Test that when the 'pending' write itself (Step 1) raises, invoke() is never
+    called, and the function still attempts the 'failed' write."""
+    from backend.api.routes.profile import _trigger_async_resumen_generation
+
+    mock_table = Mock()
+    # First update_item call ('pending') fails; second call ('failed') succeeds
+    mock_table.update_item.side_effect = [Exception("dynamodb throttled"), {}]
+
+    mock_lambda_client = Mock()
+
+    with patch("backend.api.routes.profile.get_dynamodb_table", return_value=mock_table), \
+            patch("backend.api.routes.profile.boto3.client", return_value=mock_lambda_client), \
+            patch.dict(os.environ, {"AWS_LAMBDA_FUNCTION_NAME": "test-api-function"}):
+        result = _trigger_async_resumen_generation(mock_user_id)
+
+    assert result == "failed"
+
+    # invoke() must never be reached since Step 1 raised
+    mock_lambda_client.invoke.assert_not_called()
+
+    # Both update_item attempts happened: 'pending' (failed) then 'failed' (succeeded)
+    assert mock_table.update_item.call_count == 2
+    second_call_kwargs = mock_table.update_item.call_args_list[1][1]
+    assert second_call_kwargs["ExpressionAttributeValues"][":status"] == "failed"
+
+
+def test_trigger_async_resumen_generation_both_writes_fail_returns_unknown(mock_user_id):
+    """Test that when the second ('failed') write also fails, the function returns
+    'unknown' without propagating any exception."""
+    from backend.api.routes.profile import _trigger_async_resumen_generation
+
+    mock_table = Mock()
+    mock_table.update_item.side_effect = Exception("dynamodb throttled")
+
+    mock_lambda_client = Mock()
+
+    with patch("backend.api.routes.profile.get_dynamodb_table", return_value=mock_table), \
+            patch("backend.api.routes.profile.boto3.client", return_value=mock_lambda_client), \
+            patch.dict(os.environ, {"AWS_LAMBDA_FUNCTION_NAME": "test-api-function"}):
+        # Should not raise, despite both update_item calls raising internally
+        result = _trigger_async_resumen_generation(mock_user_id)
+
+    assert result == "unknown"
+    assert mock_table.update_item.call_count == 2
+    mock_lambda_client.invoke.assert_not_called()
+
+
+# ============================================================================
+# Property-based tests: decide_roles_suggest_action (Requirement 3.1-3.4, 3.6, 3.7)
+# ============================================================================
+
+
+@settings(max_examples=100, deadline=None)
+@given(
+    resumen=st.one_of(st.none(), st.text(min_size=1)),
+    status=st.one_of(st.none(), st.sampled_from(["pending", "complete", "failed"])),
+)
+def test_decide_roles_suggest_action_property(resumen, status):
+    """
+    Feature: backend-fix-integracion-frontend, Property 3: Decisión de bloqueo
+    de roles/suggest es exhaustiva y correcta por rama.
+
+    deadline=None: la primera ejecución de este test importa
+    backend.api.routes.profile (y sus dependencias), lo que puede superar el
+    deadline por defecto de Hypothesis en la primera llamada sin reflejar una
+    regresión real de performance de la función pura bajo prueba.
+
+    Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.6, 3.7
+    """
+    from backend.api.routes.profile import decide_roles_suggest_action, RolesSuggestDecision
+
+    decision = decide_roles_suggest_action(resumen, status)
+
+    if resumen is not None:
+        assert decision == RolesSuggestDecision.ALLOW
+    elif status == "failed":
+        assert decision == RolesSuggestDecision.BLOCK_AND_RETRY
+    else:
+        assert decision == RolesSuggestDecision.BLOCK
+
+    # Exhaustive: the result must always be one of the three known decisions.
+    assert decision in (
+        RolesSuggestDecision.ALLOW,
+        RolesSuggestDecision.BLOCK,
+        RolesSuggestDecision.BLOCK_AND_RETRY,
+    )
+
+
+@settings(max_examples=100, deadline=None)
+@given(
+    resumen_a=st.text(min_size=1, max_size=2000),
+    resumen_b=st.text(min_size=1, max_size=2000),
+    status=st.one_of(st.none(), st.sampled_from(["pending", "complete", "failed"])),
+)
+def test_decide_roles_suggest_action_content_independence(resumen_a, resumen_b, status):
+    """
+    Feature: backend-fix-integracion-frontend, Property 4: La decisión de
+    bloqueo de roles/suggest es independiente del contenido del resumen.
+
+    Metamórfica: para cualquier par de resúmenes no vacíos (distintos o no) y
+    un status fijo, la decisión depende únicamente de si resumenParaMatching
+    es None, nunca de su contenido, longitud o valor específico.
+
+    Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.6, 3.7
+    """
+    from backend.api.routes.profile import decide_roles_suggest_action
+
+    assert decide_roles_suggest_action(resumen_a, status) == decide_roles_suggest_action(
+        resumen_b, status
+    )
+
+
+# ============================================================================
+# POST /me/profile/roles/suggest Tests
 # ============================================================================
 
 
@@ -711,7 +961,7 @@ def test_suggest_roles_success(client, mock_user_id):
             )
             mock_bedrock_fn.return_value = mock_client
 
-            response = client.post("/me/roles/suggest")
+            response = client.post("/me/profile/roles/suggest")
 
             assert response.status_code == 200
             data = response.json()
@@ -728,7 +978,7 @@ def test_suggest_roles_success(client, mock_user_id):
 
 
 def test_suggest_roles_resume_not_ready_null_resumen(client, mock_user_id):
-    """Test POST /me/roles/suggest returns 424 when resumenParaMatching is null."""
+    """Test POST /me/profile/roles/suggest returns 424 when resumenParaMatching is null."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -746,7 +996,7 @@ def test_suggest_roles_resume_not_ready_null_resumen(client, mock_user_id):
             mock_table.get_item.return_value = {"Item": mock_item}
             mock_get_table.return_value = mock_table
 
-            response = client.post("/me/roles/suggest")
+            response = client.post("/me/profile/roles/suggest")
 
             assert response.status_code == 424
             data = response.json()
@@ -756,8 +1006,66 @@ def test_suggest_roles_resume_not_ready_null_resumen(client, mock_user_id):
         client.app.dependency_overrides.clear()
 
 
-def test_suggest_roles_resume_not_ready_generation_pending(client, mock_user_id):
-    """Test POST /me/roles/suggest returns 424 when resumenGenerationStatus is 'pending'."""
+def _mock_bedrock_roles_suggestions(mock_bedrock_fn):
+    """Helper: configure a Mock get_bedrock_client() to return a fixed
+    RolesSuggestions on invoke_with_retry, for ALLOW-path test cases."""
+    from backend.shared.models import RolesSuggestions
+
+    mock_client = Mock()
+    mock_client.model_small = "anthropic.claude-3-haiku-20250514"
+    mock_client.invoke_with_retry.return_value = RolesSuggestions(
+        suggestions=["Backend Engineer", "Cloud Architect"]
+    )
+    mock_bedrock_fn.return_value = mock_client
+    return mock_client
+
+
+@pytest.mark.parametrize("generation_status", [None, "pending", "complete"])
+def test_suggest_roles_case_a_null_resumen_blocks_without_trigger(
+    client, mock_user_id, generation_status
+):
+    """
+    Case (a): resumenParaMatching=None, any status except 'failed' (including
+    None) -> HTTP 424, without triggering the async retry.
+
+    Validates: Requirements 3.1, 3.7, 3.8
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        mock_item = {
+            "userId": mock_user_id,
+            "resumenParaMatching": None,
+            "resumenGenerationStatus": generation_status,
+            "profileVersion": 1,
+        }
+
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+             patch("backend.api.routes.profile._trigger_async_resumen_generation") as mock_trigger:
+            mock_table = Mock()
+            mock_table.get_item.return_value = {"Item": mock_item}
+            mock_get_table.return_value = mock_table
+
+            response = client.post("/me/profile/roles/suggest")
+
+            assert response.status_code == 424
+            data = response.json()
+            assert data["error"] == "resume_not_ready"
+            mock_trigger.assert_not_called()
+
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_suggest_roles_case_b_existing_resumen_pending_allows(client, mock_user_id):
+    """
+    Case (b): resumenParaMatching existente + status='pending' -> HTTP 200
+    con sugerencias (una regeneración en curso no bloquea).
+
+    Validates: Requirements 3.2
+    """
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -770,23 +1078,151 @@ def test_suggest_roles_resume_not_ready_generation_pending(client, mock_user_id)
             "profileVersion": 1,
         }
 
-        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table:
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+             patch("backend.api.routes.profile.get_bedrock_client") as mock_bedrock_fn, \
+             patch("backend.api.routes.profile._trigger_async_resumen_generation") as mock_trigger:
             mock_table = Mock()
             mock_table.get_item.return_value = {"Item": mock_item}
             mock_get_table.return_value = mock_table
+            _mock_bedrock_roles_suggestions(mock_bedrock_fn)
 
-            response = client.post("/me/roles/suggest")
+            response = client.post("/me/profile/roles/suggest")
 
+            assert response.status_code == 200
+            data = response.json()
+            assert "suggestions" in data
+            assert "suggestedAt" in data
+            mock_trigger.assert_not_called()
+
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_suggest_roles_case_c_existing_resumen_failed_allows_no_retry(client, mock_user_id):
+    """
+    Case (c): resumenParaMatching existente + status='failed' -> HTTP 200
+    con sugerencias, sin disparar ningún retry automático.
+
+    Validates: Requirements 3.3
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        mock_item = {
+            "userId": mock_user_id,
+            "resumenParaMatching": "Some text",
+            "resumenGenerationStatus": "failed",
+            "profileVersion": 1,
+        }
+
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+             patch("backend.api.routes.profile.get_bedrock_client") as mock_bedrock_fn, \
+             patch("backend.api.routes.profile._trigger_async_resumen_generation") as mock_trigger:
+            mock_table = Mock()
+            mock_table.get_item.return_value = {"Item": mock_item}
+            mock_get_table.return_value = mock_table
+            _mock_bedrock_roles_suggestions(mock_bedrock_fn)
+
+            response = client.post("/me/profile/roles/suggest")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert "suggestions" in data
+            mock_trigger.assert_not_called()
+
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+@pytest.mark.parametrize("generation_status", ["complete", None])
+def test_suggest_roles_case_d_existing_resumen_complete_or_none_allows(
+    client, mock_user_id, generation_status
+):
+    """
+    Case (d): resumenParaMatching existente + status='complete' o None ->
+    HTTP 200 con sugerencias.
+
+    Validates: Requirements 3.6
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        mock_item = {
+            "userId": mock_user_id,
+            "resumenParaMatching": "Some text",
+            "resumenGenerationStatus": generation_status,
+            "profileVersion": 1,
+        }
+
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+             patch("backend.api.routes.profile.get_bedrock_client") as mock_bedrock_fn, \
+             patch("backend.api.routes.profile._trigger_async_resumen_generation") as mock_trigger:
+            mock_table = Mock()
+            mock_table.get_item.return_value = {"Item": mock_item}
+            mock_get_table.return_value = mock_table
+            _mock_bedrock_roles_suggestions(mock_bedrock_fn)
+
+            response = client.post("/me/profile/roles/suggest")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert "suggestions" in data
+            mock_trigger.assert_not_called()
+
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_suggest_roles_case_e_null_resumen_failed_blocks_and_triggers_retry_once(
+    client, mock_user_id
+):
+    """
+    Case (e): resumenParaMatching=None + status='failed' -> HTTP 424 Y se
+    dispara _trigger_async_resumen_generation (mockeado) exactamente una vez,
+    sin ningún loop de retry automático adicional (una única respuesta 424,
+    un único disparo del helper).
+
+    Validates: Requirements 3.7, 3.8
+    """
+    from backend.api.routes.auth import get_current_user_id
+
+    client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
+
+    try:
+        mock_item = {
+            "userId": mock_user_id,
+            "resumenParaMatching": None,
+            "resumenGenerationStatus": "failed",
+            "profileVersion": 1,
+        }
+
+        with patch("backend.api.routes.profile.get_dynamodb_table") as mock_get_table, \
+             patch("backend.api.routes.profile._trigger_async_resumen_generation") as mock_trigger:
+            mock_table = Mock()
+            mock_table.get_item.return_value = {"Item": mock_item}
+            mock_get_table.return_value = mock_table
+            mock_trigger.return_value = "pending"
+
+            response = client.post("/me/profile/roles/suggest")
+
+            # A single 424 response, no retry loop within this request.
             assert response.status_code == 424
             data = response.json()
             assert data["error"] == "resume_not_ready"
+
+            # The async retry was dispatched exactly once, with the correct userId.
+            mock_trigger.assert_called_once_with(mock_user_id)
 
     finally:
         client.app.dependency_overrides.clear()
 
 
 def test_suggest_roles_resume_not_ready_no_profile(client, mock_user_id):
-    """Test POST /me/roles/suggest returns 424 when profile doesn't exist."""
+    """Test POST /me/profile/roles/suggest returns 424 when profile doesn't exist."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -797,7 +1233,7 @@ def test_suggest_roles_resume_not_ready_no_profile(client, mock_user_id):
             mock_table.get_item.return_value = {}  # No "Item" key
             mock_get_table.return_value = mock_table
 
-            response = client.post("/me/roles/suggest")
+            response = client.post("/me/profile/roles/suggest")
 
             assert response.status_code == 424
             data = response.json()
@@ -808,7 +1244,7 @@ def test_suggest_roles_resume_not_ready_no_profile(client, mock_user_id):
 
 
 def test_suggest_roles_bedrock_timeout_returns_502(client, mock_user_id):
-    """Test POST /me/roles/suggest returns 502 on Bedrock timeout."""
+    """Test POST /me/profile/roles/suggest returns 502 on Bedrock timeout."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -831,7 +1267,7 @@ def test_suggest_roles_bedrock_timeout_returns_502(client, mock_user_id):
             mock_client.invoke_with_retry.side_effect = TimeoutError("Bedrock timeout")
             mock_bedrock_fn.return_value = mock_client
 
-            response = client.post("/me/roles/suggest")
+            response = client.post("/me/profile/roles/suggest")
 
             assert response.status_code == 502
             data = response.json()
@@ -842,7 +1278,7 @@ def test_suggest_roles_bedrock_timeout_returns_502(client, mock_user_id):
 
 
 def test_suggest_roles_validation_error_returns_400(client, mock_user_id):
-    """Test POST /me/roles/suggest returns 400 on Pydantic validation failure after retry."""
+    """Test POST /me/profile/roles/suggest returns 400 on Pydantic validation failure after retry."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -868,7 +1304,7 @@ def test_suggest_roles_validation_error_returns_400(client, mock_user_id):
             )
             mock_bedrock_fn.return_value = mock_client
 
-            response = client.post("/me/roles/suggest")
+            response = client.post("/me/profile/roles/suggest")
 
             assert response.status_code == 400
             data = response.json()
@@ -879,7 +1315,7 @@ def test_suggest_roles_validation_error_returns_400(client, mock_user_id):
 
 
 def test_suggest_roles_does_not_persist_suggestions(client, mock_user_id):
-    """Test that POST /me/roles/suggest does NOT persist suggestions to profile."""
+    """Test that POST /me/profile/roles/suggest does NOT persist suggestions to profile."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -905,7 +1341,7 @@ def test_suggest_roles_does_not_persist_suggestions(client, mock_user_id):
             )
             mock_bedrock_fn.return_value = mock_client
 
-            response = client.post("/me/roles/suggest")
+            response = client.post("/me/profile/roles/suggest")
 
             assert response.status_code == 200
             # Verify update_item was NOT called (suggestions are not persisted)
@@ -917,12 +1353,12 @@ def test_suggest_roles_does_not_persist_suggestions(client, mock_user_id):
 
 
 # ============================================================================
-# PUT /me/roles Tests
+# PUT /me/profile/roles Tests
 # ============================================================================
 
 
 def test_save_roles_success(client, mock_user_id):
-    """Test successful PUT /me/roles returns profileVersion, cargosActivos, updatedAt."""
+    """Test successful PUT /me/profile/roles returns profileVersion, cargosActivos, updatedAt."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -940,7 +1376,7 @@ def test_save_roles_success(client, mock_user_id):
             mock_get_table.return_value = mock_table
 
             response = client.put(
-                "/me/roles",
+                "/me/profile/roles",
                 json={"cargosActivos": ["Senior Python Developer", "Tech Lead"]},
             )
 
@@ -957,7 +1393,7 @@ def test_save_roles_success(client, mock_user_id):
 
 
 def test_save_roles_empty_list_accepted(client, mock_user_id):
-    """Test PUT /me/roles accepts empty list (user clearing roles)."""
+    """Test PUT /me/profile/roles accepts empty list (user clearing roles)."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -975,7 +1411,7 @@ def test_save_roles_empty_list_accepted(client, mock_user_id):
             mock_get_table.return_value = mock_table
 
             response = client.put(
-                "/me/roles",
+                "/me/profile/roles",
                 json={"cargosActivos": []},
             )
 
@@ -989,7 +1425,7 @@ def test_save_roles_empty_list_accepted(client, mock_user_id):
 
 
 def test_save_roles_too_many_items_rejected(client, mock_user_id):
-    """Test PUT /me/roles rejects more than 10 roles with HTTP 400."""
+    """Test PUT /me/profile/roles rejects more than 10 roles with HTTP 400."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -1002,7 +1438,7 @@ def test_save_roles_too_many_items_rejected(client, mock_user_id):
             mock_get_table.return_value = mock_table
 
             response = client.put(
-                "/me/roles",
+                "/me/profile/roles",
                 json={"cargosActivos": roles},
             )
 
@@ -1015,7 +1451,7 @@ def test_save_roles_too_many_items_rejected(client, mock_user_id):
 
 
 def test_save_roles_item_too_long_rejected(client, mock_user_id):
-    """Test PUT /me/roles rejects role exceeding 50 chars with HTTP 400."""
+    """Test PUT /me/profile/roles rejects role exceeding 50 chars with HTTP 400."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -1028,7 +1464,7 @@ def test_save_roles_item_too_long_rejected(client, mock_user_id):
             mock_get_table.return_value = mock_table
 
             response = client.put(
-                "/me/roles",
+                "/me/profile/roles",
                 json={"cargosActivos": roles},
             )
 
@@ -1041,7 +1477,7 @@ def test_save_roles_item_too_long_rejected(client, mock_user_id):
 
 
 def test_save_roles_increments_profile_version(client, mock_user_id):
-    """Test PUT /me/roles increments profileVersion by 1."""
+    """Test PUT /me/profile/roles increments profileVersion by 1."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -1059,7 +1495,7 @@ def test_save_roles_increments_profile_version(client, mock_user_id):
             mock_get_table.return_value = mock_table
 
             response = client.put(
-                "/me/roles",
+                "/me/profile/roles",
                 json={"cargosActivos": ["DevOps"]},
             )
 
@@ -1077,7 +1513,7 @@ def test_save_roles_increments_profile_version(client, mock_user_id):
 
 
 def test_save_roles_does_not_trigger_rescoring(client, mock_user_id):
-    """Test PUT /me/roles does NOT trigger synchronous rescoring."""
+    """Test PUT /me/profile/roles does NOT trigger synchronous rescoring."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -1096,7 +1532,7 @@ def test_save_roles_does_not_trigger_rescoring(client, mock_user_id):
             mock_get_table.return_value = mock_table
 
             response = client.put(
-                "/me/roles",
+                "/me/profile/roles",
                 json={"cargosActivos": ["Engineer"]},
             )
 
@@ -1107,7 +1543,7 @@ def test_save_roles_does_not_trigger_rescoring(client, mock_user_id):
 
 
 def test_save_roles_persists_correct_fields(client, mock_user_id):
-    """Test PUT /me/roles persists cargosActivos, profileVersion, updatedAt only."""
+    """Test PUT /me/profile/roles persists cargosActivos, profileVersion, updatedAt only."""
     from backend.api.routes.auth import get_current_user_id
 
     client.app.dependency_overrides[get_current_user_id] = lambda: mock_user_id
@@ -1125,7 +1561,7 @@ def test_save_roles_persists_correct_fields(client, mock_user_id):
             mock_get_table.return_value = mock_table
 
             response = client.put(
-                "/me/roles",
+                "/me/profile/roles",
                 json={"cargosActivos": ["Software Architect", "CTO"]},
             )
 
