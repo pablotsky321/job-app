@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
 import { hasStaleItems, reconcileFrozenOrder } from "../rescoringFreeze";
 import type { VacancyListItem } from "../types";
