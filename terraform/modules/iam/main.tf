@@ -484,7 +484,7 @@ resource "aws_iam_role_policy" "eventbridge_scheduler_policy" {
 # The GitHub OIDC provider is created once per AWS account and is reusable
 # by multiple roles (though currently we only have one role).
 #
-# Trust Policy Scope: repo:organization/job-search-assistant:ref:refs/heads/main
+# Trust Policy Scope: repo:pablotsky321/job-app:ref:refs/heads/main
 # This restricts deployments to the main branch only (not pull requests or other branches).
 
 # Create the GitHub OIDC provider (if not already exists)
@@ -519,7 +519,7 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
             # Scope the trust policy to main branch only
             # Format: repo:organization/repository:ref:refs/heads/branch
-            "token.actions.githubusercontent.com:sub" = "repo:organization/job-search-assistant:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = "repo:pablotsky321/job-app:ref:refs/heads/main"
           }
         }
       }
