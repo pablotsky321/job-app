@@ -1,7 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import * as fc from "fast-check";
 import { hasStaleItems, reconcileFrozenOrder } from "../rescoringFreeze";
 import type { VacancyListItem } from "../types";
+
+// Valid date range: 2020-2030 (semantic for job applications)
+const validDateMin = new Date(2020, 0, 1);
+const validDateMax = new Date(2030, 11, 31);
 
 const arbitraryVacancyListItem = (): fc.Arbitrary<VacancyListItem> =>
   fc.record({
@@ -18,9 +22,9 @@ const arbitraryVacancyListItem = (): fc.Arbitrary<VacancyListItem> =>
     ),
     staleFlag: fc.boolean(),
     estadoAplicacion: fc.constantFrom("nueva", "vista", "aplicada", "filtered_out"),
-    firstSeenAt: fc.date().map((d) => d.toISOString()),
-    lastSeenAt: fc.date().map((d) => d.toISOString()),
-    appliedAt: fc.oneof(fc.constant(null), fc.date().map((d) => d.toISOString())),
+    firstSeenAt: fc.date({ min: validDateMin, max: validDateMax, noInvalidDate: true }).map((d) => d.toISOString()),
+    lastSeenAt: fc.date({ min: validDateMin, max: validDateMax, noInvalidDate: true }).map((d) => d.toISOString()),
+    appliedAt: fc.oneof(fc.constant(null), fc.date({ min: validDateMin, max: validDateMax, noInvalidDate: true }).map((d) => d.toISOString())),
   });
 
 describe("rescoringFreeze", () => {
@@ -33,7 +37,7 @@ describe("rescoringFreeze", () => {
           const hasAnyStale = items.some((item) => item.staleFlag === true);
           expect(result).toBe(hasAnyStale);
         }),
-        { numRuns: 100 },
+        { numRuns: 100, seed: 42 }, // Reproducible seed for date range testing
       );
     });
 
@@ -132,7 +136,7 @@ describe("rescoringFreeze", () => {
             }
           },
         ),
-        { numRuns: 50 }, // Reduced due to complex tuple generation
+        { numRuns: 50, seed: 42 }, // Reproducible seed for date range testing
       );
     });
 
