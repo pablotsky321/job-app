@@ -48,15 +48,6 @@ jobs:
           VITE_COGNITO_REDIRECT_URI: ${{ secrets.VITE_COGNITO_REDIRECT_URI }}
           VITE_COGNITO_LOGOUT_URI: ${{ secrets.VITE_COGNITO_LOGOUT_URI }}
       
-      - name: Debug OIDC claims
-        run: |
-          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-          echo "$TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq .
-        env:
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
-          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:

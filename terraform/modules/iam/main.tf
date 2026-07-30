@@ -516,10 +516,9 @@ resource "aws_iam_role" "github_actions" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            # Scope the trust policy to main branch only
-            # Format: repo:organization/repository:ref:refs/heads/branch
-            "token.actions.githubusercontent.com:sub" = "repo:pablotsky321/job-app:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:aud"        = "sts.amazonaws.com"
+            "token.actions.githubusercontent.com:repository" = "pablotsky321/job-app"
+            "token.actions.githubusercontent.com:ref"         = "refs/heads/main"
           }
         }
       }
