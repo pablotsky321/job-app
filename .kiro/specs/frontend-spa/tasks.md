@@ -233,7 +233,7 @@ requirements.md.
     - _Requirements: 2.6_
 
 - [x] 5. Funciones puras en `lib/` con tests Vitest + fast-check (Requirement 13)
-  - 5.1 Tipos locales de estado derivado de UI: `src/lib/types.ts`
+  - [x] 5.1 Tipos locales de estado derivado de UI: `src/lib/types.ts`
     - Crear `src/lib/types.ts` con los tipos que `design.md` §Data Models asigna explícitamente a `lib/`
       (no a `api/`): `ScanJobStatus`, `VacancyListItem`, `BadgeColor`, `ScanOutcome`, `StoredTokens` —
       exactamente como en `design.md`
@@ -250,7 +250,7 @@ requirements.md.
     - **Tiempo estimado**: 1.5h
     - _Requirements: (soporte transversal de tipos para 13.1-13.5, sin AC propio)_
 
-  - 5.2 `scoreColorMapper.ts` + test (Property 1)
+  - [x] 5.2 `scoreColorMapper.ts` + test (Property 1)
     - Implementar `scoreColorMapper(veredicto): BadgeColor` (tipo `BadgeColor` de la tarea 5.1) como
       tabla determinista total: `excelente→success`, `buen_encaje→primary`, `parcial→warning`,
       `bajo→gray`
@@ -264,7 +264,7 @@ requirements.md.
     - **Tiempo estimado**: 1.5h
     - _Requirements: 8.4, 13.1_
 
-  - 5.3 `scanPollingExit.ts` + test (Property 2)
+  - [x] 5.3 `scanPollingExit.ts` + test (Property 2)
     - Implementar `isScanTerminal(status: string): boolean` — verdadero para `DONE`/`PARCIAL`/`FAILED`,
       falso para `RUNNING` o cualquier otro string no reconocido; la firma toma `string` (no
       `ScanJobStatus`) deliberadamente, porque Property 2 exige fuzzing con valores arbitrarios no
@@ -277,7 +277,7 @@ requirements.md.
     - **Tiempo estimado**: 1.5h
     - _Requirements: 7.4, 13.2_
 
-  - 5.4 `rescoringFreeze.ts` — `hasStaleItems` + test (Property 3)
+  - [x] 5.4 `rescoringFreeze.ts` — `hasStaleItems` + test (Property 3)
     - Implementar `hasStaleItems(items: VacancyListItem[]): boolean` (usa el tipo `VacancyListItem` de
       la tarea 5.1)
     - Escribir el test PBT (`fc.array(fc.record({ companyId: fc.string(), vacancyId: fc.string(),
@@ -289,7 +289,7 @@ requirements.md.
     - **Tiempo estimado**: 2h
     - _Requirements: 8.6, 13.3_
 
-  - 5.5 `rescoringFreeze.ts` — `reconcileFrozenOrder` + test (Property 4)
+  - [x] 5.5 `rescoringFreeze.ts` — `reconcileFrozenOrder` + test (Property 4)
     - Implementar `reconcileFrozenOrder(frozenOrder, latest): VacancyListItem[]` exactamente como en
       `design.md` §5: preserva el orden relativo de elementos presentes en ambas listas (con datos
       frescos de `latest`), e inserta al final los elementos nuevos de `latest` en su orden relativo
@@ -303,7 +303,7 @@ requirements.md.
     - **Tiempo estimado**: 3h
     - _Requirements: 8.6, 13.3_
 
-  - 5.6 `cvAtsBlobBuilder.ts` + test (Properties 5 y 6)
+  - [x] 5.6 `cvAtsBlobBuilder.ts` + test (Properties 5 y 6)
     - Implementar `buildCvAtsFileName(companyId, vacancyId): string` y `buildCvAtsBlob(cvAtsTexto): Blob`
       exactamente como en `design.md` §6 (no usa ningún tipo de la tarea 5.1 — trabaja solo con `string`)
     - Escribir dos tests PBT en `cvAtsBlobBuilder.test.ts`: (a) round-trip — `fc.string()` /
@@ -320,7 +320,7 @@ requirements.md.
     - **Tiempo estimado**: 3h
     - _Requirements: 11.5, 13.4_
 
-  - 5.7 `scanResultClassifier.ts` + test (Property 7)
+  - [x] 5.7 `scanResultClassifier.ts` + test (Property 7)
     - Implementar `classifyScanResult(status, newVacancyCount): ScanOutcome` (tipo `ScanOutcome` de la
       tarea 5.1) exactamente como en `design.md` §7, incluyendo la nota de diseño sobre `PARCIAL` (la
       función es una simplificación de dos ramas; `SourcesView` en la tarea 11.3 consulta
@@ -333,6 +333,14 @@ requirements.md.
     - **Dependencias previas**: 5.1
     - **Tiempo estimado**: 2h
     - _Requirements: 12.5, 12.6, 13.5_
+
+  - [x] 5.8 `cn.ts` — utilidad de merge de clases Tailwind
+    - Implementar `cn(...inputs: ClassValue[]): string` usando `clsx` (condicionales) + `tailwind-merge`
+      (resolución de conflictos Tailwind), patrón estándar de shadcn/ui
+    - **Criterios de completitud**: el archivo existe y se importa correctamente desde componentes UI
+    - **Dependencias previas**: 1.2
+    - **Tiempo estimado**: 0.5h
+    - _Requirements: (transversal, necesaria para componentes UI, sin AC propio)_
 
 - [x] 6. Componentes UI compartidos (Requirement 3)
   - 6.1 shadcn: `Select`, `Tabs`, `Progress` — copiar y re-tematizar
