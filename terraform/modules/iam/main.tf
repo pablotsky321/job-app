@@ -516,9 +516,8 @@ resource "aws_iam_role" "github_actions" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "token.actions.githubusercontent.com:aud"        = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:repository" = "pablotsky321/job-app"
-            "token.actions.githubusercontent.com:ref"         = "refs/heads/main"
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+            "token.actions.githubusercontent.com:sub" = "repo:pablotsky321@109483318/job-app@1312937682:ref:refs/heads/main"
           }
         }
       }
