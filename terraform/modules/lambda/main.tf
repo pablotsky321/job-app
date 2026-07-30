@@ -174,10 +174,10 @@ resource "aws_lambda_function" "scan_worker" {
   timeout       = 90
   memory_size   = 1024
 
-  # Reserved concurrency: 5 concurrent executions max
-  # This prevents overwhelming Bedrock's token limits
-  # Source: backend-scan-y-scoring design spec
-  reserved_concurrent_executions = 5
+  # Reserved concurrency: disabled (-1)
+  # Account limit is 10 total, AWS requires maintaining ≥10 unreserved at all times
+  # Source: aws lambda get-account-settings verification
+  reserved_concurrent_executions = -1
 
   # Code packaging: reference S3 object
   s3_bucket = var.lambda_code_bucket
@@ -237,10 +237,10 @@ resource "aws_lambda_function" "scoring_worker" {
   timeout       = 30
   memory_size   = 1024
 
-  # Reserved concurrency: 3 concurrent executions max
-  # This prevents overwhelming Bedrock's token limits
-  # Source: backend-scan-y-scoring design spec
-  reserved_concurrent_executions = 3
+  # Reserved concurrency: disabled (-1)
+  # Account limit is 10 total, AWS requires maintaining ≥10 unreserved at all times
+  # Source: aws lambda get-account-settings verification
+  reserved_concurrent_executions = -1
 
   # Code packaging: reference S3 object
   s3_bucket = var.lambda_code_bucket

@@ -58,6 +58,17 @@ variable "timezone" {
   }
 }
 
+variable "orquestador_schedule_state" {
+  description = "State of the EventBridge Scheduler schedule (ENABLED or DISABLED). Default is DISABLED to prevent automatic triggering until manual testing is confirmed against AWS real services."
+  type        = string
+  default     = "DISABLED"
+
+  validation {
+    condition     = contains(["ENABLED", "DISABLED"], var.orquestador_schedule_state)
+    error_message = "Schedule state must be either 'ENABLED' or 'DISABLED'"
+  }
+}
+
 # ============================================================================
 # Environment Configuration
 # ============================================================================

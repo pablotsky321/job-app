@@ -301,6 +301,12 @@ module "s3_cloudfront" {
 #   - EventBridge Scheduler schedule that triggers the orquestador Lambda
 #   - Schedule expression (default: 8 AM, 12 PM, 6 PM UTC daily)
 #
+# IMPORTANT: The schedule starts in DISABLED state by default to prevent automatic
+# triggering until manual testing is confirmed. The schedule must be manually enabled
+# via terraform.tfvars (orquestador_schedule_state = "ENABLED") or CLI flag
+# (-var orquestador_schedule_state=ENABLED) AFTER confirming all 5 Lambda functions
+# work correctly against real AWS services (not just pure function tests).
+#
 # Outputs from this module:
 #   - schedule_arn
 
@@ -315,8 +321,9 @@ module "eventbridge" {
   eventbridge_scheduler_role_arn = module.iam.eventbridge_scheduler_role_arn
 
   # Schedule configuration (from variables)
-  schedule_expression = var.orchestration_schedule_expression
-  timezone            = "UTC"
+  schedule_expression           = var.orchestration_schedule_expression
+  timezone                      = "UTC"
+  orquestador_schedule_state    = var.orquestador_schedule_state
 
   # Environment configuration
   environment  = var.environment

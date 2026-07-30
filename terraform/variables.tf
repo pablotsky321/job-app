@@ -196,6 +196,17 @@ variable "orchestration_schedule_expression" {
   default     = "cron(0 8,12,18 * * ? *)"
 }
 
+variable "orquestador_schedule_state" {
+  description = "State of the EventBridge Scheduler schedule for orquestador (ENABLED or DISABLED). Default is DISABLED to prevent automatic triggering until manual testing is confirmed against AWS real services. Change to ENABLED via terraform.tfvars or -var flag after confirming all 5 Lambda functions (api, orquestador, scan-worker, scoring-worker, notificador) work correctly against real AWS services."
+  type        = string
+  default     = "DISABLED"
+
+  validation {
+    condition     = contains(["ENABLED", "DISABLED"], var.orquestador_schedule_state)
+    error_message = "Schedule state must be either 'ENABLED' or 'DISABLED'"
+  }
+}
+
 # ============================================================================
 # CloudWatch Configuration
 # ============================================================================

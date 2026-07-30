@@ -22,7 +22,7 @@ output "schedule_name" {
 }
 
 output "schedule_state" {
-  description = "State of the EventBridge Scheduler schedule (ENABLED or DISABLED)"
+  description = "State of the EventBridge Scheduler schedule (ENABLED or DISABLED). Default is DISABLED - change to ENABLED via terraform.tfvars or -var flag after manual testing of all Lambda functions."
   value       = aws_scheduler_schedule.orquestador.state
 }
 

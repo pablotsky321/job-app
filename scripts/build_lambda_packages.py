@@ -58,7 +58,7 @@ def copy_backend_structure(build_dir: Path, backend_dir: Path) -> None:
     dest_backend = build_dir / "backend"
     if dest_backend.exists():
         shutil.rmtree(dest_backend)
-    shutil.copytree(backend_dir, dest_backend, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache", ".mypy_cache", "tests", "*.egg-info"))
+    shutil.copytree(backend_dir, dest_backend, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache", ".mypy_cache", "tests", "*.egg-info", ".hypothesis", "pytest_results.txt", "*.md", "requirements.txt"))
 
 
 def install_dependencies(build_dir: Path, backend_dir: Path, dry_run: bool = False) -> None:

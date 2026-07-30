@@ -117,7 +117,7 @@ resource "aws_cloudfront_distribution" "frontend" {
     # Forward all headers - necessary for SPA routing decisions
     forwarded_values {
       query_string = true
-      headers      = ["*"]
+      headers      = []
 
       cookies {
         forward = "all"

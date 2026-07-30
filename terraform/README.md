@@ -331,7 +331,24 @@ Triggers `orquestador` Lambda on schedule:
 
 - **Schedule expression** (default): `cron(0 8,12,18 * * ? *)` (8 AM, 12 PM, 6 PM UTC daily)
 - **Configurable** via `orchestration_schedule_expression` variable
+- **Schedule state** (default): `DISABLED` to prevent automatic triggering until manual testing
 - Uses EventBridge Scheduler IAM role to invoke Lambda
+
+**IMPORTANT**: The schedule starts in `DISABLED` state by default. You must manually enable it via Terraform variables AFTER confirming all 5 Lambda functions work correctly against real AWS services:
+
+```bash
+# Option 1: Update terraform.tfvars
+echo 'orquestador_schedule_state = "ENABLED"' >> terraform.tfvars
+terraform apply
+
+# Option 2: Use CLI flag
+terraform apply -var 'orquestador_schedule_state=ENABLED'
+
+# Option 3: Check current state
+terraform output schedule_state
+```
+
+**Why DISABLED by default**: The code for scan-worker and scoring-worker has only been tested with pure function tests, not against real AWS services. Enabling the schedule before confirmation could cause unexpected API calls and costs.
 
 ### SES Module (`modules/ses/main.tf`)
 
@@ -374,6 +391,7 @@ All variables are defined in `variables.tf`. Key variables:
 - `cors_origins`: CORS allowed origins (default: `http://localhost:5173`)
 - `billing_alarm_threshold`: Billing threshold (default: `$500`)
 - `orchestration_schedule_expression`: Cron schedule (default: `cron(0 8,12,18 * * ? *)`)
+- `orquestador_schedule_state`: EventBridge Scheduler state (default: `DISABLED` — change to `ENABLED` after manual testing)
 
 ### Sensitive Variables
 

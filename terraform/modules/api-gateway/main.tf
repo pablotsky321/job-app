@@ -72,6 +72,7 @@ resource "aws_api_gateway_method" "api_proxy" {
   # Pass the Authorization header to the Lambda
   request_parameters = {
     "method.request.header.Authorization" = true
+    "method.request.path.proxy"           = true
   }
 }
 
@@ -201,24 +202,35 @@ resource "aws_api_gateway_stage" "prod" {
 }
 
 # CloudWatch role for API Gateway logging (account-level setting)
-resource "aws_api_gateway_account" "logging" {
-  cloudwatch_role_arn = var.api_gateway_cloudwatch_role_arn
-}
+# DISABLED: apigateway:UpdateAccount fails persistently with
+# "The role ARN does not have required permissions configured"
+# This is an anomalous AWS endpoint behavior, not a configuration issue.
+# Verified: trust policy and inline permissions correct, no boundary, no CloudTrail AccessDenied.
+# Impact: account-level logging not available, but per-stage logging (aws_api_gateway_method_settings)
+# still works and is not required for API functionality.
+#
+# resource "aws_api_gateway_account" "logging" {
+#   cloudwatch_role_arn = var.api_gateway_cloudwatch_role_arn
+# }
 
 # CloudWatch logging settings for the prod stage
-resource "aws_api_gateway_method_settings" "logging" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  stage_name  = aws_api_gateway_stage.prod.stage_name
-  method_path = "*/*"
-
-  settings {
-    metrics_enabled    = true
-    logging_level      = "INFO"
-    data_trace_enabled = true
-  }
-
-  depends_on = [aws_api_gateway_account.logging]
-}
+# DISABLED: depends on aws_api_gateway_account.logging (account-level setting),
+# which is disabled due to persistent AWS API failure (UpdateAccount endpoint).
+# Without account-level logging configured, stage-level logging fails with:
+# "CloudWatch Logs role ARN must be set in account settings to enable logging"
+# Not required for API functionality (only enables execution logs and data trace).
+#
+# resource "aws_api_gateway_method_settings" "logging" {
+#   rest_api_id = aws_api_gateway_rest_api.api.id
+#   stage_name  = aws_api_gateway_stage.prod.stage_name
+#   method_path = "*/*"
+#
+#   settings {
+#     metrics_enabled    = true
+#     logging_level      = "INFO"
+#     data_trace_enabled = true
+#   }
+# }
 
 # ============================================================================
 # 9. ROOT RESOURCE METHOD - Root path (/) handling

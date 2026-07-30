@@ -50,7 +50,7 @@ resource "aws_scheduler_schedule" "orquestador" {
   }
 
   # Enable the schedule by default
-  state = "ENABLED"
+  state = var.orquestador_schedule_state
 
   # Target Lambda function
   target {
