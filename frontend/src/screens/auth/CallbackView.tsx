@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { useProfileCheckStatus } from "../../api/queries/useProfileCheckStatus";
@@ -37,6 +37,11 @@ function logStructuredError(event: string, detail: unknown): void {
  * 5. Navigation is determined based on that outcome + any saved redirect
  *
  * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 6.2, 6.3, 8.2, 8.3, 10.1, 10.2, 10.3, 10.4
+ *
+ * Nota (fix post-checkpoint-16): el efecto de intercambio de código está protegido con
+ * `exchangeAttempted` (useRef) porque React.StrictMode invoca los efectos dos veces en
+ * desarrollo, y el código de autorización de Cognito es de un solo uso — sin este candado,
+ * la segunda invocación siempre falla con 400 aunque la primera haya tenido éxito.
  */
 export function CallbackView() {
   const [searchParams] = useSearchParams();
@@ -44,13 +49,15 @@ export function CallbackView() {
   const { handleCallback, login } = useAuth();
   const profileCheckOutcome = useProfileCheckStatus();
   const [tokenExchangeError, setTokenExchangeError] = useState<string | null>(null);
+  const exchangeAttempted = useRef(false);
 
   const code = searchParams.get("code");
   const oauthError = searchParams.get("error");
 
-  // Effect 1: Exchange code for tokens (if present)
+  // Effect 1: Exchange code for tokens (if present) — guarded against StrictMode double-invoke
   useEffect(() => {
-    if (code && !tokenExchangeError) {
+    if (code && !tokenExchangeError && !exchangeAttempted.current) {
+      exchangeAttempted.current = true;
       handleCallback(code)
         .then(() => {
           // Token exchange succeeded — clear sessionStorage keys immediately

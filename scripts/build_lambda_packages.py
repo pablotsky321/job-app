@@ -62,7 +62,6 @@ def copy_backend_structure(build_dir: Path, backend_dir: Path) -> None:
 
 
 def install_dependencies(build_dir: Path, backend_dir: Path, dry_run: bool = False) -> None:
-    """Install dependencies from backend/pyproject.toml into the build directory."""
     if dry_run:
         print(f"[DRY-RUN] Would install dependencies from {backend_dir / 'pyproject.toml'}")
         return
@@ -71,18 +70,30 @@ def install_dependencies(build_dir: Path, backend_dir: Path, dry_run: bool = Fal
     if not pyproject_path.exists():
         raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
 
-    # Install project itself with dependencies (editable, to the build directory)
     cmd = [
         sys.executable,
         "-m",
         "pip",
         "install",
+        "--platform", "manylinux2014_x86_64",
+        "--implementation", "cp",
+        "--python-version", "3.12",
+        "--only-binary=:all:",
         "--target",
         str(build_dir),
         str(backend_dir),
     ]
-    
+
     print(f"Installing dependencies to {build_dir}: {' '.join(cmd)}")
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        print(f"ERROR: Failed to install dependencies:")
+        print(result.stderr)
+        raise RuntimeError(f"pip install failed with code {result.returncode}")
+
+    print("Dependencies installed successfully")
+    
     result = subprocess.run(cmd, capture_output=True, text=True)
     
     if result.returncode != 0:

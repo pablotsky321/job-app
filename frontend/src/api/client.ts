@@ -19,7 +19,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = tokenStore.getAccessToken();
+  const token = tokenStore.getIdToken();
   const response = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
