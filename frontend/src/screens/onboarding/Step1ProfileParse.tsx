@@ -74,12 +74,20 @@ function isNonEmpty(value: unknown): boolean {
   return true;
 }
 
-export function Step1ProfileParse() {
+interface Step1ProfileParseProps {
+  initialProfile?: PerfilEstructurado;
+  onSaveSuccess?: () => void;
+}
+
+export function Step1ProfileParse({ initialProfile, onSaveSuccess }: Step1ProfileParseProps = {}) {
   const navigate = useNavigate();
   const [cvText, setCvText] = useState("");
-  const [parsedProfile, setParsedProfile] = useState<PerfilEstructurado | null>(null);
+  const [parsedProfile, setParsedProfile] = useState<PerfilEstructurado | null>(initialProfile ?? null);
   const [revealedCount, setRevealedCount] = useState(0);
-  const [phase, setPhase] = useState<"input" | "split" | "edit">("input");
+  // When initialProfile is provided, skip "input"/"split" phases and go directly to "edit"
+  const [phase, setPhase] = useState<"input" | "split" | "edit">(
+    initialProfile ? "edit" : "input"
+  );
   const [parseError, setParseError] = useState<{ type: "size" | "other"; message: string } | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -127,7 +135,7 @@ export function Step1ProfileParse() {
         perfilEstructurado: profile,
       }),
     onSuccess: () => {
-      navigate("/onboarding/2");
+      onSaveSuccess?.() ?? navigate("/onboarding/2");
     },
     onError: () => {
       setSaveError("No se pudo guardar el perfil. Intenta de nuevo.");

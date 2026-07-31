@@ -8,6 +8,7 @@ import {
 } from "react";
 import { tokenStore } from "./tokenStore";
 import { generateCodeVerifier, generateCodeChallenge } from "./pkce";
+import { exchangeCodeForTokens } from "./tokenExchange";
 import { registerUnauthorizedHandler } from "../api/client";
 
 interface AuthContextValue {
@@ -84,43 +85,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error("Missing PKCE code_verifier in session");
       }
 
-      const tokenUrl = `${cognitoDomain}/oauth2/token`;
-      const body = new URLSearchParams({
-        grant_type: "authorization_code",
-        client_id: clientId,
-        redirect_uri: redirectUri,
+      const { accessToken, idToken } = await exchangeCodeForTokens({
+        cognitoDomain,
+        clientId,
+        redirectUri,
         code,
-        code_verifier: codeVerifier,
+        codeVerifier,
       });
 
-      const response = await fetch(tokenUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: body.toString(),
-      });
-
-      if (!response.ok) {
-        // Do NOT persist partial tokens on error
-        throw new Error(`Token exchange failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const accessToken = data.access_token as string;
-      const idToken = data.id_token as string;
-
-      if (!accessToken || !idToken) {
-        throw new Error("Token response missing required tokens");
-      }
-
-      // Only persist when we have both tokens
       tokenStore.setTokens(accessToken, idToken);
       setIsAuthenticated(true);
-
-      // Navigate to saved route or default to /
-      const savedRoute = sessionStorage.getItem("post_login_redirect") || "/";
-      sessionStorage.removeItem("post_login_redirect");
-      sessionStorage.removeItem("pkce_code_verifier");
-      window.location.href = savedRoute;
+      // No navigation here — CallbackView owns post-login routing (Requirement 8.1/8.2).
     },
     [cognitoDomain, clientId, redirectUri]
   );

@@ -61,8 +61,14 @@ resource "aws_cognito_user_pool_client" "frontend" {
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["code"]
   allowed_oauth_scopes                 = ["email", "openid", "profile"]
-  callback_urls                        = ["http://localhost:5173/callback"]
-  logout_urls                          = ["http://localhost:5173/logout"]
+  callback_urls                        = [
+                                            "http://localhost:5173/callback",
+                                            "https://do3z0o80ae5xj.cloudfront.net/callback"
+                                          ]
+  logout_urls                          = [
+                                            "http://localhost:5173/logout",
+                                            "https://do3z0o80ae5xj.cloudfront.net/logout"
+                                          ]
   explicit_auth_flows                  = ["ALLOW_ADMIN_USER_PASSWORD_AUTH", "ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
   refresh_token_validity               = 60
   access_token_validity                = 60

@@ -15,15 +15,20 @@ interface SuggestResponse {
   suggestedAt: string;
 }
 
+interface Step2RolesProps {
+  initialSelectedRoles?: string[];
+  onSaveSuccess?: () => void;
+}
+
 const MAX_ROLES = 10;
 const MAX_ROLE_LENGTH = 50;
 const POLL_INTERVAL = 3_000;
 const POLL_TIMEOUT = 30_000;
 
-export function Step2Roles() {
+export function Step2Roles({ initialSelectedRoles, onSaveSuccess }: Step2RolesProps = {}) {
   const navigate = useNavigate();
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(initialSelectedRoles ?? []);
   const [customRole, setCustomRole] = useState("");
   const [phase, setPhase] = useState<"loading" | "polling" | "selecting" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
@@ -58,7 +63,7 @@ export function Step2Roles() {
         { cargosActivos: roles },
       ),
     onSuccess: () => {
-      navigate("/onboarding/3");
+      onSaveSuccess?.() ?? navigate("/onboarding/3");
     },
     onError: (error: Error) => {
       if (error instanceof ApiError && error.status === 400) {

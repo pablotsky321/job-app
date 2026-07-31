@@ -84,8 +84,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "title": "Response Get Profile Me Profile Get"
+                  "$ref": "#/components/schemas/ProfileResponse"
                 }
               }
             }
@@ -1389,6 +1388,78 @@
         ],
         "title": "PostScansResponse",
         "description": "Response for POST /scans."
+      },
+      "ProfileResponse": {
+        "properties": {
+          "perfilEstructurado": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PerfilEstructurado"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Structured CV profile"
+          },
+          "resumenParaMatching": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resumenparamatching",
+            "description": "Summary text for matching (or null)"
+          },
+          "cargosSugeridos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cargossugeridos",
+            "description": "Suggested roles (or empty list)"
+          },
+          "cargosActivos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cargosactivos",
+            "description": "User-selected active roles (or empty list)"
+          },
+          "profileVersion": {
+            "type": "integer",
+            "title": "Profileversion",
+            "description": "Profile version number"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Timestamp of last update (or null if never set)"
+          },
+          "resumenGenerating": {
+            "type": "boolean",
+            "title": "Resumengenerating",
+            "description": "True when resumenGenerationStatus == 'pending'"
+          }
+        },
+        "type": "object",
+        "required": [
+          "profileVersion",
+          "resumenGenerating"
+        ],
+        "title": "ProfileResponse",
+        "description": "Response shape for GET /me/profile.\n\nMirrors exactly the dict built by backend/api/routes/profile.py::get_profile\nfrom the stored Perfiles item. Not persisted itself — this is a response\nmodel, not a DynamoDB item shape (see `Perfiles` for that)."
       },
       "Proyecto": {
         "properties": {

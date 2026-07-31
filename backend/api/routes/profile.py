@@ -37,6 +37,7 @@ from backend.shared.errors import (
 from backend.shared.models import (
     PerfilEstructurado,
     RolesSuggestions,
+    ProfileResponse,
 )
 from backend.shared.db import (
     query_by_pk,
@@ -365,7 +366,7 @@ async def parse_cv(
 # ============================================================================
 
 
-@router.get("", response_model=dict)
+@router.get("", response_model=ProfileResponse)
 async def get_profile(
     user_id: str = Depends(get_current_user_id),
 ):

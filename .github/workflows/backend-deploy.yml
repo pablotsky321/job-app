@@ -1,7 +1,14 @@
 name: Backend Deploy - Build Lambda Packages
 
 on:
-  workflow_dispatch
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'scripts/build_lambda_packages.py'
+      - 'terraform/**'
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -9,7 +16,7 @@ permissions:
 
 jobs:
   build-and-deploy:
-    name: Build Lambda Packages
+    name: Build Lambda Packages and Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -32,3 +39,24 @@ jobs:
           LAMBDA_CODE_BUCKET: ${{ secrets.LAMBDA_CODE_BUCKET }}
           LAMBDA_CODE_KEY_PREFIX: lambda-code
         run: python scripts/build_lambda_packages.py
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.8"
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
+            -backend-config="region=${{ secrets.TF_STATE_REGION }}"
+
+      - name: Terraform Plan
+        working-directory: terraform
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: terraform apply -auto-approve tfplan

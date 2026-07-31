@@ -5,6 +5,8 @@
 import type { components } from "./generated/schema";
 
 // --- Profile ---
+export type ProfileResponse = components["schemas"]["ProfileResponse"];
+export type MeProfile = ProfileResponse;
 export type PerfilEstructurado = components["schemas"]["PerfilEstructurado"];
 export type ExperienciaLaboral = components["schemas"]["ExperienciaLaboral"];
 export type Educacion = components["schemas"]["Educacion"];

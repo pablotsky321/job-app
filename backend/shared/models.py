@@ -249,6 +249,37 @@ class Perfiles(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class ProfileResponse(BaseModel):
+    """Response shape for GET /me/profile.
+
+    Mirrors exactly the dict built by backend/api/routes/profile.py::get_profile
+    from the stored Perfiles item. Not persisted itself — this is a response
+    model, not a DynamoDB item shape (see `Perfiles` for that).
+    """
+
+    perfilEstructurado: Optional[PerfilEstructurado] = Field(
+        default=None, description="Structured CV profile"
+    )
+    resumenParaMatching: Optional[str] = Field(
+        default=None, description="Summary text for matching (or null)"
+    )
+    cargosSugeridos: List[str] = Field(
+        default_factory=list, description="Suggested roles (or empty list)"
+    )
+    cargosActivos: List[str] = Field(
+        default_factory=list, description="User-selected active roles (or empty list)"
+    )
+    profileVersion: int = Field(..., description="Profile version number")
+    updatedAt: Optional[str] = Field(
+        default=None, description="Timestamp of last update (or null if never set)"
+    )
+    resumenGenerating: bool = Field(
+        ..., description="True when resumenGenerationStatus == 'pending'"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class ResumenParaMatchingOutput(BaseModel):
     """Salida de Bedrock para la generación de resumenParaMatching.
 

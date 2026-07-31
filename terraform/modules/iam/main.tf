@@ -669,6 +669,7 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "s3:GetObjectVersioning",
           "s3:PutBucketPublicAccessBlock",
           "s3:GetBucketPublicAccessBlock",
+          "s3:ListBucket",          # ← agregado
           "s3:ListBucketVersions",
           "s3:PutObject",
           "s3:GetObject",

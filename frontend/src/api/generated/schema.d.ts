@@ -1186,6 +1186,48 @@ export interface components {
             jobId: string;
         };
         /**
+         * ProfileResponse
+         * @description Response shape for GET /me/profile.
+         *
+         *     Mirrors exactly the dict built by backend/api/routes/profile.py::get_profile
+         *     from the stored Perfiles item. Not persisted itself — this is a response
+         *     model, not a DynamoDB item shape (see `Perfiles` for that).
+         */
+        ProfileResponse: {
+            /** @description Structured CV profile */
+            perfilEstructurado?: components["schemas"]["PerfilEstructurado"] | null;
+            /**
+             * Resumenparamatching
+             * @description Summary text for matching (or null)
+             */
+            resumenParaMatching?: string | null;
+            /**
+             * Cargossugeridos
+             * @description Suggested roles (or empty list)
+             */
+            cargosSugeridos?: string[];
+            /**
+             * Cargosactivos
+             * @description User-selected active roles (or empty list)
+             */
+            cargosActivos?: string[];
+            /**
+             * Profileversion
+             * @description Profile version number
+             */
+            profileVersion: number;
+            /**
+             * Updatedat
+             * @description Timestamp of last update (or null if never set)
+             */
+            updatedAt?: string | null;
+            /**
+             * Resumengenerating
+             * @description True when resumenGenerationStatus == 'pending'
+             */
+            resumenGenerating: boolean;
+        };
+        /**
          * Proyecto
          * @description Project entry from CV.
          */
@@ -1504,7 +1546,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["ProfileResponse"];
                 };
             };
         };
