@@ -777,6 +777,7 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "cloudwatch:PutMetricAlarm",
           "cloudwatch:DeleteAlarms",
           "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListTagsForResource",
           "cloudwatch:ListMetrics",
           "cloudwatch:GetMetricStatistics"
         ]
