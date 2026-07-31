@@ -327,7 +327,7 @@ resource "aws_lambda_function" "notificador" {
   # dotted module path to that function, not the generic "main.handler".
   handler     = "backend.workers.notificador.handler.handler"
   runtime     = "python3.12"
-  timeout     = 30
+  timeout     = 28
   memory_size = 512
 
   # Code packaging: reference S3 object

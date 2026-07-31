@@ -60,7 +60,7 @@ class BedrockClient:
         # Configure boto3 with strict timeouts
         config = Config(
             connect_timeout=10,
-            read_timeout=20,
+            read_timeout=25,
         )
         self.client = boto3.client("bedrock-runtime", region_name=self.region, config=config)
 

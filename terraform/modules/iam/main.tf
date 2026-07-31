@@ -556,7 +556,8 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "s3:PutObject",
           "s3:ListBucket",
           "s3:GetBucketVersioning",
-          "s3:PutBucketVersioning"
+          "s3:PutBucketVersioning",
+          "s3:GetObjectTagging"
         ]
         Resource = [
           "arn:aws:s3:::${var.terraform_state_bucket}",
