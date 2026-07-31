@@ -50,7 +50,10 @@ jobs:
 
       - name: Write terraform.tfvars from secret
         working-directory: terraform
-        run: echo "${{ secrets.TF_VARS_FILE }}" > terraform.tfvars
+        run: |
+          cat << 'EOF' > terraform.tfvars
+          ${{ secrets.TF_VARS_FILE }}
+          EOF
 
       - name: Terraform Init
         working-directory: terraform
