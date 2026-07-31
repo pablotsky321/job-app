@@ -42,6 +42,11 @@
 #
 # Reference: Design document - Lambda function specifications
 
+data "aws_s3_object" "api_code" {
+      bucket = var.lambda_code_bucket
+      key    = "${var.lambda_code_key_prefix}/api/code.zip"
+    }
+
 resource "aws_lambda_function" "api" {
   function_name = "job-search-api"
   role          = var.api_role_arn
@@ -51,8 +56,6 @@ resource "aws_lambda_function" "api" {
   memory_size = 512
 
   # Code packaging: reference S3 object
-  # The .zip file is expected to be at:
-  # s3://{lambda_code_bucket}/{lambda_code_key_prefix}/api/code.zip
   s3_bucket = var.lambda_code_bucket
   s3_key    = "${var.lambda_code_key_prefix}/api/code.zip"
 
@@ -64,12 +67,13 @@ resource "aws_lambda_function" "api" {
       BEDROCK_MODEL_MID   = var.bedrock_model_mid
 
       # DynamoDB table names for API endpoints
-      DYNAMODB_TABLE_EMPRESA         = var.empresas_table_name
-      DYNAMODB_TABLE_VACANTE         = var.vacantes_table_name
-      DYNAMODB_TABLE_USUARIO_VACANTE = var.usuario_vacante_table_name
-      DYNAMODB_TABLE_SCAN_JOB        = var.scan_jobs_table_name
-      DYNAMODB_TABLE_SUSCRIPCIONES   = var.suscripciones_table_name
-      DYNAMODB_TABLE_PERFIL          = var.perfiles_table_name
+      DYNAMODB_TABLE_EMPRESAS        = var.empresas_table_name
+      DYNAMODB_TABLE_VACANTES        = var.vacantes_table_name
+      DYNAMODB_TABLE_USUARIO_VACANTE = var.usuario_vacante_table_name   # ya estaba bien
+      DYNAMODB_TABLE_ENTRADAS        = var.entradas_table_name          # agregar
+      DYNAMODB_TABLE_PERFILES        = var.perfiles_table_name
+      DYNAMODB_TABLE_SUSCRIPCIONES   = var.suscripciones_table_name     # ya estaba bien
+      DYNAMODB_TABLE_SCAN_JOBS       = var.scan_jobs_table_name         
 
       # Cognito for authentication
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
@@ -89,9 +93,7 @@ resource "aws_lambda_function" "api" {
     }
   }
 
-  # Trigger redeployment when code changes
-  # Using base64sha256 of the S3 key as a simple hash; in production, use the S3 object ETag
-  source_code_hash = base64sha256("${var.lambda_code_bucket}/${var.lambda_code_key_prefix}/api/code.zip")
+  source_code_hash = data.aws_s3_object.api_code.etag
 
   tags = {
     Name = "job-search-api"
@@ -110,6 +112,11 @@ resource "aws_lambda_function" "api" {
 # Environment Variables: Empresas, Vacantes, ScanJobs, Suscripciones, Perfiles tables, scan-queue
 #
 # Note: Does NOT have event source mapping (triggered by EventBridge directly)
+
+data "aws_s3_object" "orquestador_code" {
+  bucket = var.lambda_code_bucket
+  key    = "${var.lambda_code_key_prefix}/orquestador/code.zip"
+}
 
 resource "aws_lambda_function" "orquestador" {
   function_name = "job-search-orquestador"
@@ -131,11 +138,13 @@ resource "aws_lambda_function" "orquestador" {
       BEDROCK_MODEL_MID   = var.bedrock_model_mid
 
       # DynamoDB tables: companies, vacancies, scan jobs, subscriptions
-      DYNAMODB_TABLE_EMPRESA       = var.empresas_table_name
-      DYNAMODB_TABLE_VACANTE       = var.vacantes_table_name
-      DYNAMODB_TABLE_SCAN_JOB      = var.scan_jobs_table_name
-      DYNAMODB_TABLE_SUSCRIPCIONES = var.suscripciones_table_name
-      DYNAMODB_TABLE_PERFIL        = var.perfiles_table_name
+      DYNAMODB_TABLE_EMPRESAS        = var.empresas_table_name
+      DYNAMODB_TABLE_VACANTES        = var.vacantes_table_name
+      DYNAMODB_TABLE_USUARIO_VACANTE = var.usuario_vacante_table_name
+      DYNAMODB_TABLE_ENTRADAS        = var.entradas_table_name
+      DYNAMODB_TABLE_PERFILES        = var.perfiles_table_name
+      DYNAMODB_TABLE_SUSCRIPCIONES   = var.suscripciones_table_name
+      DYNAMODB_TABLE_SCAN_JOBS       = var.scan_jobs_table_name
 
       # SQS queue for publishing scan jobs
       SQS_QUEUE_SCAN_URL = var.scan_queue_url
@@ -145,7 +154,7 @@ resource "aws_lambda_function" "orquestador" {
     }
   }
 
-  source_code_hash = base64sha256("${var.lambda_code_bucket}/${var.lambda_code_key_prefix}/orquestador/code.zip")
+  source_code_hash = data.aws_s3_object.orquestador_code.etag
 
   tags = {
     Name = "job-search-orquestador"
@@ -166,6 +175,11 @@ resource "aws_lambda_function" "orquestador" {
 # Note: Reserved concurrency is CRITICAL to prevent overwhelming Bedrock API
 # with too many concurrent requests. Bedrock has strict token-per-minute limits.
 
+data "aws_s3_object" "scan_worker_code" {
+      bucket = var.lambda_code_bucket
+      key    = "${var.lambda_code_key_prefix}/scan_worker/code.zip"
+    }
+
 resource "aws_lambda_function" "scan_worker" {
   function_name = "job-search-scan-worker"
   role          = var.scan_worker_role_arn
@@ -174,14 +188,14 @@ resource "aws_lambda_function" "scan_worker" {
   timeout       = 90
   memory_size   = 1024
 
+  # Code packaging: reference S3 object
+  s3_bucket = var.lambda_code_bucket
+  s3_key    = "${var.lambda_code_key_prefix}/scan_worker/code.zip"
+
   # Reserved concurrency: disabled (-1)
   # Account limit is 10 total, AWS requires maintaining ≥10 unreserved at all times
   # Source: aws lambda get-account-settings verification
   reserved_concurrent_executions = -1
-
-  # Code packaging: reference S3 object
-  s3_bucket = var.lambda_code_bucket
-  s3_key    = "${var.lambda_code_key_prefix}/scan_worker/code.zip"
 
   environment {
     variables = {
@@ -191,9 +205,13 @@ resource "aws_lambda_function" "scan_worker" {
       BEDROCK_MODEL_MID   = var.bedrock_model_mid
 
       # DynamoDB tables for storing scan results
-      DYNAMODB_TABLE_EMPRESA  = var.empresas_table_name
-      DYNAMODB_TABLE_VACANTE  = var.vacantes_table_name
-      DYNAMODB_TABLE_SCAN_JOB = var.scan_jobs_table_name
+      DYNAMODB_TABLE_EMPRESAS        = var.empresas_table_name
+      DYNAMODB_TABLE_VACANTES        = var.vacantes_table_name
+      DYNAMODB_TABLE_USUARIO_VACANTE = var.usuario_vacante_table_name   
+      DYNAMODB_TABLE_ENTRADAS        = var.entradas_table_name          
+      DYNAMODB_TABLE_PERFILES        = var.perfiles_table_name
+      DYNAMODB_TABLE_SUSCRIPCIONES   = var.suscripciones_table_name     
+      DYNAMODB_TABLE_SCAN_JOBS       = var.scan_jobs_table_name         
 
       # SQS queues: consume from scan-queue, publish to scoring-queue
       SQS_QUEUE_SCAN_URL    = var.scan_queue_url
@@ -207,8 +225,8 @@ resource "aws_lambda_function" "scan_worker" {
       LOG_LEVEL = var.log_level
     }
   }
-
-  source_code_hash = base64sha256("${var.lambda_code_bucket}/${var.lambda_code_key_prefix}/scan_worker/code.zip")
+  
+  source_code_hash = data.aws_s3_object.scan_worker_code.etag
 
   tags = {
     Name = "job-search-scan-worker"
@@ -229,6 +247,11 @@ resource "aws_lambda_function" "scan_worker" {
 # Note: Reserved concurrency is CRITICAL to prevent overwhelming Bedrock API
 # with too many concurrent requests.
 
+data "aws_s3_object" "scoring_worker_code" {
+    bucket = var.lambda_code_bucket
+    key    = "${var.lambda_code_key_prefix}/scoring_worker/code.zip"
+  }
+
 resource "aws_lambda_function" "scoring_worker" {
   function_name = "job-search-scoring-worker"
   role          = var.scoring_worker_role_arn
@@ -237,14 +260,14 @@ resource "aws_lambda_function" "scoring_worker" {
   timeout       = 30
   memory_size   = 1024
 
+  # Code packaging: reference S3 object
+  s3_bucket = var.lambda_code_bucket
+  s3_key    = "${var.lambda_code_key_prefix}/scoring_worker/code.zip"
+
   # Reserved concurrency: disabled (-1)
   # Account limit is 10 total, AWS requires maintaining ≥10 unreserved at all times
   # Source: aws lambda get-account-settings verification
   reserved_concurrent_executions = -1
-
-  # Code packaging: reference S3 object
-  s3_bucket = var.lambda_code_bucket
-  s3_key    = "${var.lambda_code_key_prefix}/scoring_worker/code.zip"
 
   environment {
     variables = {
@@ -270,7 +293,7 @@ resource "aws_lambda_function" "scoring_worker" {
     }
   }
 
-  source_code_hash = base64sha256("${var.lambda_code_bucket}/${var.lambda_code_key_prefix}/scoring_worker/code.zip")
+  source_code_hash = data.aws_s3_object.scoring_worker_code.etag
 
   tags = {
     Name = "job-search-scoring-worker"
@@ -289,6 +312,11 @@ resource "aws_lambda_function" "scoring_worker" {
 # Environment Variables: SES email address, optional DynamoDB tables
 #
 # Note: Does NOT have event source mapping (triggered by other services)
+
+data "aws_s3_object" "notificador_code" {
+      bucket = var.lambda_code_bucket
+      key    = "${var.lambda_code_key_prefix}/notificador/code.zip"
+  }
 
 resource "aws_lambda_function" "notificador" {
   function_name = "job-search-notificador"
@@ -316,7 +344,7 @@ resource "aws_lambda_function" "notificador" {
     }
   }
 
-  source_code_hash = base64sha256("${var.lambda_code_bucket}/${var.lambda_code_key_prefix}/notificador/code.zip")
+  source_code_hash = data.aws_s3_object.notificador_code.etag
 
   tags = {
     Name = "job-search-notificador"

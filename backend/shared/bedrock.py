@@ -130,7 +130,13 @@ class BedrockClient:
 
         response = self.client.invoke_model(
             modelId=model_id,
-            body=json.dumps({"prompt": prompt, "max_tokens": 2048}),
+            body=json.dumps({
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 2048,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+            }),
             contentType=JSON_CONTENT_TYPE,
             accept=JSON_CONTENT_TYPE,
         )
@@ -147,20 +153,21 @@ class BedrockClient:
         """
         Extract text from Bedrock response body.
 
-        Handles different response formats (completion, text, output, etc.).
-
-        Args:
-            response_body: Parsed JSON response body
-
-        Returns:
-            Text content or None if not found
+        Handles the Messages API format (content: [{"type": "text", "text": "..."}])
+        as the primary case, with older/alternate formats as fallback.
         """
-        # Try common response formats
         if isinstance(response_body, dict):
+            # Messages API format (formato actual de Claude en Bedrock)
+            content = response_body.get("content")
+            if isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        return block.get("text")
+
+            # Formatos legacy / alternos, por compatibilidad
             for key in ["completion", "text", "output"]:
                 if key in response_body:
                     return response_body[key]
-            # Try to find first string value
             for value in response_body.values():
                 if isinstance(value, str):
                     return value
@@ -168,7 +175,6 @@ class BedrockClient:
             return response_body
 
         return None
-
     def _parse_and_validate(
         self,
         response_text: str,
@@ -351,7 +357,13 @@ def startup_validation() -> None:
             # Send trivial prompt to test model
             response = validation_client.invoke_model(
                 modelId=model_id,
-                body=json.dumps({"prompt": "Respond with ok", "max_tokens": 10}),
+                body=json.dumps({
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "max_tokens": 10,
+                    "messages": [
+                        {"role": "user", "content": "Respond with ok"}
+                    ],
+                }),
                 contentType=JSON_CONTENT_TYPE,
                 accept=JSON_CONTENT_TYPE,
             )

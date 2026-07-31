@@ -81,7 +81,10 @@ resource "aws_iam_role_policy" "api_policy" {
       {
         Effect = "Allow"
         Action = [
-          "bedrock:InvokeModel"
+          "bedrock:InvokeModel",
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe"
         ]
         Resource = "*"
       },
@@ -261,7 +264,10 @@ resource "aws_iam_role_policy" "scan_worker_policy" {
       {
         Effect = "Allow"
         Action = [
-          "bedrock:InvokeModel"
+          "bedrock:InvokeModel",
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe"
         ]
         Resource = "*"
       }
@@ -347,7 +353,10 @@ resource "aws_iam_role_policy" "scoring_worker_policy" {
       {
         Effect = "Allow"
         Action = [
-          "bedrock:InvokeModel"
+          "bedrock:InvokeModel",
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe"
         ]
         Resource = "*"
       }

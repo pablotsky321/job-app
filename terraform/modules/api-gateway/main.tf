@@ -167,14 +167,39 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
 resource "aws_api_gateway_deployment" "api" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
-  # Ensure integration is deployed before creating deployment
+  # triggers fuerza un nuevo despliegue cada vez que cambia CUALQUIERA de estos
+  # recursos — sin esto, cambios como los Gateway Responses (que no son
+  # argumentos propios de este recurso) nunca provocan redeploy automático.
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.api_proxy.id,
+      aws_api_gateway_method.api_proxy.id,
+      aws_api_gateway_integration.api_lambda.id,
+      aws_api_gateway_method.api_options.id,
+      aws_api_gateway_integration.api_options.id,
+      aws_api_gateway_integration_response.api_options_integration_response.id,
+      aws_api_gateway_method.root.id,
+      aws_api_gateway_integration.root_lambda.id,
+      aws_api_gateway_method.root_options.id,
+      aws_api_gateway_integration.root_options.id,
+      aws_api_gateway_integration_response.root_options_integration_response.id,
+      aws_api_gateway_gateway_response.unauthorized.id,
+      aws_api_gateway_gateway_response.access_denied.id,
+      aws_api_gateway_gateway_response.default_4xx.id,
+      aws_api_gateway_gateway_response.default_5xx.id,
+    ]))
+  }
+
   depends_on = [
     aws_api_gateway_integration.api_lambda,
     aws_api_gateway_integration.api_options,
-    aws_api_gateway_integration_response.api_options_integration_response
+    aws_api_gateway_integration_response.api_options_integration_response,
+    aws_api_gateway_gateway_response.unauthorized,
+    aws_api_gateway_gateway_response.access_denied,
+    aws_api_gateway_gateway_response.default_4xx,
+    aws_api_gateway_gateway_response.default_5xx,
   ]
 
-  # Force redeployment when the API is updated
   lifecycle {
     create_before_destroy = true
   }
@@ -344,6 +369,16 @@ resource "aws_api_gateway_gateway_response" "access_denied" {
 resource "aws_api_gateway_gateway_response" "default_4xx" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   response_type = "DEFAULT_4XX"
+
+  response_parameters = {
+    "gatewayresponse.header.Access-Control-Allow-Origin"  = "'*'"
+    "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  }
+}
+
+resource "aws_api_gateway_gateway_response" "default_5xx" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  response_type = "DEFAULT_5XX"
 
   response_parameters = {
     "gatewayresponse.header.Access-Control-Allow-Origin"  = "'*'"
