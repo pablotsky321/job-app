@@ -581,6 +581,7 @@ resource "aws_iam_role_policy" "github_actions_policy" {
         Action = [
           "dynamodb:CreateTable",
           "dynamodb:DescribeTable",
+          "dynamodb:DescribeContinuousBackups", 
           "dynamodb:DeleteTable",
           "dynamodb:UpdateTable",
           "dynamodb:ListTables",
@@ -606,6 +607,7 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "sqs:ReceiveMessage",
           "sqs:GetQueueUrl",
           "sqs:ListQueues",
+          "sqs:ListQueueTags",
           "sqs:TagQueue",
           "sqs:UntagQueue"
         ]
@@ -692,6 +694,7 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "iam:GetRole",
           "iam:GetRolePolicy",
           "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
           "iam:CreatePolicy",
           "iam:DeletePolicy",
           "iam:GetPolicy",
@@ -774,6 +777,21 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "iam:RemoveClientIDFromOpenIDConnectProvider"
         ]
         Resource = "*"
+      },
+      # Resource Groups - for managing the project's resource group
+      {
+        Effect = "Allow"
+        Action = [
+          "resource-groups:GetGroup",
+          "resource-groups:CreateGroup",
+          "resource-groups:UpdateGroup",
+          "resource-groups:DeleteGroup",
+          "resource-groups:GetGroupQuery",
+          "resource-groups:GetTags",
+          "resource-groups:Tag",
+          "resource-groups:Untag"
+        ]
+        Resource = "arn:aws:resource-groups:*:*:group/job-search-assistant"
       }
     ]
   })
