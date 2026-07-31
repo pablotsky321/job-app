@@ -763,6 +763,8 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "logs:CreateLogGroup",
           "logs:DeleteLogGroup",
           "logs:DescribeLogGroups",
+          "sns:ListTagsForResource",
+          "logs:ListTagsForResource",
           "logs:PutRetentionPolicy",
           "logs:TagLogGroup"
         ]
